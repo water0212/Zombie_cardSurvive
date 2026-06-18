@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a929fd0962534f778437074501ae74e8, type: 3}
+  m_Name: "\u6E96\u5099\u884C\u52D5"
+  m_EditorClassIdentifier: 
+  cardId: card_8b4f7e712d134605a42365e44acc7bee
+  displayName: "\u6E96\u5099\u884C\u52D5"
+  energyCost: 1
+  artwork: {fileID: 21300000, guid: 9f4826fa756681043bcb70a852b656a1, type: 3}
+  background: {fileID: 21300000, guid: 40fa089a6106e57479fbcab32419d0a8, type: 3}
+  description: "\u7372\u5F97\u5169\u9EDE\u884C\u52D5\u9EDE"
+  effects:
+  - carrier: 0
+    category: 0
+    valueEffectType: 10
+    cardFlowEffectType: 0
+    buildingEffectType: 0
+    survivorEffectType: 0
+    amount: 2
+    effectId: 
+    isPermanent: 0
+    remainingTurns: 0

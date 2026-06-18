@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55e7408c4e352944ab27086d52cb2770, type: 3}
+  m_Name: FarmDiscover
+  m_EditorClassIdentifier: 
+  eventId: event_129b0d6b27704f30a2fb71a9ddf814df
+  displayTitle: "\u7834\u6557\u7684\u838A\u5712"
+  description: "\u4F60\u5011\u7684\u5016\u5B58\u8005\u63A2\u8A62\u5230\u4E86\u4E00\u500B\u5EE2\u68C4\u7684\u8FB2\u838A\uFF0C\u88E1\u9762\u6709\u4E00\u584A\u7834\u6557\u4E0D\u582A\u7684\u571F\u5730\u8207\u623F\u5C4B\u3002"
+  artwork: {fileID: 21300000, guid: 400985b7da1a8d243bdabff94e44e666, type: 3}
+  choices:
+  - choiceText: "\u958B\u58BE\u571F\u5730"
+    resultTitle: "\u958B\u58BE\u571F\u5730\u5F8C"
+    resultDescription: "\u4F60\u5011\u591A\u4E86\u4E00\u7247\u8FB2\u7530(\u6BCF\u56DE\u5408+1\u98DF\u7269)"
+    resultArtwork: {fileID: 21300000, guid: f311ee81c0e13194589a7d551117faaa, type: 3}
+    effects:
+    - carrier: 1
+      category: 0
+      valueEffectType: 2
+      cardFlowEffectType: 0
+      buildingEffectType: 0
+      survivorEffectType: 0
+      amount: 1
+      effectId: 
+      isPermanent: 1
+      remainingTurns: 0
+  - choiceText: "\u7372\u53D6\u8CC7\u6E90"
+    resultTitle: "\u4F60\u5011\u641C\u7D22\u5230\u4E86\u8CC7\u6E90"
+    resultDescription: "\u4F60\u5011\u641C\u7D22\u5230\u4E86\u4E00\u4E9B\u8CC7\u6E90(\u8CC7\u6E90+4)"
+    resultArtwork: {fileID: 21300000, guid: 4acb2e9c69717ee4aa0672d1c18d1d8e, type: 3}
+    effects:
+    - carrier: 1
+      category: 0
+      valueEffectType: 3
+      cardFlowEffectType: 0
+      buildingEffectType: 0
+      survivorEffectType: 0
+      amount: 4
+      effectId: 
+      isPermanent: 0
+      remainingTurns: 0
+  - choiceText: "\u7A2E\u690D\u98DF\u7269"
+    resultTitle: "\u7DCA\u6025\u98DF\u7269"
+    resultDescription: "\u4F60\u5011\u7A2E\u4E86\u4E00\u4E9B\u690D\u7269"
+    resultArtwork: {fileID: 21300000, guid: 400985b7da1a8d243bdabff94e44e666, type: 3}
+    effects:
+    - carrier: 1
+      category: 0
+      valueEffectType: 0
+      cardFlowEffectType: 0
+      buildingEffectType: 0
+      survivorEffectType: 0
+      amount: 6
+      effectId: 
+      isPermanent: 0
+      remainingTurns: 0

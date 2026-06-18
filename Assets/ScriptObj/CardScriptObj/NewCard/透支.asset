@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a929fd0962534f778437074501ae74e8, type: 3}
+  m_Name: "\u900F\u652F"
+  m_EditorClassIdentifier: 
+  cardId: card_7f429732ad0b4488ae8ffc6a99a6c8cc
+  displayName: "\u900F\u652F"
+  energyCost: 1
+  artwork: {fileID: 21300000, guid: 53b979d83b37273489825a5268f5cf6c, type: 3}
+  background: {fileID: 21300000, guid: 7f65fa9e1471f4949bb885f916d16647, type: 3}
+  description: "\u6E1B\u5C112\u9EDE\u98DF\u7269\u3001\u7372\u5F973\u9EDE\u80FD\u91CF"
+  costs:
+  - carrier: 0
+    category: 0
+    valueEffectType: 0
+    cardFlowEffectType: 0
+    buildingEffectType: 0
+    survivorEffectType: 0
+    amount: -2
+    effectId: 
+    isPermanent: 0
+    remainingTurns: 0
+  effects:
+  - carrier: 0
+    category: 0
+    valueEffectType: 10
+    cardFlowEffectType: 0
+    buildingEffectType: 0
+    survivorEffectType: 0
+    amount: 3
+    effectId: 
+    isPermanent: 0
+    remainingTurns: 0
