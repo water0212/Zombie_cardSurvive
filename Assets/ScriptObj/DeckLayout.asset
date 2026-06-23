@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 561a424c52604bec867cdc53dbb820de, type: 3}
+  m_Name: DeckLayout
+  m_EditorClassIdentifier: 
+  drawCountPerTurn: 5
+  slots:
+  - slotType: 0
+    count: 4
+    acceptedCardTypes: 00000000
+    defaultCard: {fileID: 11400000, guid: 8d856f39b1feadd4489810da9e235778, type: 2}
+  - slotType: 1
+    count: 2
+    acceptedCardTypes: 01000000
+    defaultCard: {fileID: 11400000, guid: 8b63ec519ee05c5428ab0109751c53c4, type: 2}
+  - slotType: 2
+    count: 1
+    acceptedCardTypes: 05000000
+    defaultCard: {fileID: 11400000, guid: 50f0cff2d46824e4a8da77f4fe35ed51, type: 2}
+  - slotType: 3
+    count: 8
+    acceptedCardTypes: 0000000001000000020000000300000004000000050000000600000007000000
+    defaultCard: {fileID: 11400000, guid: 393c827c8c7d3714f9e72ce6c6784a43, type: 2}

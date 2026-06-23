@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using ZombieCardSurvive.Cards.Runtime;
+using ZombieCardSurvive.Cards.UI.Replacement;
 using ZombieCardSurvive.Events.Runtime;
 
 namespace ZombieCardSurvive.Run
@@ -8,8 +9,11 @@ namespace ZombieCardSurvive.Run
     public class RunPhaseController : MonoBehaviour
     {
         [SerializeField] private CardController cardController;
-        [SerializeField] private EventFlowController eventFlowController;
+        [SerializeField] private DeckReplacementView deckReplacementView;
+        [SerializeField] private bool openExhaustionReplacementBeforeRound = true;
+        private EventFlowController eventFlowController;
         [SerializeField] private bool startRunOnAwake = true;
+        private bool waitingForReplacement;
 
         public event Action<RunPhase> PhaseChanged;
 
@@ -27,6 +31,11 @@ namespace ZombieCardSurvive.Run
             if (eventFlowController == null)
             {
                 eventFlowController = FindObjectOfType<EventFlowController>();
+            }
+
+            if (deckReplacementView == null)
+            {
+                deckReplacementView = FindObjectOfType<DeckReplacementView>(true);
             }
 
             if (startRunOnAwake)
@@ -68,6 +77,22 @@ namespace ZombieCardSurvive.Run
                 return;
             }
 
+            if (waitingForReplacement)
+            {
+                return;
+            }
+
+            if (TryOpenExhaustionReplacement())
+            {
+                return;
+            }
+
+            StartRoundAfterReplacement();
+        }
+
+        private void StartRoundAfterReplacement()
+        {
+            waitingForReplacement = false;
             RoundIndex++;
 
             if (cardController != null)
@@ -76,6 +101,73 @@ namespace ZombieCardSurvive.Run
             }
 
             EnterTurnPhase();
+        }
+
+        private void OnDestroy()
+        {
+            UnhookReplacementView();
+        }
+
+        private bool TryOpenExhaustionReplacement()
+        {
+            if (!openExhaustionReplacementBeforeRound)
+            {
+                Debug.Log("Exhaustion replacement skipped: openExhaustionReplacementBeforeRound is disabled.");
+                return false;
+            }
+
+            if (cardController == null)
+            {
+                Debug.LogWarning("Exhaustion replacement skipped: CardController is not assigned.");
+                return false;
+            }
+
+            if (deckReplacementView == null)
+            {
+                Debug.LogWarning("Exhaustion replacement skipped: DeckReplacementView is not assigned or could not be found.");
+                return false;
+            }
+
+            if (!cardController.HasPendingExhaustionRefill)
+            {
+                return false;
+            }
+
+            waitingForReplacement = true;
+            deckReplacementView.Completed += HandleReplacementFinished;
+            deckReplacementView.Cancelled += HandleReplacementFinished;
+
+            if (deckReplacementView.OpenExhaustionRefill(cardController.GetExhaustedRefillTargets()))
+            {
+                return true;
+            }
+
+            Debug.LogWarning("Exhaustion replacement view did not open. Check candidate cards, default slot cards, and popup UI references.");
+            UnhookReplacementView();
+            waitingForReplacement = false;
+            return false;
+        }
+
+        private void HandleReplacementFinished()
+        {
+            if (!waitingForReplacement)
+            {
+                return;
+            }
+
+            UnhookReplacementView();
+            StartRoundAfterReplacement();
+        }
+
+        private void UnhookReplacementView()
+        {
+            if (deckReplacementView == null)
+            {
+                return;
+            }
+
+            deckReplacementView.Completed -= HandleReplacementFinished;
+            deckReplacementView.Cancelled -= HandleReplacementFinished;
         }
 
         [ContextMenu("End Turn")]

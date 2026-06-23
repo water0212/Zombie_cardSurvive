@@ -18,14 +18,21 @@ MonoBehaviour:
   artwork: {fileID: 21300000, guid: 53b979d83b37273489825a5268f5cf6c, type: 3}
   background: {fileID: 21300000, guid: 7f65fa9e1471f4949bb885f916d16647, type: 3}
   description: "\u6E1B\u5C112\u9EDE\u98DF\u7269\u3001\u7372\u5F973\u9EDE\u80FD\u91CF"
+  cardType: 4
+  playMode: 0
+  allowedSlots: 03000000
+  isAdditiveCard: 0
+  drawReplacementOnAutoResolve: 0
+  hasLimitedUses: 1
+  maxUsesPerRun: 3
   costs:
   - carrier: 0
     category: 0
-    valueEffectType: 0
+    valueEffectType: 1
     cardFlowEffectType: 0
     buildingEffectType: 0
     survivorEffectType: 0
-    amount: -2
+    amount: 2
     effectId: 
     isPermanent: 0
     remainingTurns: 0

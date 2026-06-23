@@ -14,6 +14,7 @@ namespace ZombieCardSurvive.Cards.UI
         [SerializeField] private TMP_Text nameText;
         [SerializeField] private TMP_Text energyText;
         [SerializeField] private TMP_Text descriptionText;
+        [SerializeField] private TMP_Text remainingUsesText;
         [SerializeField] private Image artworkImage;
         [SerializeField] private Image backgroundImage;
         [SerializeField] private bool draggingEnabled = true;
@@ -65,6 +66,7 @@ namespace ZombieCardSurvive.Cards.UI
                 SetText(nameText, string.Empty);
                 SetText(energyText, string.Empty);
                 SetText(descriptionText, string.Empty);
+                SetRemainingUses(false, string.Empty);
                 SetArtwork(null);
                 SetBackground(null);
                 return;
@@ -73,6 +75,7 @@ namespace ZombieCardSurvive.Cards.UI
             SetText(nameText, RuntimeCard.Data.DisplayName);
             SetText(energyText, RuntimeCard.Data.EnergyCost.ToString());
             SetText(descriptionText, RuntimeCard.Data.Description);
+            RefreshRemainingUses();
             SetArtwork(RuntimeCard.Data.Artwork);
             SetBackground(RuntimeCard.Data.Background);
         }
@@ -248,6 +251,28 @@ namespace ZombieCardSurvive.Cards.UI
 
             backgroundImage.sprite = sprite;
             backgroundImage.enabled = sprite != null;
+        }
+
+        private void RefreshRemainingUses()
+        {
+            if (RuntimeCard == null || RuntimeCard.Data == null || !RuntimeCard.Data.HasLimitedUses)
+            {
+                SetRemainingUses(false, string.Empty);
+                return;
+            }
+
+            SetRemainingUses(true, RuntimeCard.RemainingUses.ToString());
+        }
+
+        private void SetRemainingUses(bool isVisible, string value)
+        {
+            if (remainingUsesText == null)
+            {
+                return;
+            }
+
+            remainingUsesText.text = value;
+            remainingUsesText.gameObject.SetActive(isVisible);
         }
 
         private static void SetText(TMP_Text target, string value)

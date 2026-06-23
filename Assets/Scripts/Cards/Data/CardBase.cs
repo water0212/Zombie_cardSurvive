@@ -16,6 +16,16 @@ namespace ZombieCardSurvive.Cards.Data
         [SerializeField] private Sprite background;
         [TextArea]
         [SerializeField] private string description;
+        [Header("Rules")]
+        [SerializeField] private CardType cardType = CardType.Special;
+        [SerializeField] private CardPlayMode playMode = CardPlayMode.Playable;
+        [SerializeField] private List<DeckSlotType> allowedSlots = new List<DeckSlotType>();
+        [SerializeField] private bool isAdditiveCard;
+        [SerializeField] private bool drawReplacementOnAutoResolve;
+        [SerializeField] private bool hasLimitedUses;
+        [SerializeField] private int maxUsesPerRun = 1;
+
+        [Header("Effects")]
         [SerializeField] private List<GameEffectData> costs = new List<GameEffectData>();
         [SerializeField] private List<GameEffectData> effects = new List<GameEffectData>();
 
@@ -25,6 +35,16 @@ namespace ZombieCardSurvive.Cards.Data
         public Sprite Artwork => artwork;
         public Sprite Background => background;
         public string Description => description;
+        public CardType CardType => cardType;
+        public CardType EffectiveCardType => ResolveEffectiveCardType();
+        public CardPlayMode PlayMode => playMode;
+        public CardPlayMode EffectivePlayMode => ResolveEffectivePlayMode();
+        public IReadOnlyList<DeckSlotType> AllowedSlots => allowedSlots;
+        public bool IsAdditiveCard => isAdditiveCard;
+        public bool EffectiveIsAdditiveCard => isAdditiveCard || this is ZombieCardData;
+        public bool DrawReplacementOnAutoResolve => drawReplacementOnAutoResolve;
+        public bool HasLimitedUses => hasLimitedUses;
+        public int MaxUsesPerRun => Mathf.Max(1, maxUsesPerRun);
         public IReadOnlyList<GameEffectData> Costs => costs;
         public IReadOnlyList<GameEffectData> Effects => effects;
         public string Id => cardId;
@@ -50,6 +70,56 @@ namespace ZombieCardSurvive.Cards.Data
         public CardRuntime CreateRuntimeCard()
         {
             return new CardRuntime(this);
+        }
+
+        public bool CanUseInSlot(DeckSlotType slotType)
+        {
+            return allowedSlots == null || allowedSlots.Count == 0 || allowedSlots.Contains(slotType);
+        }
+
+        private CardType ResolveEffectiveCardType()
+        {
+            if (this is FoodCardData)
+            {
+                return ZombieCardSurvive.Cards.Data.CardType.Food;
+            }
+
+            if (this is ResourceCardData)
+            {
+                return ZombieCardSurvive.Cards.Data.CardType.Resource;
+            }
+
+            if (this is CombatCardData)
+            {
+                return ZombieCardSurvive.Cards.Data.CardType.Combat;
+            }
+
+            if (this is ZombieCardData)
+            {
+                return ZombieCardSurvive.Cards.Data.CardType.Zombie;
+            }
+
+            if (this is EnergyCard)
+            {
+                return ZombieCardSurvive.Cards.Data.CardType.Special;
+            }
+
+            return cardType;
+        }
+
+        private CardPlayMode ResolveEffectivePlayMode()
+        {
+            if (this is ZombieCardData)
+            {
+                return CardPlayMode.AutoResolveOnDraw;
+            }
+
+            if (EffectiveCardType == ZombieCardSurvive.Cards.Data.CardType.Wound)
+            {
+                return CardPlayMode.Unplayable;
+            }
+
+            return playMode;
         }
 
         public bool CanPayCosts(CardPlayContext context)

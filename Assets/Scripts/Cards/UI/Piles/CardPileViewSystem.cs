@@ -2,8 +2,260 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using ZombieCardSurvive.Cards.Data;
 using ZombieCardSurvive.Cards.Runtime;
 using ZombieCardSurvive.Cards.UI;
+
+namespace ZombieCardSurvive.Cards.UI
+{
+    public enum CardSortMode
+    {
+        SlotThenTypeThenName,
+        TypeThenName,
+        EnergyThenTypeThenName,
+        Name
+    }
+
+    public static class CardDisplaySortUtility
+    {
+        public static void SortRuntimeCards(List<CardRuntime> cards, CardSortMode sortMode)
+        {
+            if (cards == null)
+            {
+                return;
+            }
+
+            cards.Sort((a, b) => CompareRuntimeCards(a, b, sortMode));
+        }
+
+        public static void SortCardData(List<CardBase> cards, CardSortMode sortMode)
+        {
+            if (cards == null)
+            {
+                return;
+            }
+
+            cards.Sort((a, b) => CompareCardData(a, b, sortMode));
+        }
+
+        private static int CompareRuntimeCards(CardRuntime left, CardRuntime right, CardSortMode sortMode)
+        {
+            int result = CompareNullable(left, right);
+            if (result != 0 || left == null || right == null)
+            {
+                return result;
+            }
+
+            result = CompareByMode(left, right, sortMode);
+            if (result != 0)
+            {
+                return result;
+            }
+
+            return string.Compare(left.RuntimeId, right.RuntimeId, System.StringComparison.Ordinal);
+        }
+
+        private static int CompareCardData(CardBase left, CardBase right, CardSortMode sortMode)
+        {
+            int result = CompareNullable(left, right);
+            if (result != 0 || left == null || right == null)
+            {
+                return result;
+            }
+
+            result = CompareByMode(left, right, sortMode);
+            if (result != 0)
+            {
+                return result;
+            }
+
+            return string.Compare(left.CardId, right.CardId, System.StringComparison.Ordinal);
+        }
+
+        private static int CompareByMode(CardRuntime left, CardRuntime right, CardSortMode sortMode)
+        {
+            switch (sortMode)
+            {
+                case CardSortMode.SlotThenTypeThenName:
+                    return CompareChain(
+                        CompareSlot(left.AssignedSlotType, right.AssignedSlotType),
+                        CompareCardDataCore(left.Data, right.Data, includeEnergy: true));
+                case CardSortMode.TypeThenName:
+                    return CompareCardDataCore(left.Data, right.Data, includeEnergy: true);
+                case CardSortMode.EnergyThenTypeThenName:
+                    return CompareChain(
+                        CompareEnergy(left.Data, right.Data),
+                        CompareCardDataCore(left.Data, right.Data, includeEnergy: false));
+                case CardSortMode.Name:
+                    return CompareNameThenId(left.Data, right.Data);
+                default:
+                    return CompareCardDataCore(left.Data, right.Data, includeEnergy: true);
+            }
+        }
+
+        private static int CompareByMode(CardBase left, CardBase right, CardSortMode sortMode)
+        {
+            switch (sortMode)
+            {
+                case CardSortMode.SlotThenTypeThenName:
+                case CardSortMode.TypeThenName:
+                    return CompareCardDataCore(left, right, includeEnergy: true);
+                case CardSortMode.EnergyThenTypeThenName:
+                    return CompareChain(
+                        CompareEnergy(left, right),
+                        CompareCardDataCore(left, right, includeEnergy: false));
+                case CardSortMode.Name:
+                    return CompareNameThenId(left, right);
+                default:
+                    return CompareCardDataCore(left, right, includeEnergy: true);
+            }
+        }
+
+        private static int CompareCardDataCore(CardBase left, CardBase right, bool includeEnergy)
+        {
+            int result = CompareNullable(left, right);
+            if (result != 0 || left == null || right == null)
+            {
+                return result;
+            }
+
+            result = CompareType(left.EffectiveCardType, right.EffectiveCardType);
+            if (result != 0)
+            {
+                return result;
+            }
+
+            if (includeEnergy)
+            {
+                result = CompareEnergy(left, right);
+                if (result != 0)
+                {
+                    return result;
+                }
+            }
+
+            return CompareNameThenId(left, right);
+        }
+
+        private static int CompareNameThenId(CardBase left, CardBase right)
+        {
+            int result = string.Compare(GetDisplayName(left), GetDisplayName(right), System.StringComparison.Ordinal);
+            if (result != 0)
+            {
+                return result;
+            }
+
+            return string.Compare(GetCardId(left), GetCardId(right), System.StringComparison.Ordinal);
+        }
+
+        private static int CompareSlot(DeckSlotType left, DeckSlotType right)
+        {
+            return GetSlotSortOrder(left).CompareTo(GetSlotSortOrder(right));
+        }
+
+        private static int CompareType(CardType left, CardType right)
+        {
+            return GetCardTypeSortOrder(left).CompareTo(GetCardTypeSortOrder(right));
+        }
+
+        private static int CompareEnergy(CardBase left, CardBase right)
+        {
+            int leftEnergy = left != null ? left.EnergyCost : int.MaxValue;
+            int rightEnergy = right != null ? right.EnergyCost : int.MaxValue;
+            return leftEnergy.CompareTo(rightEnergy);
+        }
+
+        private static int CompareNullable<T>(T left, T right) where T : class
+        {
+            if (ReferenceEquals(left, right))
+            {
+                return 0;
+            }
+
+            if (left == null)
+            {
+                return 1;
+            }
+
+            return right == null ? -1 : 0;
+        }
+
+        private static int CompareChain(params int[] comparisons)
+        {
+            foreach (int comparison in comparisons)
+            {
+                if (comparison != 0)
+                {
+                    return comparison;
+                }
+            }
+
+            return 0;
+        }
+
+        private static int GetSlotSortOrder(DeckSlotType slotType)
+        {
+            switch (slotType)
+            {
+                case DeckSlotType.Food:
+                    return 0;
+                case DeckSlotType.Resource:
+                    return 1;
+                case DeckSlotType.Explore:
+                    return 2;
+                case DeckSlotType.Unrestricted:
+                    return 3;
+                default:
+                    return 99;
+            }
+        }
+
+        private static int GetCardTypeSortOrder(CardType cardType)
+        {
+            switch (cardType)
+            {
+                case CardType.Food:
+                    return 0;
+                case CardType.Resource:
+                    return 1;
+                case CardType.Combat:
+                    return 2;
+                case CardType.Explore:
+                    return 3;
+                case CardType.Build:
+                    return 4;
+                case CardType.Special:
+                    return 5;
+                case CardType.Zombie:
+                    return 6;
+                case CardType.Wound:
+                    return 7;
+                default:
+                    return 99;
+            }
+        }
+
+        private static string GetDisplayName(CardBase card)
+        {
+            if (card == null)
+            {
+                return string.Empty;
+            }
+
+            if (!string.IsNullOrWhiteSpace(card.DisplayName))
+            {
+                return card.DisplayName;
+            }
+
+            return card.name;
+        }
+
+        private static string GetCardId(CardBase card)
+        {
+            return card != null ? card.CardId : string.Empty;
+        }
+    }
+}
 
 namespace ZombieCardSurvive.Cards.UI.Piles
 {
@@ -25,7 +277,11 @@ namespace ZombieCardSurvive.Cards.UI.Piles
         [SerializeField] private GameObject popupRoot;
         [SerializeField] private TMP_Text titleText;
         [SerializeField] private Button closeButton;
+        [SerializeField] private TMP_Dropdown sortDropdown;
         [SerializeField] private Transform contentRoot;
+
+        [Header("Sorting")]
+        [SerializeField] private CardSortMode currentSortMode = CardSortMode.SlotThenTypeThenName;
 
         [Header("Runtime Setup")]
         [SerializeField] private Canvas targetCanvas;
@@ -48,11 +304,13 @@ namespace ZombieCardSurvive.Cards.UI.Piles
         private void OnEnable()
         {
             HookButtons();
+            HookSortDropdown();
             if (cardController != null)
             {
                 cardController.StateChanged += HandleCardStateChanged;
             }
 
+            SyncSortDropdownValue();
             RefreshButtonLabels();
         }
 
@@ -64,6 +322,7 @@ namespace ZombieCardSurvive.Cards.UI.Piles
             }
 
             UnhookButtons();
+            UnhookSortDropdown();
         }
 
         [ContextMenu("Auto Wire From Scene")]
@@ -213,6 +472,17 @@ namespace ZombieCardSurvive.Cards.UI.Piles
             }
         }
 
+        private void HookSortDropdown()
+        {
+            if (sortDropdown == null)
+            {
+                return;
+            }
+
+            sortDropdown.onValueChanged.RemoveListener(HandleSortDropdownChanged);
+            sortDropdown.onValueChanged.AddListener(HandleSortDropdownChanged);
+        }
+
         private void HandleCardStateChanged()
         {
             RefreshButtonLabels();
@@ -254,6 +524,26 @@ namespace ZombieCardSurvive.Cards.UI.Piles
             }
         }
 
+        private void UnhookSortDropdown()
+        {
+            if (sortDropdown == null)
+            {
+                return;
+            }
+
+            sortDropdown.onValueChanged.RemoveListener(HandleSortDropdownChanged);
+        }
+
+        private void HandleSortDropdownChanged(int value)
+        {
+            currentSortMode = ResolveSortMode(value);
+
+            if (popupRoot != null && popupRoot.activeSelf && hasActiveSource)
+            {
+                Refresh(activeSource);
+            }
+        }
+
         private List<CardRuntime> GetSortedCards(CardPileSource source)
         {
             List<CardRuntime> cards = new List<CardRuntime>();
@@ -266,7 +556,7 @@ namespace ZombieCardSurvive.Cards.UI.Piles
                 }
             }
 
-            cards.Sort((a, b) => string.Compare(GetDisplayName(a), GetDisplayName(b), System.StringComparison.Ordinal));
+            CardDisplaySortUtility.SortRuntimeCards(cards, currentSortMode);
             return cards;
         }
 
@@ -436,19 +726,28 @@ namespace ZombieCardSurvive.Cards.UI.Piles
             return count;
         }
 
-        private static string GetDisplayName(CardRuntime card)
+        private void SyncSortDropdownValue()
         {
-            if (card == null || card.Data == null)
+            if (sortDropdown == null)
             {
-                return string.Empty;
+                return;
             }
 
-            if (!string.IsNullOrWhiteSpace(card.Data.DisplayName))
+            int value = (int)currentSortMode;
+            if (sortDropdown.value != value)
             {
-                return card.Data.DisplayName;
+                sortDropdown.SetValueWithoutNotify(value);
+            }
+        }
+
+        private static CardSortMode ResolveSortMode(int value)
+        {
+            if (System.Enum.IsDefined(typeof(CardSortMode), value))
+            {
+                return (CardSortMode)value;
             }
 
-            return card.Data.name;
+            return CardSortMode.SlotThenTypeThenName;
         }
 
         private static void SetText(TMP_Text target, string value)

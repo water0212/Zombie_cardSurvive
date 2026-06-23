@@ -17,15 +17,23 @@ MonoBehaviour:
   energyCost: 1
   artwork: {fileID: 21300000, guid: 326d6dc4a2c53c04ab286270da508df9, type: 3}
   background: {fileID: 21300000, guid: 24e0ed7cb29ea09409cc3d9e5e8fa4da, type: 3}
-  description: "\u7372\u5F972\u9EDE\u8CC7\u6E90"
+  description: "\u7372\u5F971\u9EDE\u8CC7\u6E90"
+  cardType: 1
+  playMode: 0
+  allowedSlots: 
+  isAdditiveCard: 0
+  drawReplacementOnAutoResolve: 0
+  hasLimitedUses: 0
+  maxUsesPerRun: 1
+  costs: []
   effects:
   - carrier: 0
     category: 0
-    valueEffectType: 0
+    valueEffectType: 3
     cardFlowEffectType: 0
     buildingEffectType: 0
     survivorEffectType: 0
-    amount: 0
+    amount: 1
     effectId: 
     isPermanent: 0
     remainingTurns: 0

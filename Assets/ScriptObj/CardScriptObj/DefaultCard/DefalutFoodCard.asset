@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a929fd0962534f778437074501ae74e8, type: 3}
+  m_Name: DefalutFoodCard
+  m_EditorClassIdentifier: 
+  cardId: card_796dcf19c87a44ff81e339d610a38fb7
+  displayName: "\u9810\u8A2D\u98DF\u7269"
+  energyCost: 0
+  artwork: {fileID: 21300000, guid: 0bb0abed29167424a96a38bfb3b2099a, type: 3}
+  background: {fileID: 21300000, guid: 0bb0abed29167424a96a38bfb3b2099a, type: 3}
+  description: "\u98DF\u7269\u9810\u8A2D\u724C "
+  cardType: 0
+  playMode: 0
+  allowedSlots: 00000000
+  isAdditiveCard: 0
+  drawReplacementOnAutoResolve: 0
+  hasLimitedUses: 0
+  maxUsesPerRun: 0
+  costs: []
+  effects:
+  - carrier: 0
+    category: 0
+    valueEffectType: 0
+    cardFlowEffectType: 0
+    buildingEffectType: 0
+    survivorEffectType: 0
+    amount: 1
+    effectId: 
+    isPermanent: 0
+    remainingTurns: 0

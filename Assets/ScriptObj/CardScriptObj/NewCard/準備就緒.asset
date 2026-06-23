@@ -18,6 +18,14 @@ MonoBehaviour:
   artwork: {fileID: 21300000, guid: 5743bc32f95051a43baef7207c175315, type: 3}
   background: {fileID: 21300000, guid: a7f25ffaac2bdb04bb86448c23ac530a, type: 3}
   description: "\u7372\u5F97\u5169\u9EDE\u6230\u9B25\u503C"
+  cardType: 6
+  playMode: 0
+  allowedSlots: 
+  isAdditiveCard: 0
+  drawReplacementOnAutoResolve: 0
+  hasLimitedUses: 0
+  maxUsesPerRun: 1
+  costs: []
   effects:
   - carrier: 0
     category: 0
