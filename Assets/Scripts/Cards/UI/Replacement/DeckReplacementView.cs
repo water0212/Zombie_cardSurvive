@@ -12,14 +12,16 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
     [Serializable]
     public class DeckReplacementCandidateDisplayData
     {
-        public DeckReplacementCandidateDisplayData(CardBase card, int quantity)
+        public DeckReplacementCandidateDisplayData(CardInventoryEntry entry, int quantity)
         {
-            Card = card;
+            Entry = entry;
             Quantity = Mathf.Max(1, quantity);
         }
 
-        public CardBase Card { get; }
+        public CardInventoryEntry Entry { get; }
+        public CardBase Card => Entry != null ? Entry.Data : null;
         public int Quantity { get; }
+        public bool IsReusable => Entry != null && Entry.IsReusable;
     }
 
     [Serializable]
@@ -252,9 +254,13 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
         [SerializeField] private TMP_Text statusText;
         [SerializeField] private Transform targetRoot;
         [SerializeField] private Transform candidateRoot;
+        [SerializeField] private Transform defaultCandidateRoot;
         [SerializeField] private DeckReplacementTargetView targetPrefab;
         [SerializeField] private DeckReplacementCandidateView candidatePrefab;
         [SerializeField] private Button closeButton;
+
+        [Header("Default Candidates")]
+        [SerializeField] private bool includeDeckLayoutDefaultCandidates = true;
 
         [Header("Target Slot Groups")]
         [SerializeField] private bool useTargetSlotGroups = true;
@@ -319,8 +325,8 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
 
         public bool OpenExhaustionRefill(IEnumerable<CardRuntime> targets)
         {
-            List<CardBase> defaultCandidates = ResolveDefaultRefillCandidates(targets);
-            List<CardBase> allCandidates = ResolveExhaustionRefillCandidates(defaultCandidates);
+            List<CardInventoryEntry> defaultCandidates = ResolveDefaultRefillCandidates(targets);
+            List<CardInventoryEntry> allCandidates = ResolveExhaustionRefillCandidates(defaultCandidates);
 
             DeckReplacementRequest request = new DeckReplacementRequest(
                 DeckReplacementReason.ExhaustionRefill,
@@ -388,7 +394,7 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
             RefreshTargetAvailability();
         }
 
-        public bool TryReplace(CardRuntime target, CardBase candidate)
+        public bool TryReplace(CardRuntime target, CardInventoryEntry candidate)
         {
             if (session == null || target == null || candidate == null)
             {
@@ -415,12 +421,16 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
 
         private DeckReplacementRequest CreateInspectorRequest()
         {
+            List<CardInventoryEntry> defaultCandidates = ResolveDeckLayoutDefaultCandidates();
+            List<CardInventoryEntry> allCandidates = ResolveAllCandidateEntries(defaultCandidates);
+
             return new DeckReplacementRequest(
                 reason,
                 replacementCount,
                 cardController != null ? cardController.GetReplaceableRegularCards() : null,
-                ResolveCandidateCards(),
-                allowedSlotTypes);
+                allCandidates,
+                allowedSlotTypes,
+                defaultCandidates);
         }
 
         private void StartSession(DeckReplacementRequest request)
@@ -486,7 +496,7 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
 
         private void BuildCandidateViews()
         {
-            if (candidateRoot == null || candidatePrefab == null || session == null)
+            if (candidatePrefab == null || session == null)
             {
                 return;
             }
@@ -495,10 +505,26 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
 
             foreach (DeckReplacementCandidateDisplayData candidateDisplay in candidateDisplays)
             {
-                DeckReplacementCandidateView view = Instantiate(candidatePrefab, candidateRoot);
-                view.Bind(candidateDisplay.Card, this, candidateDisplay.Quantity);
+                Transform parent = ResolveCandidateParent(candidateDisplay);
+                if (parent == null)
+                {
+                    continue;
+                }
+
+                DeckReplacementCandidateView view = Instantiate(candidatePrefab, parent);
+                view.Bind(candidateDisplay.Entry, this, candidateDisplay.Quantity, candidateDisplay.IsReusable);
                 candidateViews.Add(view);
             }
+        }
+
+        private Transform ResolveCandidateParent(DeckReplacementCandidateDisplayData candidateDisplay)
+        {
+            if (candidateDisplay != null && candidateDisplay.IsReusable && defaultCandidateRoot != null)
+            {
+                return defaultCandidateRoot;
+            }
+
+            return candidateRoot != null ? candidateRoot : defaultCandidateRoot;
         }
 
         private List<DeckReplacementOption> GetSortedOptions()
@@ -529,18 +555,18 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
 
         private List<DeckReplacementCandidateDisplayData> GetSortedCandidateDisplayData()
         {
-            List<CardBase> uniqueCandidates = new List<CardBase>();
+            List<CardInventoryEntry> uniqueCandidates = new List<CardInventoryEntry>();
 
             foreach (DeckReplacementOption option in session.Options)
             {
-                foreach (CardBase candidate in option.CandidateCards)
+                foreach (CardInventoryEntry candidate in option.CandidateEntries)
                 {
-                    if (candidate == null)
+                    if (candidate == null || candidate.Data == null)
                     {
                         continue;
                     }
 
-                    int index = IndexOfCardReference(uniqueCandidates, candidate);
+                    int index = IndexOfCandidateStack(uniqueCandidates, candidate);
                     if (index < 0)
                     {
                         uniqueCandidates.Add(candidate);
@@ -548,10 +574,10 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
                 }
             }
 
-            CardDisplaySortUtility.SortCardData(uniqueCandidates, CardSortMode.TypeThenName);
+            uniqueCandidates.Sort(CompareCandidateEntries);
 
             List<DeckReplacementCandidateDisplayData> result = new List<DeckReplacementCandidateDisplayData>();
-            foreach (CardBase candidate in uniqueCandidates)
+            foreach (CardInventoryEntry candidate in uniqueCandidates)
             {
                 result.Add(new DeckReplacementCandidateDisplayData(candidate, CountCandidateQuantity(candidate)));
             }
@@ -600,17 +626,40 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
             return -1;
         }
 
-        private int CountCandidateQuantity(CardBase candidate)
+        private static int IndexOfCandidateStack(List<CardInventoryEntry> entries, CardInventoryEntry target)
         {
+            if (entries == null || target == null)
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < entries.Count; i++)
+            {
+                if (IsSameCandidateStack(entries[i], target))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private int CountCandidateQuantity(CardInventoryEntry candidate)
+        {
+            if (candidate != null && candidate.IsReusable)
+            {
+                return 1;
+            }
+
             int count = 0;
             if (session == null || session.Request == null || candidate == null)
             {
                 return 1;
             }
 
-            foreach (CardBase requestCandidate in session.Request.CandidateCards)
+            foreach (CardInventoryEntry requestCandidate in session.Request.CandidateEntries)
             {
-                if (ReferenceEquals(requestCandidate, candidate))
+                if (IsSameCandidateStack(requestCandidate, candidate))
                 {
                     count++;
                 }
@@ -621,7 +670,7 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
 
         private void RefreshTargetAvailability()
         {
-            CardBase candidate = selectedCandidate != null ? selectedCandidate.CardData : null;
+            CardInventoryEntry candidate = selectedCandidate != null ? selectedCandidate.Entry : null;
 
             foreach (DeckReplacementTargetView targetView in targetViews)
             {
@@ -635,7 +684,7 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
             }
         }
 
-        private bool CanCandidateReplaceTarget(CardBase candidate, CardRuntime target)
+        private bool CanCandidateReplaceTarget(CardInventoryEntry candidate, CardRuntime target)
         {
             if (session == null || candidate == null || target == null)
             {
@@ -649,9 +698,9 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
                     continue;
                 }
 
-                foreach (CardBase optionCandidate in option.CandidateCards)
+                foreach (CardInventoryEntry optionCandidate in option.CandidateEntries)
                 {
-                    if (ReferenceEquals(optionCandidate, candidate))
+                    if (IsSameCandidateStack(optionCandidate, candidate))
                     {
                         return true;
                     }
@@ -799,27 +848,62 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
             }
         }
 
-        private IEnumerable<CardBase> ResolveCandidateCards()
+        private IEnumerable<CardInventoryEntry> ResolveCandidateEntries()
         {
             if (useInventoryCards && inventory != null)
             {
-                return inventory.Cards;
+                return inventory.Entries;
             }
 
-            return candidateCards;
+            return CreateEntriesFromCardData(candidateCards);
         }
 
-        private List<CardBase> ResolveExhaustionRefillCandidates(IEnumerable<CardBase> defaultCandidates)
+        private List<CardInventoryEntry> ResolveAllCandidateEntries(IEnumerable<CardInventoryEntry> defaultCandidates)
         {
-            List<CardBase> candidates = new List<CardBase>();
-            AddUniqueCandidates(candidates, ResolveCandidateCards());
-            AddUniqueCandidates(candidates, defaultCandidates);
+            List<CardInventoryEntry> candidates = new List<CardInventoryEntry>();
+            AddUniqueCandidateEntries(candidates, ResolveCandidateEntries());
+            AddUniqueCandidateEntries(candidates, defaultCandidates);
             return candidates;
         }
 
-        private List<CardBase> ResolveDefaultRefillCandidates(IEnumerable<CardRuntime> targets)
+        private List<CardInventoryEntry> ResolveDeckLayoutDefaultCandidates()
         {
-            List<CardBase> candidates = new List<CardBase>();
+            List<CardInventoryEntry> candidates = new List<CardInventoryEntry>();
+            if (!includeDeckLayoutDefaultCandidates)
+            {
+                return candidates;
+            }
+
+            DeckLayoutDefinition layout = ResolveDeckLayout();
+            if (layout == null || layout.Slots == null)
+            {
+                return candidates;
+            }
+
+            foreach (DeckSlotDefinition slot in layout.Slots)
+            {
+                if (slot == null || slot.DefaultCard == null || ContainsReusableCardDataEntry(candidates, slot.DefaultCard))
+                {
+                    continue;
+                }
+
+                candidates.Add(CreateReusableDefaultEntry(slot.DefaultCard));
+            }
+
+            return candidates;
+        }
+
+        private List<CardInventoryEntry> ResolveExhaustionRefillCandidates(IEnumerable<CardInventoryEntry> defaultCandidates)
+        {
+            List<CardInventoryEntry> candidates = new List<CardInventoryEntry>();
+            AddUniqueCandidateEntries(candidates, ResolveCandidateEntries());
+            AddUniqueCandidateEntries(candidates, defaultCandidates);
+            return candidates;
+        }
+
+        private List<CardInventoryEntry> ResolveDefaultRefillCandidates(IEnumerable<CardRuntime> targets)
+        {
+            List<CardInventoryEntry> candidates = new List<CardInventoryEntry>();
             DeckLayoutDefinition layout = ResolveDeckLayout();
             if (layout == null || targets == null)
             {
@@ -834,13 +918,18 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
                 }
 
                 CardBase defaultCard = layout.GetDefaultCardForSlot(target.AssignedSlotType);
-                if (defaultCard != null && !candidates.Contains(defaultCard))
+                if (defaultCard != null && !ContainsCardDataEntry(candidates, defaultCard))
                 {
-                    candidates.Add(defaultCard);
+                    candidates.Add(CreateReusableDefaultEntry(defaultCard));
                 }
             }
 
             return candidates;
+        }
+
+        private static CardInventoryEntry CreateReusableDefaultEntry(CardBase card)
+        {
+            return new CardInventoryEntry(card, card != null && card.HasLimitedUses ? card.MaxUsesPerRun : -1, null, true);
         }
 
         private DeckLayoutDefinition ResolveDeckLayout()
@@ -1019,6 +1108,150 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
                     target.Add(card);
                 }
             }
+        }
+
+        private static List<CardInventoryEntry> CreateEntriesFromCardData(IEnumerable<CardBase> source)
+        {
+            List<CardInventoryEntry> entries = new List<CardInventoryEntry>();
+            if (source == null)
+            {
+                return entries;
+            }
+
+            foreach (CardBase card in source)
+            {
+                if (card != null)
+                {
+                    entries.Add(new CardInventoryEntry(card));
+                }
+            }
+
+            return entries;
+        }
+
+        private static void AddUniqueCandidateEntries(List<CardInventoryEntry> target, IEnumerable<CardInventoryEntry> source)
+        {
+            if (target == null || source == null)
+            {
+                return;
+            }
+
+            foreach (CardInventoryEntry entry in source)
+            {
+                if (entry != null && entry.Data != null && !ContainsEntryReference(target, entry))
+                {
+                    target.Add(entry);
+                }
+            }
+        }
+
+        private static bool ContainsEntryReference(List<CardInventoryEntry> entries, CardInventoryEntry target)
+        {
+            if (entries == null || target == null)
+            {
+                return false;
+            }
+
+            foreach (CardInventoryEntry entry in entries)
+            {
+                if (ReferenceEquals(entry, target))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool ContainsCardDataEntry(List<CardInventoryEntry> entries, CardBase target)
+        {
+            if (entries == null || target == null)
+            {
+                return false;
+            }
+
+            foreach (CardInventoryEntry entry in entries)
+            {
+                if (entry != null && ReferenceEquals(entry.Data, target))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool ContainsReusableCardDataEntry(List<CardInventoryEntry> entries, CardBase target)
+        {
+            if (entries == null || target == null)
+            {
+                return false;
+            }
+
+            foreach (CardInventoryEntry entry in entries)
+            {
+                if (entry != null && entry.IsReusable && ReferenceEquals(entry.Data, target))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool IsSameCandidateStack(CardInventoryEntry left, CardInventoryEntry right)
+        {
+            return left != null
+                && right != null
+                && ReferenceEquals(left.Data, right.Data)
+                && left.RemainingUses == right.RemainingUses
+                && left.IsReusable == right.IsReusable;
+        }
+
+        private static int CompareCandidateEntries(CardInventoryEntry left, CardInventoryEntry right)
+        {
+            CardBase leftCard = left != null ? left.Data : null;
+            CardBase rightCard = right != null ? right.Data : null;
+
+            List<CardBase> cards = new List<CardBase> { leftCard, rightCard };
+            CardDisplaySortUtility.SortCardData(cards, CardSortMode.TypeThenName);
+
+            if (!ReferenceEquals(leftCard, rightCard))
+            {
+                return ReferenceEquals(cards[0], leftCard) ? -1 : 1;
+            }
+
+            int reusableComparison = GetReusableSortValue(left).CompareTo(GetReusableSortValue(right));
+            if (reusableComparison != 0)
+            {
+                return reusableComparison;
+            }
+
+            int remainingComparison = GetRemainingUsesSortValue(right).CompareTo(GetRemainingUsesSortValue(left));
+            if (remainingComparison != 0)
+            {
+                return remainingComparison;
+            }
+
+            return string.Compare(
+                left != null ? left.InstanceId : string.Empty,
+                right != null ? right.InstanceId : string.Empty,
+                StringComparison.Ordinal);
+        }
+
+        private static int GetRemainingUsesSortValue(CardInventoryEntry entry)
+        {
+            if (entry == null || entry.Data == null || !entry.Data.HasLimitedUses)
+            {
+                return int.MaxValue;
+            }
+
+            return entry.RemainingUses;
+        }
+
+        private static int GetReusableSortValue(CardInventoryEntry entry)
+        {
+            return entry != null && entry.IsReusable ? 1 : 0;
         }
     }
 }

@@ -3,6 +3,7 @@ using UnityEngine;
 using ZombieCardSurvive.Cards.Runtime;
 using ZombieCardSurvive.Cards.UI.Replacement;
 using ZombieCardSurvive.Events.Runtime;
+using ZombieCardSurvive.Systems;
 
 namespace ZombieCardSurvive.Run
 {
@@ -10,6 +11,7 @@ namespace ZombieCardSurvive.Run
     {
         [SerializeField] private CardController cardController;
         [SerializeField] private DeckReplacementView deckReplacementView;
+        [SerializeField] private RoundEndResolver roundEndResolver;
         [SerializeField] private bool openExhaustionReplacementBeforeRound = true;
         private EventFlowController eventFlowController;
         [SerializeField] private bool startRunOnAwake = true;
@@ -20,6 +22,7 @@ namespace ZombieCardSurvive.Run
         public RunPhase CurrentPhase { get; private set; } = RunPhase.Event;
         public int RoundIndex { get; private set; }
         public int TurnIndex { get; private set; }
+        public RoundEndReport LastRoundEndReport => roundEndResolver != null ? roundEndResolver.LastReport : null;
 
         private void Awake()
         {
@@ -38,6 +41,11 @@ namespace ZombieCardSurvive.Run
                 deckReplacementView = FindObjectOfType<DeckReplacementView>(true);
             }
 
+            if (roundEndResolver == null)
+            {
+                roundEndResolver = FindObjectOfType<RoundEndResolver>();
+            }
+
             if (startRunOnAwake)
             {
                 StartRun();
@@ -53,6 +61,11 @@ namespace ZombieCardSurvive.Run
             if (cardController != null)
             {
                 cardController.StartDemoRun();
+            }
+
+            if (roundEndResolver != null)
+            {
+                roundEndResolver.PrepareRun();
             }
 
             EnterEventPhase();
@@ -188,11 +201,33 @@ namespace ZombieCardSurvive.Run
 
             if (cardController.IsDrawPileEmpty)
             {
+                EnterRoundEndPhase();
                 EnterEventPhase();
             }
             else
             {
                 EnterTurnPhase();
+            }
+        }
+
+        public bool TrySetFoodPlan(FoodPlanLevel plan)
+        {
+            if (CurrentPhase != RunPhase.Turn)
+            {
+                return false;
+            }
+
+            return FoodPlanSystem.TrySetPendingPlan(plan);
+        }
+
+        public void EnterRoundEndPhase()
+        {
+            CurrentPhase = RunPhase.RoundEnd;
+            PhaseChanged?.Invoke(CurrentPhase);
+
+            if (roundEndResolver != null)
+            {
+                roundEndResolver.ResolveRoundEnd(cardController, RoundIndex, TurnIndex);
             }
         }
 

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using TMPro;
 using ZombieCardSurvive.Cards.Data;
+using ZombieCardSurvive.Cards.Runtime;
 
 namespace ZombieCardSurvive.Cards.UI.Replacement
 {
@@ -22,6 +23,7 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
         private Vector2 originalAnchoredPosition;
         private Vector3 dragPointerWorldOffset;
 
+        public CardInventoryEntry Entry { get; private set; }
         public CardBase CardData { get; private set; }
 
         private void Awake()
@@ -31,30 +33,31 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
             rootCanvas = GetComponentInParent<Canvas>();
         }
 
-        public void Bind(CardBase card, DeckReplacementView replacementView, int quantity = 1)
+        public void Bind(CardInventoryEntry entry, DeckReplacementView replacementView, int quantity = 1, bool isUnlimited = false)
         {
-            CardData = card;
+            Entry = entry;
+            CardData = entry != null ? entry.Data : null;
             owner = replacementView;
 
             if (previewView != null)
             {
-                previewView.Bind(card);
+                previewView.Bind(entry);
             }
 
-            SetQuantity(quantity);
+            SetQuantity(quantity, isUnlimited);
             SetSelected(false);
         }
 
-        private void SetQuantity(int quantity)
+        private void SetQuantity(int quantity, bool isUnlimited)
         {
             if (quantityText == null)
             {
                 return;
             }
 
-            bool shouldShow = quantity > 1;
+            bool shouldShow = isUnlimited || quantity > 1;
             quantityText.gameObject.SetActive(shouldShow);
-            quantityText.text = shouldShow ? $"x{quantity}" : string.Empty;
+            quantityText.text = isUnlimited ? "x\u221e" : shouldShow ? $"x{quantity}" : string.Empty;
         }
 
         public void SetSelected(bool isSelected)

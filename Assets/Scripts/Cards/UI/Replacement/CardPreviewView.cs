@@ -15,6 +15,22 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
         [SerializeField] private Image artworkImage;
         [SerializeField] private Image backgroundImage;
 
+        public void Bind(CardInventoryEntry entry)
+        {
+            Bind(entry != null ? entry.Data : null);
+
+            if (remainingUsesText == null)
+            {
+                return;
+            }
+
+            if (entry != null && entry.Data != null && entry.Data.HasLimitedUses)
+            {
+                remainingUsesText.text = entry.RemainingUses.ToString();
+                remainingUsesText.gameObject.SetActive(true);
+            }
+        }
+
         public void Bind(CardRuntime card)
         {
             Bind(card != null ? card.Data : null);

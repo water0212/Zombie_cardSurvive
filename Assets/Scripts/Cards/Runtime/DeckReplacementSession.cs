@@ -56,7 +56,7 @@ namespace ZombieCardSurvive.Cards.Runtime
             NotifyChanged();
         }
 
-        public bool TryApply(CardRuntime target, CardBase replacement, out CardRuntime replacementRuntime)
+        public bool TryApply(CardRuntime target, CardInventoryEntry replacement, out CardRuntime replacementRuntime)
         {
             replacementRuntime = null;
 
@@ -95,7 +95,7 @@ namespace ZombieCardSurvive.Cards.Runtime
                     continue;
                 }
 
-                return TryApply(option.TargetCard, option.CandidateCards[0], out replacementRuntime);
+                return TryApply(option.TargetCard, option.CandidateEntries[0], out replacementRuntime);
             }
 
             return false;
@@ -113,10 +113,10 @@ namespace ZombieCardSurvive.Cards.Runtime
                 return option;
             }
 
-            List<CardBase> candidates = new List<CardBase>();
-            foreach (CardBase candidate in option.CandidateCards)
+            List<CardInventoryEntry> candidates = new List<CardInventoryEntry>();
+            foreach (CardInventoryEntry candidate in option.CandidateEntries)
             {
-                if (inventory.Contains(candidate) || request.IsFreeCandidate(candidate))
+                if (inventory.ContainsEntry(candidate) || request.IsFreeCandidate(candidate))
                 {
                     candidates.Add(candidate);
                 }

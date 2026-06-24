@@ -56,18 +56,18 @@ namespace ZombieCardSurvive.Cards.Runtime
                 reason,
                 replacementCount,
                 cardController != null ? cardController.GetReplaceableRegularCards() : null,
-                ResolveCandidateCards(),
+                ResolveCandidateEntries(),
                 allowedSlotTypes);
         }
 
-        private IEnumerable<CardBase> ResolveCandidateCards()
+        private IEnumerable<CardInventoryEntry> ResolveCandidateEntries()
         {
             if (useInventoryCards && inventory != null)
             {
-                return inventory.Cards;
+                return inventory.Entries;
             }
 
-            return candidateCards;
+            return CreateEntriesFromCardData(candidateCards);
         }
 
         private DeckLayoutDefinition ResolveDeckLayout()
@@ -98,6 +98,25 @@ namespace ZombieCardSurvive.Cards.Runtime
             }
 
             Debug.Log($"Replacement session: {activeSession.CompletedReplacementCount}/{activeSession.Request.ReplacementCount}, Remaining: {activeSession.RemainingReplacementCount}, Options: {activeSession.Options.Count}");
+        }
+
+        private static IEnumerable<CardInventoryEntry> CreateEntriesFromCardData(IEnumerable<CardBase> source)
+        {
+            List<CardInventoryEntry> entries = new List<CardInventoryEntry>();
+            if (source == null)
+            {
+                return entries;
+            }
+
+            foreach (CardBase card in source)
+            {
+                if (card != null)
+                {
+                    entries.Add(new CardInventoryEntry(card));
+                }
+            }
+
+            return entries;
         }
     }
 }

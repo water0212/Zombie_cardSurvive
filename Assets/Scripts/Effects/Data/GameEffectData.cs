@@ -119,6 +119,12 @@ namespace ZombieCardSurvive.Effects.Data
                 case ValueEffectType.RefillEnergy:
                     EnergySystem.RefillToMax();
                     return true;
+                case ValueEffectType.AddMorale:
+                    MoraleSystem.AddMorale(amount);
+                    return true;
+                case ValueEffectType.ReduceMorale:
+                    MoraleSystem.ReduceMorale(amount);
+                    return true;
                 default:
                     return true;
             }

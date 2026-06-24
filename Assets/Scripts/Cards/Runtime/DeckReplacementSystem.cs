@@ -23,7 +23,7 @@ namespace ZombieCardSurvive.Cards.Runtime
                     continue;
                 }
 
-                List<CardBase> candidates = GetValidCandidates(deckLayout, target.AssignedSlotType, request.CandidateCards);
+                List<CardInventoryEntry> candidates = GetValidCandidates(deckLayout, target.AssignedSlotType, request.CandidateEntries);
                 options.Add(new DeckReplacementOption(target, candidates));
             }
 
@@ -36,12 +36,12 @@ namespace ZombieCardSurvive.Cards.Runtime
             DeckLayoutDefinition deckLayout,
             DeckReplacementRequest request,
             CardRuntime target,
-            CardBase replacement,
+            CardInventoryEntry replacement,
             out CardRuntime replacementRuntime)
         {
             replacementRuntime = null;
 
-            if (cardController == null || request == null || target == null || replacement == null)
+            if (cardController == null || request == null || target == null || replacement == null || replacement.Data == null)
             {
                 return false;
             }
@@ -56,13 +56,13 @@ namespace ZombieCardSurvive.Cards.Runtime
                 return false;
             }
 
-            if (request.CandidateCards.Count > 0 && !ContainsReference(request.CandidateCards, replacement))
+            if (request.CandidateEntries.Count > 0 && !ContainsReference(request.CandidateEntries, replacement))
             {
                 return false;
             }
 
             bool consumeFromInventory = inventory != null && !request.IsFreeCandidate(replacement);
-            if (consumeFromInventory && !inventory.RemoveCard(replacement))
+            if (consumeFromInventory && !inventory.RemoveEntry(replacement))
             {
                 return false;
             }
@@ -75,7 +75,7 @@ namespace ZombieCardSurvive.Cards.Runtime
             {
                 if (consumeFromInventory)
                 {
-                    inventory.AddCard(replacement);
+                    inventory.AddEntry(replacement);
                 }
 
                 return false;
@@ -83,19 +83,19 @@ namespace ZombieCardSurvive.Cards.Runtime
 
             if (inventory != null && target.Data != null && !target.IsExhausted)
             {
-                inventory.AddCard(target.Data);
+                inventory.AddRuntimeCard(target);
             }
 
             return true;
         }
 
-        private static List<CardBase> GetValidCandidates(
+        private static List<CardInventoryEntry> GetValidCandidates(
             DeckLayoutDefinition deckLayout,
             DeckSlotType slotType,
-            IReadOnlyList<CardBase> candidateCards)
+            IReadOnlyList<CardInventoryEntry> candidateEntries)
         {
-            List<CardBase> validCandidates = new List<CardBase>();
-            foreach (CardBase candidate in candidateCards)
+            List<CardInventoryEntry> validCandidates = new List<CardInventoryEntry>();
+            foreach (CardInventoryEntry candidate in candidateEntries)
             {
                 if (IsValidCandidate(deckLayout, slotType, candidate))
                 {
@@ -106,26 +106,26 @@ namespace ZombieCardSurvive.Cards.Runtime
             return validCandidates;
         }
 
-        private static bool IsValidCandidate(DeckLayoutDefinition deckLayout, DeckSlotType slotType, CardBase candidate)
+        private static bool IsValidCandidate(DeckLayoutDefinition deckLayout, DeckSlotType slotType, CardInventoryEntry candidate)
         {
-            if (candidate == null)
+            if (candidate == null || candidate.Data == null || !candidate.HasRemainingUses)
             {
                 return false;
             }
 
             if (deckLayout == null)
             {
-                return candidate.CanUseInSlot(slotType);
+                return candidate.Data.CanUseInSlot(slotType);
             }
 
-            return deckLayout.CanCardUseSlot(candidate, slotType);
+            return deckLayout.CanCardUseSlot(candidate.Data, slotType);
         }
 
-        private static bool ContainsReference(IReadOnlyList<CardBase> cards, CardBase target)
+        private static bool ContainsReference(IReadOnlyList<CardInventoryEntry> entries, CardInventoryEntry target)
         {
-            foreach (CardBase card in cards)
+            foreach (CardInventoryEntry entry in entries)
             {
-                if (ReferenceEquals(card, target))
+                if (ReferenceEquals(entry, target))
                 {
                     return true;
                 }

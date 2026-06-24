@@ -54,7 +54,7 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
 
             if (candidateView != null)
             {
-                owner.TryReplace(RuntimeCard, candidateView.CardData);
+                owner.TryReplace(RuntimeCard, candidateView.Entry);
             }
         }
     }

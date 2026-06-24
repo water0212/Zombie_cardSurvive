@@ -10,23 +10,27 @@ namespace ZombieCardSurvive.Cards.Runtime
             DeckReplacementReason reason,
             int replacementCount,
             IEnumerable<CardRuntime> replaceableCards,
-            IEnumerable<CardBase> candidateCards,
+            IEnumerable<CardInventoryEntry> candidateEntries,
             IEnumerable<DeckSlotType> allowedSlotTypes = null,
-            IEnumerable<CardBase> freeCandidateCards = null)
+            IEnumerable<CardInventoryEntry> freeCandidateEntries = null)
         {
             Reason = reason;
             ReplacementCount = Math.Max(0, replacementCount);
             ReplaceableCards = CopyRuntimeCards(replaceableCards);
-            CandidateCards = CopyCardData(candidateCards);
+            CandidateEntries = CopyEntries(candidateEntries);
+            CandidateCards = CopyEntryCardData(CandidateEntries);
             AllowedSlotTypes = CopySlotTypes(allowedSlotTypes);
-            FreeCandidateCards = CopyCardData(freeCandidateCards);
+            FreeCandidateEntries = CopyEntries(freeCandidateEntries);
+            FreeCandidateCards = CopyEntryCardData(FreeCandidateEntries);
         }
 
         public DeckReplacementReason Reason { get; }
         public int ReplacementCount { get; }
         public IReadOnlyList<CardRuntime> ReplaceableCards { get; }
+        public IReadOnlyList<CardInventoryEntry> CandidateEntries { get; }
         public IReadOnlyList<CardBase> CandidateCards { get; }
         public IReadOnlyList<DeckSlotType> AllowedSlotTypes { get; }
+        public IReadOnlyList<CardInventoryEntry> FreeCandidateEntries { get; }
         public IReadOnlyList<CardBase> FreeCandidateCards { get; }
 
         public bool AllowsTarget(CardRuntime target)
@@ -44,9 +48,9 @@ namespace ZombieCardSurvive.Cards.Runtime
             return AllowedSlotTypes.Count == 0 || ContainsSlotType(AllowedSlotTypes, target.AssignedSlotType);
         }
 
-        public bool IsFreeCandidate(CardBase candidate)
+        public bool IsFreeCandidate(CardInventoryEntry candidate)
         {
-            return candidate != null && ContainsCardReference(FreeCandidateCards, candidate);
+            return candidate != null && (candidate.IsReusable || ContainsEntryReference(FreeCandidateEntries, candidate));
         }
 
         private static List<CardRuntime> CopyRuntimeCards(IEnumerable<CardRuntime> source)
@@ -68,7 +72,26 @@ namespace ZombieCardSurvive.Cards.Runtime
             return result;
         }
 
-        private static List<CardBase> CopyCardData(IEnumerable<CardBase> source)
+        private static List<CardInventoryEntry> CopyEntries(IEnumerable<CardInventoryEntry> source)
+        {
+            List<CardInventoryEntry> result = new List<CardInventoryEntry>();
+            if (source == null)
+            {
+                return result;
+            }
+
+            foreach (CardInventoryEntry entry in source)
+            {
+                if (entry != null && entry.Data != null)
+                {
+                    result.Add(entry);
+                }
+            }
+
+            return result;
+        }
+
+        private static List<CardBase> CopyEntryCardData(IEnumerable<CardInventoryEntry> source)
         {
             List<CardBase> result = new List<CardBase>();
             if (source == null)
@@ -76,11 +99,11 @@ namespace ZombieCardSurvive.Cards.Runtime
                 return result;
             }
 
-            foreach (CardBase card in source)
+            foreach (CardInventoryEntry entry in source)
             {
-                if (card != null)
+                if (entry != null && entry.Data != null)
                 {
-                    result.Add(card);
+                    result.Add(entry.Data);
                 }
             }
 
@@ -119,11 +142,11 @@ namespace ZombieCardSurvive.Cards.Runtime
             return false;
         }
 
-        private static bool ContainsCardReference(IReadOnlyList<CardBase> cards, CardBase target)
+        private static bool ContainsEntryReference(IReadOnlyList<CardInventoryEntry> entries, CardInventoryEntry target)
         {
-            foreach (CardBase card in cards)
+            foreach (CardInventoryEntry entry in entries)
             {
-                if (ReferenceEquals(card, target))
+                if (ReferenceEquals(entry, target))
                 {
                     return true;
                 }

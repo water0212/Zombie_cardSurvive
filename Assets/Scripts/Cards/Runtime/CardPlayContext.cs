@@ -18,6 +18,7 @@ namespace ZombieCardSurvive.Cards.Runtime
         public int MaxEnergy => EnergySystem.MaxEnergy;
         public int PendingDamage => CombatSystem.PendingDamage;
         public int ZombieThreatCount => CombatSystem.ZombieThreatCount;
+        public int Morale => MoraleSystem.Morale;
 
         public void AddFood(int amount)
         {
@@ -37,6 +38,16 @@ namespace ZombieCardSurvive.Cards.Runtime
         public void AddZombieThreat(int amount)
         {
             CombatSystem.AddZombieThreat(amount);
+        }
+
+        public void AddMorale(int amount)
+        {
+            MoraleSystem.AddMorale(amount);
+        }
+
+        public void ReduceMorale(int amount)
+        {
+            MoraleSystem.ReduceMorale(amount);
         }
     }
 }

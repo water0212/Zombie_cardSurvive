@@ -110,6 +110,7 @@ namespace ZombieCardSurvive.Cards.Runtime
         [ContextMenu("Start Turn")]
         public void StartTurn()
         {
+            FoodPlanSystem.BeginTurn();
             FoodSystem.ApplyTurnStartProduction();
             ResourceSystem.ApplyTurnStartProduction();
             EnergySystem.RefillToMax();
@@ -317,9 +318,14 @@ namespace ZombieCardSurvive.Cards.Runtime
 
         public bool TryReplaceRuntimeCard(CardRuntime target, CardBase replacementData, out CardRuntime replacementRuntime)
         {
+            return TryReplaceRuntimeCard(target, replacementData != null ? new CardInventoryEntry(replacementData) : null, out replacementRuntime);
+        }
+
+        public bool TryReplaceRuntimeCard(CardRuntime target, CardInventoryEntry replacementEntry, out CardRuntime replacementRuntime)
+        {
             replacementRuntime = null;
 
-            if (target == null || replacementData == null || target.IsAdditiveInstance)
+            if (target == null || replacementEntry == null || replacementEntry.Data == null || target.IsAdditiveInstance)
             {
                 return false;
             }
@@ -336,7 +342,7 @@ namespace ZombieCardSurvive.Cards.Runtime
                 return false;
             }
 
-            replacementRuntime = replacementData.CreateRuntimeCard();
+            replacementRuntime = replacementEntry.CreateRuntimeCard();
             replacementRuntime.SetAssignedSlotType(target.AssignedSlotType);
             replacementRuntime.SetZone(target.Zone);
             zoneList[index] = replacementRuntime;
@@ -348,9 +354,14 @@ namespace ZombieCardSurvive.Cards.Runtime
 
         public bool TryRefillExhaustedSlot(CardRuntime exhaustedCard, CardBase replacementData, out CardRuntime replacementRuntime)
         {
+            return TryRefillExhaustedSlot(exhaustedCard, replacementData != null ? new CardInventoryEntry(replacementData) : null, out replacementRuntime);
+        }
+
+        public bool TryRefillExhaustedSlot(CardRuntime exhaustedCard, CardInventoryEntry replacementEntry, out CardRuntime replacementRuntime)
+        {
             replacementRuntime = null;
 
-            if (exhaustedCard == null || replacementData == null)
+            if (exhaustedCard == null || replacementEntry == null || replacementEntry.Data == null)
             {
                 return false;
             }
@@ -361,7 +372,7 @@ namespace ZombieCardSurvive.Cards.Runtime
                 return false;
             }
 
-            replacementRuntime = replacementData.CreateRuntimeCard();
+            replacementRuntime = replacementEntry.CreateRuntimeCard();
             replacementRuntime.SetAssignedSlotType(record.SlotType);
             AddToDrawPile(replacementRuntime);
             exhaustionRecords.Remove(record);

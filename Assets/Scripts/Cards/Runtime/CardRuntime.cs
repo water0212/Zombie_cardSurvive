@@ -7,10 +7,15 @@ namespace ZombieCardSurvive.Cards.Runtime
     public class CardRuntime
     {
         public CardRuntime(CardBase data)
+            : this(data, GetDefaultRemainingUses(data), null)
         {
-            RuntimeId = Guid.NewGuid().ToString("N");
+        }
+
+        public CardRuntime(CardBase data, int remainingUses, string runtimeId = null)
+        {
+            RuntimeId = !string.IsNullOrWhiteSpace(runtimeId) ? runtimeId : Guid.NewGuid().ToString("N");
             Data = data;
-            RemainingUses = data != null && data.HasLimitedUses ? data.MaxUsesPerRun : -1;
+            RemainingUses = NormalizeRemainingUses(data, remainingUses);
             Zone = DeckZone.Removed;
             AssignedSlotType = DeckSlotType.Unrestricted;
             IsAdditiveInstance = data != null && data.EffectiveIsAdditiveCard;
@@ -54,6 +59,26 @@ namespace ZombieCardSurvive.Cards.Runtime
         public void MarkExhausted()
         {
             Zone = DeckZone.Exhausted;
+        }
+
+        private static int GetDefaultRemainingUses(CardBase data)
+        {
+            return data != null && data.HasLimitedUses ? data.MaxUsesPerRun : -1;
+        }
+
+        private static int NormalizeRemainingUses(CardBase data, int remainingUses)
+        {
+            if (data == null || !data.HasLimitedUses)
+            {
+                return -1;
+            }
+
+            if (remainingUses < 0)
+            {
+                return data.MaxUsesPerRun;
+            }
+
+            return Math.Min(data.MaxUsesPerRun, Math.Max(0, remainingUses));
         }
     }
 }
