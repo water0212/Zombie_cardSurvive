@@ -25,6 +25,7 @@ namespace ZombieCardSurvive.Cards.Runtime
         private readonly List<CardRuntime> playedCards = new List<CardRuntime>();
         private readonly List<CardRuntime> exhaustedCards = new List<CardRuntime>();
         private readonly List<CardExhaustionRecord> exhaustionRecords = new List<CardExhaustionRecord>();
+        private int drawOperationDepth;
 
         public event Action StateChanged;
 
@@ -120,38 +121,49 @@ namespace ZombieCardSurvive.Cards.Runtime
 
         public void DrawCards(int amount)
         {
+            drawOperationDepth++;
             int drawAmount = Mathf.Max(0, amount);
             int regularCardsDrawn = 0;
 
-            while (regularCardsDrawn < drawAmount && drawPile.Count > 0)
+            try
             {
-                CardRuntime topCard = drawPile[0];
-                drawPile.RemoveAt(0);
-
-                if (topCard == null || topCard.Data == null)
+                while (regularCardsDrawn < drawAmount && drawPile.Count > 0)
                 {
-                    continue;
-                }
+                    CardRuntime topCard = drawPile[0];
+                    drawPile.RemoveAt(0);
 
-                if (topCard.Data.EffectivePlayMode == CardPlayMode.AutoResolveOnDraw)
-                {
-                    bool countsAsReplacementDraw = topCard.Data.DrawReplacementOnAutoResolve;
-                    ResolveAutoDrawCard(topCard);
-
-                    if (!countsAsReplacementDraw)
+                    if (topCard == null || topCard.Data == null)
                     {
-                        regularCardsDrawn++;
+                        continue;
                     }
 
-                    continue;
-                }
+                    if (topCard.Data.EffectivePlayMode == CardPlayMode.AutoResolveOnDraw)
+                    {
+                        bool countsAsReplacementDraw = topCard.Data.EffectiveDrawReplacementOnAutoResolve;
+                        ResolveAutoDrawCard(topCard);
 
-                topCard.SetZone(DeckZone.Hand);
-                handCards.Add(topCard);
-                regularCardsDrawn++;
+                        if (!countsAsReplacementDraw)
+                        {
+                            regularCardsDrawn++;
+                        }
+
+                        continue;
+                    }
+
+                    topCard.SetZone(DeckZone.Hand);
+                    handCards.Add(topCard);
+                    regularCardsDrawn++;
+                }
+            }
+            finally
+            {
+                drawOperationDepth--;
             }
 
-            NotifyStateChanged();
+            if (drawOperationDepth == 0)
+            {
+                NotifyStateChanged();
+            }
         }
 
         public bool RequestPlayCard(CardRuntime card)

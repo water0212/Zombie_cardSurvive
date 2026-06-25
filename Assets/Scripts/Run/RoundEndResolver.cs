@@ -25,6 +25,11 @@ namespace ZombieCardSurvive.Run
         [SerializeField] private int tightPlanMoraleDelta = -5;
         [SerializeField] private int generousPlanMoraleDelta = 5;
 
+        [Header("Combat")]
+        [SerializeField] private int maxCombatValue = 9;
+        [Range(0, 100)]
+        [SerializeField] private int combatOvercapLossPercent = 50;
+
         public event Action<RoundEndReport> RoundEndResolved;
 
         public RoundEndReport LastReport { get; private set; }
@@ -43,6 +48,7 @@ namespace ZombieCardSurvive.Run
                 tightPlanMoraleDelta,
                 generousPlanMoraleDelta,
                 shortageMoralePenaltyPerFood);
+            CombatSystem.Configure(maxCombatValue, combatOvercapLossPercent);
         }
 
         public RoundEndReport ResolveRoundEnd(CardController cardController, int roundIndex, int turnIndex)
@@ -61,6 +67,21 @@ namespace ZombieCardSurvive.Run
             {
                 cardController.RevealRemainingAdditiveCardsForRound();
             }
+
+            report.CombatValueBeforeRoundEnd = CombatSystem.PendingDamage;
+            report.MaxCombatValue = CombatSystem.MaxCombatValue;
+            report.CombatOvercapLossPercent = CombatSystem.OvercapLossPercent;
+            report.ZombiesBeforeRoundEnd = CombatSystem.ZombieThreatCount;
+            report.ZombiesKilled = CombatSystem.ResolveMarkedZombieKills();
+            report.ZombiesSurvived = CombatSystem.ZombieThreatCount;
+            report.ZombieMoraleDamage = CombatSystem.GetSurvivingZombieAttackPower();
+            if (report.ZombieMoraleDamage > 0)
+            {
+                MoraleSystem.ReduceMorale(report.ZombieMoraleDamage);
+            }
+
+            report.CombatOvercapLoss = CombatSystem.ApplyOvercapDecay();
+            report.CombatValueAfterDecay = CombatSystem.PendingDamage;
 
             report.FoodConsumption = FoodPlanSystem.GetRoundFoodConsumption();
             report.FoodShortage = FoodSystem.ConsumeFoodAllowShortage(report.FoodConsumption);

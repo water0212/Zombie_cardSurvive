@@ -15,8 +15,7 @@ namespace ZombieCardSurvive.Cards.Data
 
         public override void Resolve(CardPlayContext context)
         {
-            CombatSystem.AddZombieThreat(1);
-            context.Controller.DrawCards(1);
+            CombatSystem.SpawnZombieThreat(this);
             base.Resolve(context);
         }
     }

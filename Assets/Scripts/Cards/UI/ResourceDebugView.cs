@@ -15,6 +15,8 @@ namespace ZombieCardSurvive.Cards.UI
         [SerializeField] private TMP_Text energyText;
         [SerializeField] private TMP_Text pendingDamageText;
         [SerializeField] private TMP_Text zombieThreatText;
+        [SerializeField] private TMP_Text combatLimitText;
+        [SerializeField] private TMP_Text zombieSummaryText;
         [SerializeField] private TMP_Text moraleText;
         [SerializeField] private TMP_Text foodPlanText;
         [SerializeField] private TMP_Text foodStorageText;
@@ -64,18 +66,20 @@ namespace ZombieCardSurvive.Cards.UI
             SetText(foodPlanText, BuildFoodPlanText());
             SetText(foodStorageText, BuildFoodStorageText());
             SetText(roundEndDebugText, BuildRoundEndText());
+            SetText(combatLimitText, BuildCombatLimitText());
+            SetText(zombieSummaryText, BuildZombieSummaryText());
 
             if (cardController == null)
             {
                 SetText(energyText, $"{EnergySystem.CurrentEnergy}/{EnergySystem.MaxEnergy}");
-                SetText(pendingDamageText, $"{CombatSystem.PendingDamage}");
+                SetText(pendingDamageText, $"{CombatSystem.PendingDamage}/{CombatSystem.MaxCombatValue}");
                 SetText(zombieThreatText, $"{CombatSystem.ZombieThreatCount}");
                 SetText(deckDebugText, string.Empty);
                 return;
             }
 
             SetText(energyText, $"{EnergySystem.CurrentEnergy}/{EnergySystem.MaxEnergy}");
-            SetText(pendingDamageText, $"{CombatSystem.PendingDamage}");
+            SetText(pendingDamageText, $"{CombatSystem.PendingDamage}/{CombatSystem.MaxCombatValue}");
             SetText(zombieThreatText, $"{CombatSystem.ZombieThreatCount}");
             SetText(deckDebugText, BuildDeckDebugText());
         }
@@ -114,6 +118,25 @@ namespace ZombieCardSurvive.Cards.UI
 
             RoundEndReport report = runPhaseController.LastRoundEndReport;
             return report != null ? report.BuildSummary() : string.Empty;
+        }
+
+        private static string BuildCombatLimitText()
+        {
+            return $"{CombatSystem.PendingDamage}/{CombatSystem.MaxCombatValue}, loss {CombatSystem.OvercapLossPercent}%";
+        }
+
+        private static string BuildZombieSummaryText()
+        {
+            int markedCount = 0;
+            foreach (ZombieThreatRuntime threat in CombatSystem.ZombieThreats)
+            {
+                if (threat != null && threat.IsMarkedForKill)
+                {
+                    markedCount++;
+                }
+            }
+
+            return $"{CombatSystem.ZombieThreatCount} zombies, {markedCount} marked";
         }
 
         private static void SetText(TMP_Text target, string value)

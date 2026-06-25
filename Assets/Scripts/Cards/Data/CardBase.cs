@@ -43,6 +43,7 @@ namespace ZombieCardSurvive.Cards.Data
         public bool IsAdditiveCard => isAdditiveCard;
         public bool EffectiveIsAdditiveCard => isAdditiveCard || this is ZombieCardData;
         public bool DrawReplacementOnAutoResolve => drawReplacementOnAutoResolve;
+        public bool EffectiveDrawReplacementOnAutoResolve => drawReplacementOnAutoResolve || this is ZombieCardData;
         public bool HasLimitedUses => hasLimitedUses;
         public int MaxUsesPerRun => Mathf.Max(1, maxUsesPerRun);
         public IReadOnlyList<GameEffectData> Costs => costs;
