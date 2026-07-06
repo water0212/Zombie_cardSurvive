@@ -106,20 +106,28 @@ namespace ZombieCardSurvive.Cards.Runtime
             }
         }
 
-        public void AddCard(CardBase card)
+        public CardInventoryEntry AddCard(CardBase card)
         {
-            if (card != null)
+            if (card == null)
             {
-                AddEntry(new CardInventoryEntry(card));
+                return null;
             }
+
+            CardInventoryEntry entry = new CardInventoryEntry(card);
+            AddEntry(entry);
+            return entry;
         }
 
-        public void AddRuntimeCard(CardRuntime card)
+        public CardInventoryEntry AddRuntimeCard(CardRuntime card)
         {
-            if (card != null && card.Data != null)
+            if (card == null || card.Data == null)
             {
-                AddEntry(new CardInventoryEntry(card));
+                return null;
             }
+
+            CardInventoryEntry entry = new CardInventoryEntry(card);
+            AddEntry(entry);
+            return entry;
         }
 
         public void AddEntry(CardInventoryEntry entry)
@@ -191,6 +199,41 @@ namespace ZombieCardSurvive.Cards.Runtime
             }
 
             return false;
+        }
+
+        public CardInventoryEntry FindEntry(string instanceId)
+        {
+            if (string.IsNullOrWhiteSpace(instanceId))
+            {
+                return null;
+            }
+
+            return entries.Find(entry => entry != null && entry.InstanceId == instanceId);
+        }
+
+        public bool RemoveByInstanceId(string instanceId)
+        {
+            CardInventoryEntry entry = FindEntry(instanceId);
+            return entry != null && RemoveEntry(entry);
+        }
+
+        public int RemoveByInstanceIds(IEnumerable<string> instanceIds)
+        {
+            if (instanceIds == null)
+            {
+                return 0;
+            }
+
+            int removed = 0;
+            foreach (string instanceId in instanceIds)
+            {
+                if (RemoveByInstanceId(instanceId))
+                {
+                    removed++;
+                }
+            }
+
+            return removed;
         }
 
         private void RemoveEntryAt(int index)

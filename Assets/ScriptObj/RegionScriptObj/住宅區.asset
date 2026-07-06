@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba4dfbf4a4674bb491a48a74b64cbc26, type: 3}
+  m_Name: "\u4F4F\u5B85\u5340"
+  m_EditorClassIdentifier: 
+  regionId: region_45bf6396aeb04c5796893247216f904b
+  displayName: "\u4F4F\u5B85"
+  artwork: {fileID: 0}
+  description: "\u4E00\u9593\u5EE2\u68C4\u7684\u4F4F\u5B85"
+  regionTier: 0
+  dangerLevel: 0
+  baseOfferWeight: 20
+  isRareRegion: 0
+  expectedRewards: 0000000001000000
+  cardPackDrops:
+  - cardPack: {fileID: 11400000, guid: 4e1412ac1ddeb35488faa4cb7bdbd7f1, type: 2}
+    weight: 10
+    minPackCount: 1
+    maxPackCount: 1
+  - cardPack: {fileID: 11400000, guid: 99063d9c1ed93894b86933bcece60042, type: 2}
+    weight: 10
+    minPackCount: 1
+    maxPackCount: 1
+  risks: []

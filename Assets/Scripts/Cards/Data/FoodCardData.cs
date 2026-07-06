@@ -4,7 +4,7 @@ using ZombieCardSurvive.Systems;
 
 namespace ZombieCardSurvive.Cards.Data
 {
-    [CreateAssetMenu(fileName = "FoodCard", menuName = "Zombie Card Survive/Cards/Food Card")]
+    [CreateAssetMenu(fileName = "FoodCard", menuName = "Zombie Card Survive/Legacy/Card Types/Food Card")]
     public class FoodCardData : CardBase
     {
         [SerializeField] private int foodAmount = 1;

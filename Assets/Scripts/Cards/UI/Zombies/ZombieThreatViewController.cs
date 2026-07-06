@@ -19,6 +19,11 @@ namespace ZombieCardSurvive.Cards.UI.Zombies
             detailView = FindObjectOfType<ZombieThreatDetailView>(true);
         }
 
+        private void Awake()
+        {
+            ResolveDetailView();
+        }
+
         private void OnEnable()
         {
             CombatSystem.StateChanged += Refresh;
@@ -67,9 +72,13 @@ namespace ZombieCardSurvive.Cards.UI.Zombies
 
         public void SelectThreat(ZombieThreatRuntime threat)
         {
-            if (detailView != null)
+            if (ResolveDetailView())
             {
                 detailView.Open(threat);
+            }
+            else
+            {
+                Debug.LogWarning("ZombieThreatDetailView was not found. The selected zombie cannot be displayed.", this);
             }
         }
 
@@ -115,6 +124,16 @@ namespace ZombieCardSurvive.Cards.UI.Zombies
             {
                 Destroy(view.gameObject);
             }
+        }
+
+        private bool ResolveDetailView()
+        {
+            if (detailView == null)
+            {
+                detailView = FindObjectOfType<ZombieThreatDetailView>(true);
+            }
+
+            return detailView != null;
         }
     }
 }

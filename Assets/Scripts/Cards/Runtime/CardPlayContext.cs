@@ -12,8 +12,9 @@ namespace ZombieCardSurvive.Cards.Runtime
 
         public CardController Controller { get; }
         public CardRuntime Card { get; }
-        public int Food => FoodSystem.Food;
-        public int Resource => ResourceSystem.Resource;
+        public int Food => FoodSystem.AvailableFood;
+        public int TemporaryFood => FoodSystem.TemporaryFood;
+        public int Resource => ResourceSystem.AvailableResource;
         public int CurrentEnergy => EnergySystem.CurrentEnergy;
         public int MaxEnergy => EnergySystem.MaxEnergy;
         public int PendingDamage => CombatSystem.PendingDamage;
@@ -23,6 +24,11 @@ namespace ZombieCardSurvive.Cards.Runtime
         public void AddFood(int amount)
         {
             FoodSystem.AddFood(amount);
+        }
+
+        public void AddTemporaryFood(int amount)
+        {
+            FoodSystem.AddTemporaryFood(amount);
         }
 
         public void AddResource(int amount)

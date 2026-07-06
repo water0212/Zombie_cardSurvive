@@ -17,6 +17,7 @@ namespace ZombieCardSurvive.Effects.Data
         DecreaseMaxEnergy,
         RefillEnergy,
         AddMorale,
-        ReduceMorale
+        ReduceMorale,
+        AddTemporaryFood
     }
 }

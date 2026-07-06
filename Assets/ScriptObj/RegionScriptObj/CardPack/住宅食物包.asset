@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b8dae5c7c6141328c97f8da37474e16, type: 3}
+  m_Name: "\u4F4F\u5B85\u98DF\u7269\u5305"
+  m_EditorClassIdentifier: 
+  packId: pack_5b79a39be76b40d883c9f503a366c84e
+  displayName: "\u4F4F\u5B85\u98DF\u7269\u5305"
+  artwork: {fileID: 0}
+  packType: 0
+  cardsToGenerate: 3
+  cardPool:
+  - card: {fileID: 11400000, guid: 4335063393dc50a4fb8299b0af2b19c8, type: 2}
+    weight: 20
+    isZombiePollution: 0
+  - card: {fileID: 11400000, guid: 0a20066248a82ff4ca3684877867e6bb, type: 2}
+    weight: 10
+    isZombiePollution: 0
+  - card: {fileID: 11400000, guid: a2968e9520c7ec640a25a72c36d73b50, type: 2}
+    weight: 5
+    isZombiePollution: 0
+  - card: {fileID: 11400000, guid: 0a42e1f82c81221499c3cf986e1365e1, type: 2}
+    weight: 30
+    isZombiePollution: 0

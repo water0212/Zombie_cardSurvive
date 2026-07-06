@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using ZombieCardSurvive.Buildings.Runtime;
 
 namespace ZombieCardSurvive.Systems
 {
@@ -9,6 +10,8 @@ namespace ZombieCardSurvive.Systems
         private static int resource;
 
         public static int Resource => resource;
+        public static int AvailableResource => ResourceReservationService.AvailableResource;
+        public static int ReservedResource => ResourceReservationService.ReservedResource;
         public static IReadOnlyList<TurnProductionEffect> ProductionEffects => productionEffects;
 
         public static int GetResource()
@@ -22,6 +25,18 @@ namespace ZombieCardSurvive.Systems
         }
 
         public static bool SpendResource(int amount)
+        {
+            int cost = Mathf.Max(0, amount);
+            if (AvailableResource < cost)
+            {
+                return false;
+            }
+
+            resource -= cost;
+            return true;
+        }
+
+        internal static bool SpendReservedResource(int amount)
         {
             int cost = Mathf.Max(0, amount);
             if (resource < cost)

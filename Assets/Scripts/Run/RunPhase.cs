@@ -4,6 +4,7 @@ namespace ZombieCardSurvive.Run
     {
         Event,
         RoundEnd,
+        BuildingResolution,
         Turn
     }
 }

@@ -325,11 +325,16 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
 
         public bool OpenExhaustionRefill(IEnumerable<CardRuntime> targets)
         {
+            return OpenVacancyRefill(targets);
+        }
+
+        public bool OpenVacancyRefill(IEnumerable<CardRuntime> targets)
+        {
             List<CardInventoryEntry> defaultCandidates = ResolveDefaultRefillCandidates(targets);
             List<CardInventoryEntry> allCandidates = ResolveExhaustionRefillCandidates(defaultCandidates);
 
             DeckReplacementRequest request = new DeckReplacementRequest(
-                DeckReplacementReason.ExhaustionRefill,
+                DeckReplacementReason.VacancyRefill,
                 CountRuntimeCards(targets),
                 targets,
                 allCandidates,

@@ -57,7 +57,6 @@ namespace ZombieCardSurvive.Run
             {
                 RoundIndex = roundIndex,
                 TurnIndex = turnIndex,
-                FoodBefore = FoodSystem.GetFood(),
                 StorageCapacity = FoodSystem.StorageCapacity,
                 MoraleBefore = MoraleSystem.GetMorale(),
                 FoodPlanBefore = FoodPlanSystem.CurrentPlan.ToString()
@@ -84,7 +83,13 @@ namespace ZombieCardSurvive.Run
             report.CombatValueAfterDecay = CombatSystem.PendingDamage;
 
             report.FoodConsumption = FoodPlanSystem.GetRoundFoodConsumption();
-            report.FoodShortage = FoodSystem.ConsumeFoodAllowShortage(report.FoodConsumption);
+            RoundFoodConsumptionResult foodResult = FoodSystem.ConsumeRoundFoodAllowShortage(report.FoodConsumption);
+            report.FoodBefore = foodResult.PermanentBefore;
+            report.TemporaryFoodBefore = foodResult.TemporaryBefore;
+            report.TemporaryFoodConsumed = foodResult.TemporaryConsumed;
+            report.PermanentFoodConsumed = foodResult.PermanentConsumed;
+            report.TemporaryFoodDiscarded = foodResult.TemporaryDiscarded;
+            report.FoodShortage = foodResult.Shortage;
             report.FoodAfterConsumption = FoodSystem.GetFood();
 
             report.ShortageMoraleLoss = report.FoodShortage * FoodPlanSystem.ShortageMoralePenaltyPerFood;

@@ -65,7 +65,8 @@ namespace ZombieCardSurvive.Effects.Editor
             ValueEffectType.DecreaseMaxEnergy,
             ValueEffectType.RefillEnergy,
             ValueEffectType.AddMorale,
-            ValueEffectType.ReduceMorale
+            ValueEffectType.ReduceMorale,
+            ValueEffectType.AddTemporaryFood
         };
 
         private static readonly string[] ValueEffectLabels =
@@ -85,7 +86,8 @@ namespace ZombieCardSurvive.Effects.Editor
             "\u6e1b\u5c11\u6700\u5927\u80fd\u91cf",
             "\u80fd\u91cf\u56de\u6eff",
             "\u589e\u52a0\u58eb\u6c23",
-            "\u964d\u4f4e\u58eb\u6c23"
+            "\u964d\u4f4e\u58eb\u6c23",
+            "\u589e\u52a0\u81e8\u6642\u98df\u7269"
         };
 
         private static readonly CardFlowEffectType[] CardFlowEffectValues =

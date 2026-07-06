@@ -18,10 +18,8 @@ namespace ZombieCardSurvive.Cards.UI.Zombies
 
         private void Awake()
         {
-            if (root == null)
-            {
-                root = gameObject;
-            }
+            EnsureRoot();
+            NormalizeBackgroundImageType();
         }
 
         private void OnEnable()
@@ -49,18 +47,37 @@ namespace ZombieCardSurvive.Cards.UI.Zombies
             SetText(negativeEffectText, threat.NegativeEffectDescription);
             SetArtwork(threat.Artwork);
 
-            if (root != null)
-            {
-                root.SetActive(true);
-            }
+            NormalizeBackgroundImageType();
+            EnsureRoot().SetActive(true);
         }
 
         public void Close()
         {
-            if (root != null)
+            EnsureRoot().SetActive(false);
+        }
+
+        private GameObject EnsureRoot()
+        {
+            if (root == null)
             {
-                root.SetActive(false);
+                root = gameObject;
             }
+
+            return root;
+        }
+
+        private void NormalizeBackgroundImageType()
+        {
+            Image backgroundImage = GetComponent<Image>();
+            if (backgroundImage == null || backgroundImage.type != Image.Type.Tiled)
+            {
+                return;
+            }
+
+            Sprite backgroundSprite = backgroundImage.sprite;
+            backgroundImage.type = backgroundSprite != null && backgroundSprite.border.sqrMagnitude > 0f
+                ? Image.Type.Sliced
+                : Image.Type.Simple;
         }
 
         private void HookButtons()

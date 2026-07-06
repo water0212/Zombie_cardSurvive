@@ -60,8 +60,8 @@ namespace ZombieCardSurvive.Cards.UI
         [ContextMenu("Refresh")]
         public void Refresh()
         {
-            SetText(foodText, $"{FoodSystem.GetFood()}");
-            SetText(resourceText, $"{ResourceSystem.GetResource()}");
+            SetText(foodText, BuildFoodResourceText());
+            SetText(resourceText, BuildResourceText(ResourceSystem.GetResource(), ResourceSystem.AvailableResource, ResourceSystem.ReservedResource));
             SetText(moraleText, $"{MoraleSystem.GetMorale()}/{MoraleSystem.MaxMorale}");
             SetText(foodPlanText, BuildFoodPlanText());
             SetText(foodStorageText, BuildFoodStorageText());
@@ -93,7 +93,7 @@ namespace ZombieCardSurvive.Cards.UI
 
             return $"正規抽牌:{cardController.RegularDrawPileCount}  附加:{cardController.AdditiveDrawPileCount}\n"
                 + $"手牌:{cardController.HandCards.Count}  棄牌:{cardController.DiscardPile.Count}  已打出:{cardController.PlayedCards.Count}\n"
-                + $"耗盡:{cardController.ExhaustedCards.Count}  補位需求:{cardController.ExhaustionRecords.Count}";
+                + $"耗盡:{cardController.ExhaustedCards.Count}  補位需求:{cardController.VacancyRecords.Count}";
         }
 
         private static string BuildFoodPlanText()
@@ -105,8 +105,10 @@ namespace ZombieCardSurvive.Cards.UI
         private static string BuildFoodStorageText()
         {
             int consumption = FoodPlanSystem.GetRoundFoodConsumption();
-            int afterConsumption = FoodSystem.PreviewFoodAfterConsumption(consumption);
-            return $"{FoodSystem.GetFood()} - {consumption} / {FoodSystem.StorageCapacity} ({afterConsumption})";
+            RoundFoodConsumptionResult preview = FoodSystem.PreviewRoundFoodConsumption(consumption);
+            return $"需求 {preview.Requested}：臨時 {preview.TemporaryConsumed}、永久 {preview.PermanentConsumed}、短缺 {preview.Shortage}"
+                + $"，結算後永久 {preview.PermanentAfter}/{FoodSystem.StorageCapacity}"
+                + (preview.TemporaryDiscarded > 0 ? $"，浪費臨時 {preview.TemporaryDiscarded}" : string.Empty);
         }
 
         private string BuildRoundEndText()
@@ -145,6 +147,19 @@ namespace ZombieCardSurvive.Cards.UI
             {
                 target.text = value;
             }
+        }
+
+        private static string BuildResourceText(int total, int available, int reserved)
+        {
+            return reserved > 0 ? $"{total}（可用 {available}／保留 {reserved}）" : total.ToString();
+        }
+
+        private static string BuildFoodResourceText()
+        {
+            string permanent = BuildResourceText(FoodSystem.GetFood(), FoodSystem.AvailableFood, FoodSystem.ReservedFood);
+            return FoodSystem.TemporaryFood > 0
+                ? $"{permanent}（臨時 {FoodSystem.TemporaryFood}）"
+                : permanent;
         }
     }
 }

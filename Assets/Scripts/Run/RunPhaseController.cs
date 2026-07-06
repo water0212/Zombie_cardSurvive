@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using ZombieCardSurvive.Buildings.Runtime;
 using ZombieCardSurvive.Cards.Runtime;
 using ZombieCardSurvive.Cards.UI.Replacement;
 using ZombieCardSurvive.Events.Runtime;
@@ -12,10 +13,13 @@ namespace ZombieCardSurvive.Run
         [SerializeField] private CardController cardController;
         [SerializeField] private DeckReplacementView deckReplacementView;
         [SerializeField] private RoundEndResolver roundEndResolver;
+        [SerializeField] private BuildingSystem buildingSystem;
         [SerializeField] private bool openExhaustionReplacementBeforeRound = true;
         private EventFlowController eventFlowController;
         [SerializeField] private bool startRunOnAwake = true;
         private bool waitingForReplacement;
+        private int postEventReplacementStep;
+        private bool postEventResolved;
 
         public event Action<RunPhase> PhaseChanged;
 
@@ -46,6 +50,11 @@ namespace ZombieCardSurvive.Run
                 roundEndResolver = FindObjectOfType<RoundEndResolver>();
             }
 
+            if (buildingSystem == null)
+            {
+                buildingSystem = FindObjectOfType<BuildingSystem>();
+            }
+
             if (startRunOnAwake)
             {
                 StartRun();
@@ -61,6 +70,11 @@ namespace ZombieCardSurvive.Run
             if (cardController != null)
             {
                 cardController.StartDemoRun();
+            }
+
+            if (buildingSystem != null)
+            {
+                buildingSystem.InitializeRun();
             }
 
             if (roundEndResolver != null)
@@ -85,7 +99,7 @@ namespace ZombieCardSurvive.Run
 
         public void StartRoundFromEvent()
         {
-            if (CurrentPhase != RunPhase.Event)
+            if (CurrentPhase != RunPhase.Event && CurrentPhase != RunPhase.BuildingResolution)
             {
                 return;
             }
@@ -95,17 +109,22 @@ namespace ZombieCardSurvive.Run
                 return;
             }
 
-            if (TryOpenExhaustionReplacement())
+            if (!postEventResolved)
             {
-                return;
+                EnterBuildingResolutionPhase();
+                buildingSystem?.ResolveAfterEvent();
+                postEventResolved = true;
+                postEventReplacementStep = 0;
             }
 
-            StartRoundAfterReplacement();
+            ContinuePostEventFlow();
         }
 
         private void StartRoundAfterReplacement()
         {
             waitingForReplacement = false;
+            postEventResolved = false;
+            postEventReplacementStep = 0;
             RoundIndex++;
 
             if (cardController != null)
@@ -121,7 +140,35 @@ namespace ZombieCardSurvive.Run
             UnhookReplacementView();
         }
 
-        private bool TryOpenExhaustionReplacement()
+        private void ContinuePostEventFlow()
+        {
+            if (waitingForReplacement)
+            {
+                return;
+            }
+
+            if (postEventReplacementStep == 0)
+            {
+                postEventReplacementStep = 1;
+                if (TryOpenVacancyReplacement())
+                {
+                    return;
+                }
+            }
+
+            if (postEventReplacementStep == 1)
+            {
+                postEventReplacementStep = 2;
+                if (TryOpenConstructionIntegration())
+                {
+                    return;
+                }
+            }
+
+            StartRoundAfterReplacement();
+        }
+
+        private bool TryOpenVacancyReplacement()
         {
             if (!openExhaustionReplacementBeforeRound)
             {
@@ -141,7 +188,7 @@ namespace ZombieCardSurvive.Run
                 return false;
             }
 
-            if (!cardController.HasPendingExhaustionRefill)
+            if (!cardController.HasPendingVacancyRefill)
             {
                 return false;
             }
@@ -150,12 +197,38 @@ namespace ZombieCardSurvive.Run
             deckReplacementView.Completed += HandleReplacementFinished;
             deckReplacementView.Cancelled += HandleReplacementFinished;
 
-            if (deckReplacementView.OpenExhaustionRefill(cardController.GetExhaustedRefillTargets()))
+            if (deckReplacementView.OpenVacancyRefill(cardController.GetVacancyRefillTargets()))
             {
                 return true;
             }
 
             Debug.LogWarning("Exhaustion replacement view did not open. Check candidate cards, default slot cards, and popup UI references.");
+            UnhookReplacementView();
+            waitingForReplacement = false;
+            return false;
+        }
+
+        private bool TryOpenConstructionIntegration()
+        {
+            if (buildingSystem == null || deckReplacementView == null)
+            {
+                return false;
+            }
+
+            if (!buildingSystem.TryCreateConstructionIntegrationRequest(out DeckReplacementRequest request))
+            {
+                return false;
+            }
+
+            waitingForReplacement = true;
+            deckReplacementView.Completed += HandleReplacementFinished;
+            deckReplacementView.Cancelled += HandleReplacementFinished;
+            if (deckReplacementView.OpenWithRequest(request))
+            {
+                buildingSystem.ConsumeConstructionIntegrationOffers();
+                return true;
+            }
+
             UnhookReplacementView();
             waitingForReplacement = false;
             return false;
@@ -169,7 +242,8 @@ namespace ZombieCardSurvive.Run
             }
 
             UnhookReplacementView();
-            StartRoundAfterReplacement();
+            waitingForReplacement = false;
+            ContinuePostEventFlow();
         }
 
         private void UnhookReplacementView()
@@ -240,6 +314,12 @@ namespace ZombieCardSurvive.Run
             {
                 eventFlowController.BeginEventPhase();
             }
+        }
+
+        private void EnterBuildingResolutionPhase()
+        {
+            CurrentPhase = RunPhase.BuildingResolution;
+            PhaseChanged?.Invoke(CurrentPhase);
         }
 
         public void EnterTurnPhase()

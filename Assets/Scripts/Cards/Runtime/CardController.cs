@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using ZombieCardSurvive.Cards.Data;
+using ZombieCardSurvive.Buildings.Runtime;
 using ZombieCardSurvive.Systems;
 
 namespace ZombieCardSurvive.Cards.Runtime
@@ -24,7 +25,7 @@ namespace ZombieCardSurvive.Cards.Runtime
         private readonly List<CardRuntime> discardPile = new List<CardRuntime>();
         private readonly List<CardRuntime> playedCards = new List<CardRuntime>();
         private readonly List<CardRuntime> exhaustedCards = new List<CardRuntime>();
-        private readonly List<CardExhaustionRecord> exhaustionRecords = new List<CardExhaustionRecord>();
+        private readonly List<DeckVacancyRecord> vacancyRecords = new List<DeckVacancyRecord>();
         private int drawOperationDepth;
 
         public event Action StateChanged;
@@ -34,7 +35,7 @@ namespace ZombieCardSurvive.Cards.Runtime
         public IReadOnlyList<CardRuntime> DiscardPile => discardPile;
         public IReadOnlyList<CardRuntime> PlayedCards => playedCards;
         public IReadOnlyList<CardRuntime> ExhaustedCards => exhaustedCards;
-        public IReadOnlyList<CardExhaustionRecord> ExhaustionRecords => exhaustionRecords;
+        public IReadOnlyList<DeckVacancyRecord> VacancyRecords => vacancyRecords;
         public DeckLayoutDefinition DeckLayout => deckLayout;
 
         public int DrawCountPerTurn => deckLayout != null ? deckLayout.DrawCountPerTurn : Mathf.Max(0, drawCountPerTurn);
@@ -45,8 +46,10 @@ namespace ZombieCardSurvive.Cards.Runtime
         public int RegularDrawPileCount => CountCardsInDrawPile(false);
         public int AdditiveDrawPileCount => CountCardsInDrawPile(true);
         public bool IsDrawPileEmpty => RegularDrawPileCount == 0;
-        public bool HasPendingExhaustionRefill => exhaustionRecords.Count > 0;
-        public int PendingExhaustionRefillCount => exhaustionRecords.Count;
+        public bool HasPendingVacancyRefill => vacancyRecords.Count > 0;
+        public int PendingVacancyRefillCount => vacancyRecords.Count;
+        public bool HasPendingExhaustionRefill => HasPendingVacancyRefill;
+        public int PendingExhaustionRefillCount => PendingVacancyRefillCount;
 
         private void Awake()
         {
@@ -64,8 +67,9 @@ namespace ZombieCardSurvive.Cards.Runtime
             discardPile.Clear();
             playedCards.Clear();
             exhaustedCards.Clear();
-            exhaustionRecords.Clear();
+            vacancyRecords.Clear();
 
+            ResourceReservationService.Reset();
             FoodSystem.Reset(startingFood);
             ResourceSystem.Reset(startingResource);
             CombatSystem.Reset();
@@ -103,7 +107,7 @@ namespace ZombieCardSurvive.Cards.Runtime
             discardPile.Clear();
             playedCards.Clear();
 
-            RefillExhaustedSlotsWithDefaults();
+            RefillVacantSlotsWithDefaults();
             Shuffle(drawPile);
             NotifyStateChanged();
         }
@@ -245,6 +249,42 @@ namespace ZombieCardSurvive.Cards.Runtime
             return true;
         }
 
+        public bool AddCardToDiscardPile(CardBase cardData)
+        {
+            if (cardData == null)
+            {
+                return false;
+            }
+
+            CardRuntime runtime = cardData.CreateRuntimeCard();
+            MoveToDiscardPile(runtime);
+            NotifyStateChanged();
+            return true;
+        }
+
+        public int RemoveRuntimeCardsByInstanceIds(IEnumerable<string> instanceIds, DeckVacancyReason reason)
+        {
+            if (instanceIds == null)
+            {
+                return 0;
+            }
+
+            HashSet<string> ids = new HashSet<string>(instanceIds);
+            int removed = 0;
+            removed += RemoveMatchingCards(drawPile, ids, reason);
+            removed += RemoveMatchingCards(handCards, ids, reason);
+            removed += RemoveMatchingCards(discardPile, ids, reason);
+            removed += RemoveMatchingCards(playedCards, ids, reason);
+            removed += RemoveMatchingCards(exhaustedCards, ids, reason);
+
+            if (removed > 0)
+            {
+                NotifyStateChanged();
+            }
+
+            return removed;
+        }
+
         [ContextMenu("Discard Hand")]
         public void DiscardHand()
         {
@@ -314,18 +354,23 @@ namespace ZombieCardSurvive.Cards.Runtime
             return cards;
         }
 
-        public List<CardRuntime> GetExhaustedRefillTargets()
+        public List<CardRuntime> GetVacancyRefillTargets()
         {
             List<CardRuntime> cards = new List<CardRuntime>();
-            foreach (CardExhaustionRecord record in exhaustionRecords)
+            foreach (DeckVacancyRecord record in vacancyRecords)
             {
-                if (record != null && record.Card != null)
+                if (record != null && record.SourceCard != null)
                 {
-                    cards.Add(record.Card);
+                    cards.Add(record.SourceCard);
                 }
             }
 
             return cards;
+        }
+
+        public List<CardRuntime> GetExhaustedRefillTargets()
+        {
+            return GetVacancyRefillTargets();
         }
 
         public bool TryReplaceRuntimeCard(CardRuntime target, CardBase replacementData, out CardRuntime replacementRuntime)
@@ -364,21 +409,21 @@ namespace ZombieCardSurvive.Cards.Runtime
             return true;
         }
 
-        public bool TryRefillExhaustedSlot(CardRuntime exhaustedCard, CardBase replacementData, out CardRuntime replacementRuntime)
+        public bool TryFillVacantSlot(CardRuntime sourceCard, CardBase replacementData, out CardRuntime replacementRuntime)
         {
-            return TryRefillExhaustedSlot(exhaustedCard, replacementData != null ? new CardInventoryEntry(replacementData) : null, out replacementRuntime);
+            return TryFillVacantSlot(sourceCard, replacementData != null ? new CardInventoryEntry(replacementData) : null, out replacementRuntime);
         }
 
-        public bool TryRefillExhaustedSlot(CardRuntime exhaustedCard, CardInventoryEntry replacementEntry, out CardRuntime replacementRuntime)
+        public bool TryFillVacantSlot(CardRuntime sourceCard, CardInventoryEntry replacementEntry, out CardRuntime replacementRuntime)
         {
             replacementRuntime = null;
 
-            if (exhaustedCard == null || replacementEntry == null || replacementEntry.Data == null)
+            if (sourceCard == null || replacementEntry == null || replacementEntry.Data == null)
             {
                 return false;
             }
 
-            CardExhaustionRecord record = FindExhaustionRecord(exhaustedCard);
+            DeckVacancyRecord record = FindVacancyRecord(sourceCard);
             if (record == null)
             {
                 return false;
@@ -387,10 +432,25 @@ namespace ZombieCardSurvive.Cards.Runtime
             replacementRuntime = replacementEntry.CreateRuntimeCard();
             replacementRuntime.SetAssignedSlotType(record.SlotType);
             AddToDrawPile(replacementRuntime);
-            exhaustionRecords.Remove(record);
+            vacancyRecords.Remove(record);
 
             NotifyStateChanged();
             return true;
+        }
+
+        public bool TryRefillExhaustedSlot(CardRuntime exhaustedCard, CardBase replacementData, out CardRuntime replacementRuntime)
+        {
+            return TryFillVacantSlot(exhaustedCard, replacementData, out replacementRuntime);
+        }
+
+        public bool TryRefillExhaustedSlot(CardRuntime exhaustedCard, CardInventoryEntry replacementEntry, out CardRuntime replacementRuntime)
+        {
+            return TryFillVacantSlot(exhaustedCard, replacementEntry, out replacementRuntime);
+        }
+
+        public bool HasVacancyFor(CardRuntime sourceCard)
+        {
+            return FindVacancyRecord(sourceCard) != null;
         }
 
         private bool IsValidHandIndex(int index)
@@ -512,17 +572,20 @@ namespace ZombieCardSurvive.Cards.Runtime
 
             card.MarkExhausted();
             exhaustedCards.Add(card);
-            exhaustionRecords.Add(new CardExhaustionRecord(card, card.AssignedSlotType));
+            if (card.Data == null || card.Data.CreatesExhaustionRefillRequest)
+            {
+                vacancyRecords.Add(new DeckVacancyRecord(card, card.AssignedSlotType, DeckVacancyReason.Exhausted));
+            }
         }
 
-        public void RefillExhaustedSlotsWithDefaults()
+        public void RefillVacantSlotsWithDefaults()
         {
-            if (deckLayout == null || exhaustionRecords.Count == 0)
+            if (deckLayout == null || vacancyRecords.Count == 0)
             {
                 return;
             }
 
-            foreach (CardExhaustionRecord record in exhaustionRecords)
+            foreach (DeckVacancyRecord record in vacancyRecords)
             {
                 if (record == null)
                 {
@@ -541,20 +604,49 @@ namespace ZombieCardSurvive.Cards.Runtime
                 AddToDrawPile(replacement);
             }
 
-            exhaustionRecords.Clear();
+            vacancyRecords.Clear();
         }
 
-        private CardExhaustionRecord FindExhaustionRecord(CardRuntime exhaustedCard)
+        public void RefillExhaustedSlotsWithDefaults()
         {
-            foreach (CardExhaustionRecord record in exhaustionRecords)
+            RefillVacantSlotsWithDefaults();
+        }
+
+        private DeckVacancyRecord FindVacancyRecord(CardRuntime sourceCard)
+        {
+            foreach (DeckVacancyRecord record in vacancyRecords)
             {
-                if (record != null && ReferenceEquals(record.Card, exhaustedCard))
+                if (record != null && ReferenceEquals(record.SourceCard, sourceCard))
                 {
                     return record;
                 }
             }
 
             return null;
+        }
+
+        private int RemoveMatchingCards(List<CardRuntime> cards, HashSet<string> instanceIds, DeckVacancyReason reason)
+        {
+            int removed = 0;
+            for (int i = cards.Count - 1; i >= 0; i--)
+            {
+                CardRuntime card = cards[i];
+                if (card == null || !instanceIds.Contains(card.RuntimeId))
+                {
+                    continue;
+                }
+
+                cards.RemoveAt(i);
+                if (!card.IsAdditiveInstance && !HasVacancyFor(card))
+                {
+                    vacancyRecords.Add(new DeckVacancyRecord(card, card.AssignedSlotType, reason));
+                }
+
+                card.SetZone(DeckZone.Removed);
+                removed++;
+            }
+
+            return removed;
         }
 
         private int CountCardsInDrawPile(bool additive)

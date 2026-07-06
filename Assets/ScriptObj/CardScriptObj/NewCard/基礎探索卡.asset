@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cef30a2327484881b009f6f8a184fa86, type: 3}
+  m_Name: "\u57FA\u790E\u63A2\u7D22\u5361"
+  m_EditorClassIdentifier: 
+  cardId: card_de83779f03bc4b0593505510c846525d
+  displayName: "\u63A2\u7D22"
+  energyCost: 1
+  artwork: {fileID: 21300000, guid: 672053fcc881ab14298ca43f37cba839, type: 3}
+  background: {fileID: 21300000, guid: 8bfd45cc1b88a094fb2595aba4c31bae, type: 3}
+  description: "\u5C0B\u627E\u8457\u4E16\u754C\u7684\u672A\u77E5"
+  cardType: 5
+  playMode: 0
+  allowedSlots: 
+  isAdditiveCard: 0
+  drawReplacementOnAutoResolve: 0
+  hasLimitedUses: 0
+  maxUsesPerRun: 1
+  costs: []
+  effects: []
+  explorationTier: 0
+  explorationMaxUsesPerRun: 1
+  regionOfferCount: 3
+  basicRegionMultiplier: 1
+  advancedRegionMultiplier: 0.15
+  highRiskRegionMultiplier: 0

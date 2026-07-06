@@ -44,8 +44,9 @@ namespace ZombieCardSurvive.Cards.Data
         public bool EffectiveIsAdditiveCard => isAdditiveCard || this is ZombieCardData;
         public bool DrawReplacementOnAutoResolve => drawReplacementOnAutoResolve;
         public bool EffectiveDrawReplacementOnAutoResolve => drawReplacementOnAutoResolve || this is ZombieCardData;
-        public bool HasLimitedUses => hasLimitedUses;
-        public int MaxUsesPerRun => Mathf.Max(1, maxUsesPerRun);
+        public virtual bool HasLimitedUses => hasLimitedUses;
+        public virtual int MaxUsesPerRun => Mathf.Max(1, maxUsesPerRun);
+        public virtual bool CreatesExhaustionRefillRequest => true;
         public IReadOnlyList<GameEffectData> Costs => costs;
         public IReadOnlyList<GameEffectData> Effects => effects;
         public string Id => cardId;
@@ -73,7 +74,7 @@ namespace ZombieCardSurvive.Cards.Data
             return new CardRuntime(this);
         }
 
-        public bool CanUseInSlot(DeckSlotType slotType)
+        public virtual bool CanUseInSlot(DeckSlotType slotType)
         {
             return allowedSlots == null || allowedSlots.Count == 0 || allowedSlots.Contains(slotType);
         }
@@ -93,6 +94,16 @@ namespace ZombieCardSurvive.Cards.Data
             if (this is CombatCardData)
             {
                 return ZombieCardSurvive.Cards.Data.CardType.Combat;
+            }
+
+            if (this is ExplorationCardData)
+            {
+                return ZombieCardSurvive.Cards.Data.CardType.Explore;
+            }
+
+            if (this is ConstructionCardData)
+            {
+                return ZombieCardSurvive.Cards.Data.CardType.Build;
             }
 
             if (this is ZombieCardData)

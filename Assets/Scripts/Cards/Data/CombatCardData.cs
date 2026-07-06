@@ -4,7 +4,7 @@ using ZombieCardSurvive.Systems;
 
 namespace ZombieCardSurvive.Cards.Data
 {
-    [CreateAssetMenu(fileName = "CombatCard", menuName = "Zombie Card Survive/Cards/Combat Card")]
+    [CreateAssetMenu(fileName = "CombatCard", menuName = "Zombie Card Survive/Legacy/Card Types/Combat Card")]
     public class CombatCardData : CardBase
     {
         [SerializeField] private int damage = 1;

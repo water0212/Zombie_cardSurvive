@@ -67,8 +67,9 @@ namespace ZombieCardSurvive.Cards.Runtime
                 return false;
             }
 
-            bool replaced = target.IsExhausted
-                ? cardController.TryRefillExhaustedSlot(target, replacement, out replacementRuntime)
+            bool isVacancyRefill = cardController.HasVacancyFor(target);
+            bool replaced = isVacancyRefill
+                ? cardController.TryFillVacantSlot(target, replacement, out replacementRuntime)
                 : cardController.TryReplaceRuntimeCard(target, replacement, out replacementRuntime);
 
             if (!replaced)
@@ -81,7 +82,7 @@ namespace ZombieCardSurvive.Cards.Runtime
                 return false;
             }
 
-            if (inventory != null && target.Data != null && !target.IsExhausted)
+            if (!isVacancyRefill && inventory != null && target.Data != null && !target.IsExhausted)
             {
                 inventory.AddRuntimeCard(target);
             }

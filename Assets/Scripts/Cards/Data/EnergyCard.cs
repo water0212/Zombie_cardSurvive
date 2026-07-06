@@ -3,7 +3,7 @@ using ZombieCardSurvive.Cards.Runtime;
 using ZombieCardSurvive.Systems;
 namespace ZombieCardSurvive.Cards.Data
 {
-    [CreateAssetMenu(fileName = "EnergyCard", menuName = "Zombie Card Survive/Cards/Test/Energy Card")]
+    [CreateAssetMenu(fileName = "EnergyCard", menuName = "Zombie Card Survive/Developer/Test Cards/Energy Card")]
     public class EnergyCard : CardBase
     {
         

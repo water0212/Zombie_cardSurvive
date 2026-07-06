@@ -66,9 +66,9 @@ namespace ZombieCardSurvive.Effects.Data
             switch (valueEffectType)
             {
                 case ValueEffectType.SpendFood:
-                    return FoodSystem.GetFood() >= value;
+                    return FoodSystem.AvailableFood >= value;
                 case ValueEffectType.SpendResource:
-                    return ResourceSystem.GetResource() >= value;
+                    return ResourceSystem.AvailableResource >= value;
                 case ValueEffectType.RemoveZombieThreat:
                     return CombatSystem.ZombieThreatCount >= value;
                 default:
@@ -82,6 +82,9 @@ namespace ZombieCardSurvive.Effects.Data
             {
                 case ValueEffectType.AddFood:
                     FoodSystem.AddFood(amount);
+                    return true;
+                case ValueEffectType.AddTemporaryFood:
+                    FoodSystem.AddTemporaryFood(amount);
                     return true;
                 case ValueEffectType.SpendFood:
                     return FoodSystem.SpendFood(amount);

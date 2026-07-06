@@ -5,8 +5,12 @@ namespace ZombieCardSurvive.Run
         public int RoundIndex { get; set; }
         public int TurnIndex { get; set; }
         public int FoodBefore { get; set; }
+        public int TemporaryFoodBefore { get; set; }
         public int FoodAfterConsumption { get; set; }
         public int FoodConsumption { get; set; }
+        public int TemporaryFoodConsumed { get; set; }
+        public int PermanentFoodConsumed { get; set; }
+        public int TemporaryFoodDiscarded { get; set; }
         public int FoodShortage { get; set; }
         public int FoodTrimmedByStorage { get; set; }
         public int StorageCapacity { get; set; }
@@ -33,7 +37,8 @@ namespace ZombieCardSurvive.Run
             return $"Round {RoundIndex} End\n"
                 + $"Combat: {CombatValueBeforeRoundEnd} -> {CombatValueAfterDecay}/{MaxCombatValue}, overcap loss {CombatOvercapLoss} ({CombatOvercapLossPercent}%)\n"
                 + $"Zombies: {ZombiesBeforeRoundEnd}, killed {ZombiesKilled}, survived {ZombiesSurvived}, morale damage {ZombieMoraleDamage}\n"
-                + $"Food: {FoodBefore} - {FoodConsumption} = {FoodAfterConsumption}, shortage {FoodShortage}, trim {FoodTrimmedByStorage}/{StorageCapacity}\n"
+                + $"Food: permanent {FoodBefore}, temporary {TemporaryFoodBefore}, demand {FoodConsumption}\n"
+                + $"Food paid: temporary {TemporaryFoodConsumed}, permanent {PermanentFoodConsumed}, discarded {TemporaryFoodDiscarded}, remaining {FoodAfterConsumption}, shortage {FoodShortage}, trim {FoodTrimmedByStorage}/{StorageCapacity}\n"
                 + $"Morale: {MoraleBefore} -> {MoraleAfter}, shortage loss {ShortageMoraleLoss}, plan {FoodPlanMoraleDelta}, drift {HighMoraleDrift}\n"
                 + $"Food Plan: {FoodPlanBefore} -> {FoodPlanAfter}";
         }
