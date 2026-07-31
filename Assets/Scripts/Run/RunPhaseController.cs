@@ -4,6 +4,7 @@ using ZombieCardSurvive.Buildings.Runtime;
 using ZombieCardSurvive.Cards.Runtime;
 using ZombieCardSurvive.Cards.UI.Replacement;
 using ZombieCardSurvive.Events.Runtime;
+using ZombieCardSurvive.Exploration.Runtime;
 using ZombieCardSurvive.Systems;
 
 namespace ZombieCardSurvive.Run
@@ -22,6 +23,8 @@ namespace ZombieCardSurvive.Run
         [SerializeField] private RoundEndResolver roundEndResolver;
         // 建築系統；事件後會在這裡結算施工、取消與製作列。
         [SerializeField] private BuildingSystem buildingSystem;
+        // 探索系統；每次開始新局時會由地區 Asset 重建所有 RegionRuntime。
+        [SerializeField] private ExplorationSystem explorationSystem;
         // 是否在新一輪開始前先開啟耗盡／空位補位視窗。
         [SerializeField] private bool openExhaustionReplacementBeforeRound = true;
         // 事件流程控制器；Awake 時自動尋找，事件階段會交給它抽事件。
@@ -76,6 +79,11 @@ namespace ZombieCardSurvive.Run
                 buildingSystem = FindObjectOfType<BuildingSystem>();
             }
 
+            if (explorationSystem == null)
+            {
+                explorationSystem = FindObjectOfType<ExplorationSystem>();
+            }
+
             if (startRunOnAwake)
             {
                 StartRun();
@@ -99,6 +107,11 @@ namespace ZombieCardSurvive.Run
             if (buildingSystem != null)
             {
                 buildingSystem.InitializeRun();
+            }
+
+            if (explorationSystem != null)
+            {
+                explorationSystem.InitializeRun();
             }
 
             if (roundEndResolver != null)

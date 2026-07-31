@@ -14,6 +14,14 @@ namespace ZombieCardSurvive.Exploration.Data
         [SerializeField] private string description;
         [SerializeField] private ExplorationTier regionTier = ExplorationTier.Basic;
         [SerializeField] private DangerLevel dangerLevel = DangerLevel.Low;
+        [Min(0)]
+        [SerializeField] private int initialZombieCount;
+        [Range(0f, 1f)]
+        [SerializeField] private float baseEncounterChance;
+        [Min(0f)]
+        [SerializeField] private float heatPerExploration;
+        [Min(0f)]
+        [SerializeField] private float dailyHeatDecay;
         [SerializeField] private int baseOfferWeight = 10;
         [SerializeField] private bool isRareRegion;
         [SerializeField] private List<RewardTag> expectedRewards = new List<RewardTag>();
@@ -26,6 +34,10 @@ namespace ZombieCardSurvive.Exploration.Data
         public string Description => description;
         public ExplorationTier RegionTier => regionTier;
         public DangerLevel DangerLevel => dangerLevel;
+        public int InitialZombieCount => Mathf.Max(0, initialZombieCount);
+        public float BaseEncounterChance => Mathf.Clamp01(baseEncounterChance);
+        public float HeatPerExploration => Mathf.Max(0f, heatPerExploration);
+        public float DailyHeatDecay => Mathf.Max(0f, dailyHeatDecay);
         public int BaseOfferWeight => Mathf.Max(0, baseOfferWeight);
         public bool IsRareRegion => isRareRegion;
         public IReadOnlyList<RewardTag> ExpectedRewards => expectedRewards;

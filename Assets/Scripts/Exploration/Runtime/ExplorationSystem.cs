@@ -16,15 +16,21 @@ namespace ZombieCardSurvive.Exploration.Runtime
         [SerializeField] private List<ExplorationRegionData> regionPool = new List<ExplorationRegionData>();
 
         private readonly List<ExplorationRegionData> currentOffers = new List<ExplorationRegionData>();
+        private readonly Dictionary<string, RegionRuntime> regionRuntimes =
+            new Dictionary<string, RegionRuntime>(StringComparer.Ordinal);
         private CardController currentCardController;
 
         public event Action ExplorationChanged;
+        public event Action RegionStatesReset;
+        public event Action<RegionRuntime> RegionStateChanged;
 
         public ExplorationFlowState State { get; private set; } = ExplorationFlowState.Hidden;
         public ExplorationCardData CurrentExplorationCard { get; private set; }
         public IReadOnlyList<ExplorationRegionData> CurrentOffers => currentOffers;
+        public IReadOnlyDictionary<string, RegionRuntime> RegionRuntimes => regionRuntimes;
         public ExplorationRegionData SelectedRegion { get; private set; }
         public ExplorationResult LastResult { get; private set; }
+        public bool IsRunInitialized { get; private set; }
 
         private void Awake()
         {
@@ -47,6 +53,7 @@ namespace ZombieCardSurvive.Exploration.Runtime
 
         private void OnDestroy()
         {
+            DetachRegionRuntimeEvents();
             if (ReferenceEquals(activeInstance, this))
             {
                 activeInstance = null;
@@ -68,12 +75,72 @@ namespace ZombieCardSurvive.Exploration.Runtime
         [ContextMenu("Hide Exploration")]
         public void Hide()
         {
-            State = ExplorationFlowState.Hidden;
-            CurrentExplorationCard = null;
-            currentCardController = null;
-            SelectedRegion = null;
-            currentOffers.Clear();
+            ResetFlowState(false);
             NotifyChanged();
+        }
+
+        [ContextMenu("Initialize Exploration Run")]
+        public void InitializeRun()
+        {
+            DetachRegionRuntimeEvents();
+            regionRuntimes.Clear();
+            ResetFlowState(true);
+
+            for (int index = 0; index < regionPool.Count; index++)
+            {
+                ExplorationRegionData region = regionPool[index];
+                if (region == null)
+                {
+                    Debug.LogWarning($"Exploration region at index {index} was skipped because the entry is null.", this);
+                    continue;
+                }
+
+                string regionId = region.RegionId?.Trim();
+                if (string.IsNullOrWhiteSpace(regionId))
+                {
+                    Debug.LogWarning(
+                        $"Exploration region '{GetRegionLabel(region)}' was skipped because RegionId is missing.",
+                        region);
+                    continue;
+                }
+
+                if (regionRuntimes.ContainsKey(regionId))
+                {
+                    Debug.LogWarning(
+                        $"Exploration region '{GetRegionLabel(region)}' was skipped because RegionId '{regionId}' is duplicated. The first entry was kept.",
+                        region);
+                    continue;
+                }
+
+                RegionRuntime runtime = new RegionRuntime(region);
+                runtime.Changed += HandleRegionRuntimeChanged;
+                regionRuntimes.Add(regionId, runtime);
+            }
+
+            IsRunInitialized = true;
+            if (regionRuntimes.Count == 0)
+            {
+                Debug.LogWarning("Exploration run initialized without any valid regions.", this);
+            }
+
+            RegionStatesReset?.Invoke();
+            NotifyChanged();
+        }
+
+        public bool TryGetRegionRuntime(string regionId, out RegionRuntime runtime)
+        {
+            runtime = null;
+            if (string.IsNullOrWhiteSpace(regionId))
+            {
+                return false;
+            }
+
+            return regionRuntimes.TryGetValue(regionId.Trim(), out runtime);
+        }
+
+        public RegionRuntime GetRegionRuntime(string regionId)
+        {
+            return TryGetRegionRuntime(regionId, out RegionRuntime runtime) ? runtime : null;
         }
 
         public bool ChooseRegion(int index)
@@ -409,6 +476,52 @@ namespace ZombieCardSurvive.Exploration.Runtime
             if (inventory == null)
             {
                 inventory = FindObjectOfType<CardInventory>();
+            }
+        }
+
+        private void ResetFlowState(bool clearLastResult)
+        {
+            State = ExplorationFlowState.Hidden;
+            CurrentExplorationCard = null;
+            currentCardController = null;
+            SelectedRegion = null;
+            currentOffers.Clear();
+            if (clearLastResult)
+            {
+                LastResult = null;
+            }
+        }
+
+        private void HandleRegionRuntimeChanged(RegionRuntime runtime)
+        {
+            RegionStateChanged?.Invoke(runtime);
+        }
+
+        private static string GetRegionLabel(ExplorationRegionData region)
+        {
+            if (region == null)
+            {
+                return "-";
+            }
+
+            if (!string.IsNullOrWhiteSpace(region.DisplayName))
+            {
+                return region.DisplayName;
+            }
+
+            if (!string.IsNullOrWhiteSpace(region.RegionId))
+            {
+                return region.RegionId;
+            }
+
+            return !string.IsNullOrWhiteSpace(region.name) ? region.name : "Unnamed Region";
+        }
+
+        private void DetachRegionRuntimeEvents()
+        {
+            foreach (RegionRuntime runtime in regionRuntimes.Values)
+            {
+                runtime.Changed -= HandleRegionRuntimeChanged;
             }
         }
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 using ZombieCardSurvive.Cards.Data;
 
 namespace ZombieCardSurvive.Exploration.Data
@@ -41,6 +42,13 @@ namespace ZombieCardSurvive.Exploration.Data
         MixedSurvivalPack
     }
 
+    public enum RegionSupplyRarity
+    {
+        Common,
+        Rare,
+        UltraRare
+    }
+
     public enum RegionRiskType
     {
         AddZombieCardToDiscard,
@@ -67,12 +75,18 @@ namespace ZombieCardSurvive.Exploration.Data
     public class CardPackDropEntry
     {
         [SerializeField] private CardPackData cardPack;
-        [SerializeField] private int weight = 1;
+        [SerializeField] private RegionSupplyRarity supplyRarity = RegionSupplyRarity.Common;
+        [SerializeField] private int initialCount = 1;
+        [FormerlySerializedAs("weight")]
+        [SerializeField] private int baseWeight = 1;
         [SerializeField] private int minPackCount = 1;
         [SerializeField] private int maxPackCount = 1;
 
         public CardPackData CardPack => cardPack;
-        public int Weight => Mathf.Max(0, weight);
+        public RegionSupplyRarity SupplyRarity => supplyRarity;
+        public int InitialCount => Mathf.Max(0, initialCount);
+        public int BaseWeight => Mathf.Max(0, baseWeight);
+        public int Weight => BaseWeight;
         public int MinPackCount => Mathf.Max(1, minPackCount);
         public int MaxPackCount => Mathf.Max(MinPackCount, maxPackCount);
     }
