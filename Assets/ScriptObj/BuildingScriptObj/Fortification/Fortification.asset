@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9e48b9d55114024bf6bcd628d05a729, type: 3}
+  m_Name: Fortification
+  m_EditorClassIdentifier: 
+  buildingId: building_fortification
+  displayName: "\u9632\u79A6\u5DE5\u4E8B"
+  artwork: {fileID: 21300000, guid: a7f25ffaac2bdb04bb86448c23ac530a, type: 3}
+  color: {r: 0.36, g: 0.22, b: 0.2, a: 1}
+  anchoredPosition: {x: 400, y: 0}
+  startsUnlocked: 1
+  unlockRequirementIds: []
+  levels:
+  - level: 1
+    artwork: {fileID: 21300000, guid: a7f25ffaac2bdb04bb86448c23ac530a, type: 3}
+    color: {r: 0.42, g: 0.25, b: 0.22, a: 1}
+    rewardDescription: "\u89E3\u9396\u5B88\u5099\u5C04\u64CA\u88FD\u4F5C\u5217\u3002"
+    constructionCost:
+      food: 0
+      resource: 4
+    requiredConstructionProgress: 3
+    progressPerCardPlay: 1
+    constructionCard: {fileID: 11400000, guid: 2cacfe3e4cb89e547b18efedff175b6e, type: 2}
+    constructionCardCount: 1
+    freeIntegrationCount: 1
+    manufacturingBonus: 0
+  - level: 2
+    artwork: {fileID: 21300000, guid: a7f25ffaac2bdb04bb86448c23ac530a, type: 3}
+    color: {r: 0.52, g: 0.29, b: 0.24, a: 1}
+    rewardDescription: "\u53EF\u5C07\u5B88\u5099\u5C04\u64CA\u5F37\u5316\u3002"
+    constructionCost:
+      food: 0
+      resource: 6
+    requiredConstructionProgress: 4
+    progressPerCardPlay: 1
+    constructionCard: {fileID: 11400000, guid: 2cacfe3e4cb89e547b18efedff175b6e, type: 2}
+    constructionCardCount: 1
+    freeIntegrationCount: 1
+    manufacturingBonus: 0
+  interactions:
+  - {fileID: 11400000, guid: 7d99121c4e9ce864e92df165cd1d64a4, type: 2}
+  - {fileID: 11400000, guid: 7417b023c6fc8a1439811c05b2601880, type: 2}

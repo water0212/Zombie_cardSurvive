@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55e7408c4e352944ab27086d52cb2770, type: 3}
+  m_Name: "EVT-005_\u5DE5\u5177\u640D\u8017"
+  m_EditorClassIdentifier: 
+  eventId: EVT-005
+  displayTitle: "\u5DE5\u5177\u640D\u8017"
+  description: "\u4E00\u6279\u5DE5\u5177\u5728\u7DAD\u4FEE\u6642\u5831\u5EE2\uFF0C\u77ED\u671F\u5167\u5F88\u96E3\u88DC\u56DE\u3002"
+  artwork: {fileID: 0}
+  choices:
+  - choiceText: "\u8A18\u9304\u640D\u5931"
+    resultTitle: "\u8CC7\u6E90\u6E1B\u5C11"
+    resultDescription: "\u5931\u53BB 2 \u8CC7\u6E90\u3002"
+    resultArtwork: {fileID: 0}
+    effects:
+    - carrier: 1
+      category: 0
+      valueEffectType: 4
+      cardFlowEffectType: 0
+      buildingEffectType: 0
+      survivorEffectType: 0
+      cardData: {fileID: 0}
+      amount: 2
+      effectId: 
+      isPermanent: 0
+      remainingTurns: 0
+      requiredBuildingId: 
+      requiredBuildingLevel: 0
+      invertBuildingRequirement: 0

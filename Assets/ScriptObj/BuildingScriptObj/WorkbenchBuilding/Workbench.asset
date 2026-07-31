@@ -28,7 +28,7 @@ MonoBehaviour:
     constructionCost:
       food: 0
       resource: 3
-    requiredConstructionProgress: 2
+    requiredConstructionProgress: 1
     progressPerCardPlay: 1
     constructionCard: {fileID: 11400000, guid: cfbc01624854b284f83db9e82c3406a2, type: 2}
     constructionCardCount: 1

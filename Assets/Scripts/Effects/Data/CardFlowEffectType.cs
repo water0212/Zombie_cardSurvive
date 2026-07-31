@@ -2,6 +2,10 @@ namespace ZombieCardSurvive.Effects.Data
 {
     public enum CardFlowEffectType
     {
-        DrawCards
+        DrawCards,
+        GrantReplacementChance,
+        AddCardToDiscardPile,
+        ReduceOtherHandEnergyCosts,
+        ReduceDrawPileEnergyCosts
     }
 }

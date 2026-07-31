@@ -35,6 +35,11 @@ namespace ZombieCardSurvive.Cards.UI.Replacement
         {
             Bind(card != null ? card.Data : null);
 
+            if (card != null)
+            {
+                SetText(energyText, card.EffectiveEnergyCost.ToString());
+            }
+
             if (remainingUsesText == null)
             {
                 return;

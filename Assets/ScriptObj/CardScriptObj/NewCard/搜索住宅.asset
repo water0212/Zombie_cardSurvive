@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: "\u641C\u7D22\u4F4F\u5B85"
   energyCost: 2
   artwork: {fileID: 21300000, guid: a0076a1940caac341b4c00d65e3cda9b, type: 3}
-  background: {fileID: 21300000, guid: 0bb0abed29167424a96a38bfb3b2099a, type: 3}
+  background: {fileID: 21300000, guid: 7f65fa9e1471f4949bb885f916d16647, type: 3}
   description: "\u7372\u5F971\u9EDE\u8CC7\u6E90\u30011\u9EDE\u6230\u9B25\u503C\u30012\u9EDE\u98DF\u7269"
   cardType: 4
   playMode: 0

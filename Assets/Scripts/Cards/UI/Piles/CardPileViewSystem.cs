@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -288,8 +289,13 @@ namespace ZombieCardSurvive.Cards.UI.Piles
         [SerializeField] private bool autoWireByName = true;
 
         private readonly List<CardView> spawnedCards = new List<CardView>();
+        private readonly List<CardRuntime> selectedCards = new List<CardRuntime>();
         private CardPileSource activeSource;
         private bool hasActiveSource;
+        private bool isSelectionMode;
+        private CardSelectionRequest activeSelectionRequest;
+        private Action<IReadOnlyList<CardRuntime>> selectionCompleted;
+        private Action selectionCancelled;
 
         private void Awake()
         {
@@ -399,6 +405,11 @@ namespace ZombieCardSurvive.Cards.UI.Piles
 
         public void Open(CardPileSource source)
         {
+            if (isSelectionMode)
+            {
+                CancelSelection();
+            }
+
             activeSource = source;
             hasActiveSource = true;
 
@@ -413,6 +424,56 @@ namespace ZombieCardSurvive.Cards.UI.Piles
         }
 
         public void Close()
+        {
+            if (isSelectionMode)
+            {
+                CancelSelection();
+                return;
+            }
+
+            ClosePopupOnly();
+        }
+
+        public bool OpenSelection(CardSelectionRequest request, Action<IReadOnlyList<CardRuntime>> onCompleted, Action onCancelled = null)
+        {
+            if (request == null || onCompleted == null || cardViewPrefab == null || contentRoot == null)
+            {
+                return false;
+            }
+
+            List<CardRuntime> validCards = request.GetValidCards();
+            if (validCards.Count == 0)
+            {
+                return false;
+            }
+
+            if (validCards.Count <= request.SelectionCount)
+            {
+                ClosePopupOnly();
+                onCompleted(validCards);
+                return true;
+            }
+
+            ClearCards();
+            selectedCards.Clear();
+            activeSelectionRequest = request;
+            selectionCompleted = onCompleted;
+            selectionCancelled = onCancelled;
+            isSelectionMode = true;
+            hasActiveSource = false;
+
+            if (popupRoot != null)
+            {
+                popupRoot.SetActive(true);
+            }
+
+            SetText(titleText, GetSelectionTitle());
+            RefreshSelection();
+            RefreshButtonLabels();
+            return true;
+        }
+
+        private void ClosePopupOnly()
         {
             ClearCards();
 
@@ -439,10 +500,105 @@ namespace ZombieCardSurvive.Cards.UI.Piles
                 CardView view = Instantiate(cardViewPrefab, contentRoot);
                 view.gameObject.SetActive(true);
                 view.SetDraggingEnabled(false);
+                view.SetHoverMotionEnabled(false);
                 view.Bind(card, null, null);
                 EnsureReadOnlyLayout(view);
                 spawnedCards.Add(view);
             }
+        }
+
+        private void RefreshSelection()
+        {
+            ClearCards();
+
+            if (activeSelectionRequest == null || cardViewPrefab == null || contentRoot == null)
+            {
+                return;
+            }
+
+            List<CardRuntime> cards = activeSelectionRequest.GetValidCards();
+            CardDisplaySortUtility.SortRuntimeCards(cards, currentSortMode);
+
+            foreach (CardRuntime card in cards)
+            {
+                CardView view = Instantiate(cardViewPrefab, contentRoot);
+                view.gameObject.SetActive(true);
+                view.SetDraggingEnabled(false);
+                view.SetHoverMotionEnabled(false);
+                view.Bind(card, null, null);
+                EnsureSelectableLayout(view);
+                view.Clicked += HandleSelectionCardClicked;
+                SetSelectionVisual(view, selectedCards.Contains(card));
+                spawnedCards.Add(view);
+            }
+        }
+
+        private void HandleSelectionCardClicked(CardView cardView)
+        {
+            if (!isSelectionMode || cardView == null || cardView.RuntimeCard == null || activeSelectionRequest == null)
+            {
+                return;
+            }
+
+            CardRuntime card = cardView.RuntimeCard;
+            if (selectedCards.Contains(card))
+            {
+                selectedCards.Remove(card);
+                SetSelectionVisual(cardView, false);
+                SetText(titleText, GetSelectionTitle());
+                return;
+            }
+
+            if (selectedCards.Count >= activeSelectionRequest.SelectionCount)
+            {
+                return;
+            }
+
+            selectedCards.Add(card);
+            SetSelectionVisual(cardView, true);
+            SetText(titleText, GetSelectionTitle());
+
+            if (selectedCards.Count >= activeSelectionRequest.SelectionCount)
+            {
+                CompleteSelection();
+            }
+        }
+
+        private void CompleteSelection()
+        {
+            if (!isSelectionMode)
+            {
+                return;
+            }
+
+            List<CardRuntime> result = new List<CardRuntime>(selectedCards);
+            Action<IReadOnlyList<CardRuntime>> completed = selectionCompleted;
+            ClearSelectionState();
+            ClosePopupOnly();
+            completed?.Invoke(result);
+        }
+
+        private void CancelSelection()
+        {
+            if (!isSelectionMode)
+            {
+                ClosePopupOnly();
+                return;
+            }
+
+            Action cancelled = selectionCancelled;
+            ClearSelectionState();
+            ClosePopupOnly();
+            cancelled?.Invoke();
+        }
+
+        private void ClearSelectionState()
+        {
+            isSelectionMode = false;
+            activeSelectionRequest = null;
+            selectionCompleted = null;
+            selectionCancelled = null;
+            selectedCards.Clear();
         }
 
         private void HookButtons()
@@ -538,6 +694,12 @@ namespace ZombieCardSurvive.Cards.UI.Piles
         {
             currentSortMode = ResolveSortMode(value);
 
+            if (isSelectionMode)
+            {
+                RefreshSelection();
+                return;
+            }
+
             if (popupRoot != null && popupRoot.activeSelf && hasActiveSource)
             {
                 Refresh(activeSource);
@@ -614,6 +776,7 @@ namespace ZombieCardSurvive.Cards.UI.Piles
             {
                 if (spawnedCards[i] != null)
                 {
+                    spawnedCards[i].Clicked -= HandleSelectionCardClicked;
                     Destroy(spawnedCards[i].gameObject);
                 }
             }
@@ -638,6 +801,46 @@ namespace ZombieCardSurvive.Cards.UI.Piles
                 canvasGroup.interactable = false;
                 canvasGroup.blocksRaycasts = false;
             }
+        }
+
+        private static void EnsureSelectableLayout(CardView cardView)
+        {
+            EnsureReadOnlyLayout(cardView);
+
+            CanvasGroup canvasGroup = cardView.GetComponent<CanvasGroup>();
+            if (canvasGroup != null)
+            {
+                canvasGroup.interactable = true;
+                canvasGroup.blocksRaycasts = true;
+            }
+        }
+
+        private string GetSelectionTitle()
+        {
+            if (activeSelectionRequest == null)
+            {
+                return "選擇卡牌";
+            }
+
+            return $"{activeSelectionRequest.Title} {selectedCards.Count}/{activeSelectionRequest.SelectionCount}";
+        }
+
+        private static void SetSelectionVisual(CardView cardView, bool isSelected)
+        {
+            if (cardView == null)
+            {
+                return;
+            }
+
+            Outline outline = cardView.GetComponent<Outline>();
+            if (outline == null)
+            {
+                outline = cardView.gameObject.AddComponent<Outline>();
+                outline.effectColor = new Color(1f, 0.82f, 0.25f, 1f);
+                outline.effectDistance = new Vector2(5f, -5f);
+            }
+
+            outline.enabled = isSelected;
         }
 
         private static Button FindButton(Transform root, string objectName)

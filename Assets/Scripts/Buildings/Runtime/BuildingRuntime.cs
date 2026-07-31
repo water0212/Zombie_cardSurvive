@@ -8,6 +8,7 @@ namespace ZombieCardSurvive.Buildings.Runtime
     public class BuildingRuntime
     {
         private readonly List<CraftLineRuntime> craftLines = new List<CraftLineRuntime>();
+        private readonly HashSet<string> completedUpgradeInteractionIds = new HashSet<string>();
 
         public BuildingRuntime(BuildBaseData data)
         {
@@ -77,6 +78,43 @@ namespace ZombieCardSurvive.Buildings.Runtime
         {
             BuildingLevelData level = Data != null ? Data.GetLevel(CurrentLevel) : null;
             return level != null ? level.ManufacturingBonus : 0;
+        }
+
+        public bool IsInteractionUnlocked(BuildingInteractionData interaction)
+        {
+            return interaction != null && CurrentLevel >= interaction.RequiredBuildingLevel;
+        }
+
+        public bool IsCardUpgradeCompleted(CardUpgradeInteractionData interaction)
+        {
+            return interaction != null && completedUpgradeInteractionIds.Contains(interaction.InteractionId);
+        }
+
+        public void MarkCardUpgradeCompleted(CardUpgradeInteractionData interaction)
+        {
+            if (interaction != null && !string.IsNullOrWhiteSpace(interaction.InteractionId))
+            {
+                completedUpgradeInteractionIds.Add(interaction.InteractionId);
+            }
+        }
+
+        public int GetFoodCapacityBonus()
+        {
+            int bonus = 0;
+            if (Data?.Interactions == null)
+            {
+                return bonus;
+            }
+
+            foreach (BuildingInteractionData interaction in Data.Interactions)
+            {
+                if (interaction is FoodStorageInteractionData storage && IsInteractionUnlocked(storage))
+                {
+                    bonus += storage.FoodCapacityBonus;
+                }
+            }
+
+            return bonus;
         }
 
         public void RefreshCraftLines()

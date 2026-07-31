@@ -57,7 +57,11 @@ namespace ZombieCardSurvive.Shared.AutoId.Editor
 
         private static bool IsIdProperty(SerializedProperty property)
         {
-            return property.propertyPath == "cardId" || property.propertyPath == "eventId";
+            return property.propertyPath == "cardId"
+                || property.propertyPath == "eventId"
+                || property.propertyPath == "endingScenarioId"
+                || property.propertyPath == "eventPackId"
+                || property.propertyPath == "keyItemId";
         }
     }
 }

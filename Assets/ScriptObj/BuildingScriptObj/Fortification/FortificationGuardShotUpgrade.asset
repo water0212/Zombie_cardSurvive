@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c15cc3f4047f71348bc3b07108e16023, type: 3}
+  m_Name: FortificationGuardShotUpgrade
+  m_EditorClassIdentifier: 
+  interactionId: interaction_upgrade_guard_shot
+  displayName: "\u5B88\u5099\u5C04\u64CA\u5F37\u5316"
+  requiredBuildingLevel: 2
+  sourceCard: {fileID: 11400000, guid: b06a0d9d57a07e24b8c5c8731be23b50, type: 2}
+  upgradedCard: {fileID: 11400000, guid: aed9dcf0f3c960f42bbe6713baafd447, type: 2}
+  cost:
+    food: 0
+    resource: 2
+  description: "\u5C07\u5B88\u5099\u5C04\u64CA\u5347\u7D1A\u70BA\u5F37\u5316\u5B88\u5099\u5C04\u64CA\u3002"

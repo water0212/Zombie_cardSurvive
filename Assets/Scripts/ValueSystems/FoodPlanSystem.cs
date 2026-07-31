@@ -15,12 +15,14 @@ namespace ZombieCardSurvive.Systems
         private static int tightMoraleDelta = -5;
         private static int generousMoraleDelta = 5;
         private static int shortageMoralePenaltyPerFood = 5;
+        private static int temporaryRoundConsumptionModifier;
 
         public static FoodPlanLevel CurrentPlan => currentPlan;
         public static FoodPlanLevel PendingPlan => pendingPlan;
         public static bool HasPendingPlan => hasPendingPlan;
         public static bool HasChangedThisTurn => hasChangedThisTurn;
         public static int BaseRoundConsumption => baseRoundConsumption;
+        public static int TemporaryRoundConsumptionModifier => temporaryRoundConsumptionModifier;
         public static int ShortageMoralePenaltyPerFood => shortageMoralePenaltyPerFood;
 
         public static void Reset(
@@ -43,6 +45,7 @@ namespace ZombieCardSurvive.Systems
             tightMoraleDelta = tightMorale;
             generousMoraleDelta = generousMorale;
             shortageMoralePenaltyPerFood = Mathf.Max(0, shortagePenaltyPerFood);
+            temporaryRoundConsumptionModifier = 0;
         }
 
         public static void BeginTurn()
@@ -83,12 +86,22 @@ namespace ZombieCardSurvive.Systems
 
         public static int GetRoundFoodConsumption()
         {
-            return Mathf.Max(0, baseRoundConsumption + GetConsumptionDelta(currentPlan));
+            return Mathf.Max(0, baseRoundConsumption + GetConsumptionDelta(currentPlan) + temporaryRoundConsumptionModifier);
         }
 
         public static int GetPendingRoundFoodConsumption()
         {
-            return Mathf.Max(0, baseRoundConsumption + GetConsumptionDelta(pendingPlan));
+            return Mathf.Max(0, baseRoundConsumption + GetConsumptionDelta(pendingPlan) + temporaryRoundConsumptionModifier);
+        }
+
+        public static void AddTemporaryRoundConsumptionModifier(int amount)
+        {
+            temporaryRoundConsumptionModifier += amount;
+        }
+
+        public static void ClearTemporaryRoundConsumptionModifiers()
+        {
+            temporaryRoundConsumptionModifier = 0;
         }
 
         public static int GetRoundMoraleDelta()

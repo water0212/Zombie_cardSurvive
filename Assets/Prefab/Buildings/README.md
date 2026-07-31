@@ -11,6 +11,8 @@
 | `CardCraftView.prefab` | 一條獨立的卡牌製作列 |
 | `CraftRecipeButton.prefab` | 製作配方按鈕 |
 | `CraftJobRow.prefab` | 製作佇列中的一項工作 |
+| `FoodPlanInteractionView.prefab` | 情報中心使用的食物計畫設定面板 |
+| `CardUpgradeView.prefab` | 建築強化指定卡牌時使用的互動面板 |
 
 所有建築共用這些 Prefab。建築名稱、圖片、顏色、座標、等級與功能由 `BuildBaseData` 決定。
 
@@ -136,14 +138,18 @@ buildingSystem.UnlockBuilding(buildingData.BuildingId);
 
 目前已完成的通用互動是：
 
-`CardCraftInteractionData > CraftLineRuntime > CardCraftView`
+- `CardCraftInteractionData > CraftLineRuntime > CardCraftView`
+- `FoodPlanInteractionData > FoodPlanInteractionView`
+- `CardUpgradeInteractionData > CardUpgradeView`
 
-新增 `BluePrintView`、`ChangeStateView`、研究、倖存者派駐或其他新功能時，不能只建立資料資產，還需要：
+另外，`FoodStorageInteractionData` 是被動互動資料，不會建立面板；建築達到指定等級後會直接增加 `FoodSystem.StorageCapacity`。
+
+新增 `BluePrintView`、研究、倖存者派駐或其他新功能時，不能只建立資料資產，還需要：
 
 1. 建立新的 `BuildingInteractionData` 子類別。
 2. 建立保存進度與狀態的 Runtime 類別。
 3. 建立對應 View Prefab 與顯示腳本。
-4. 在 `BuildingRuntime` 建立對應 Runtime。
+4. 在 `BuildingRuntime` 建立對應 Runtime，或明確定義它是無 Runtime 的即時/被動互動。
 5. 在 `BuildingDetailView` 加入辨識資料類型並建立 View 的規則。
 6. 若功能需要事件後推進，在 `BuildingSystem.ResolveAfterEvent()` 加入結算。
 
@@ -157,6 +163,15 @@ View 只負責顯示與送出操作，真正狀態必須保存在 Runtime，避�
 
 只有共用 Prefab、SampleScene 接線方式或工作台 V1 預設內容改變時，才需要修改 `BuildingV1SetupUtility`。
 
+`Tools > Zombie Card Survive > Setup Building Content V1` 是 V1-2 內容包工具，會建立：
+
+- 倉庫、情報中心、防禦工事。
+- 調度、改良調度、守備射擊、強化守備射擊。
+- 12 個 10 天短局測試事件。
+- `FoodPlanInteractionView` 與 `CardUpgradeView` Prefab，並接到 `BuildingDetailView`。
+
+這個工具也是冪等設計；重跑會更新既有資產與場景引用，不應產生重複目錄項目。
+
 ## 8. 常見檢查
 
 - 建築沒有出現：確認已加入 `Building Catalog`，並勾選 `Starts Unlocked` 或呼叫解鎖 API。
@@ -165,5 +180,4 @@ View 只負責顯示與送出操作，真正狀態必須保存在 Runtime，避�
 - 配方按鈕沒有出現：確認配方已加入製作列的 `Recipes`。
 - 製作無法排隊：確認目前是 `Turn`、佇列未滿，而且可用資源扣除保留量後仍足夠。
 - 建造卡無法替換：建造卡只能替換 `Unrestricted` 欄位。
-- 新增互動資產後沒有畫面：目前詳情介面只自動建立 `CardCraftView`，新互動類型需要補上 Runtime 與 View 支援。
-
+- 新增互動資產後沒有畫面：確認 `BuildingDetailView` 已有對應 Prefab 引用，並且該互動類型已在 `BuildingDetailView` 中被辨識。

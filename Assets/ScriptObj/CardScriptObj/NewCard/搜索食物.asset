@@ -23,8 +23,8 @@ MonoBehaviour:
   allowedSlots: 
   isAdditiveCard: 0
   drawReplacementOnAutoResolve: 0
-  hasLimitedUses: 0
-  maxUsesPerRun: 1
+  hasLimitedUses: 1
+  maxUsesPerRun: 5
   costs: []
   effects:
   - carrier: 0

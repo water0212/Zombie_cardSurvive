@@ -15,6 +15,9 @@ namespace ZombieCardSurvive.Cards.UI
         [SerializeField] private float cardSpacing = 80f;
         [SerializeField] private bool useCenteredManualLayout = true;
 
+        [Header("Play Animation")]
+        [SerializeField] private CardPlayEffectController playEffectController;
+
         [Header("Draw Animation")]
         [SerializeField] private RectTransform drawAnimationStartPoint;
         [SerializeField] private float drawAnimationDuration = 0.25f;
@@ -54,13 +57,34 @@ namespace ZombieCardSurvive.Cards.UI
                 return false;
             }
 
+            RectTransform effectVisual = null;
+            if (playEffectController != null)
+            {
+                effectVisual = cardView.CreatePlayEffectVisual(playEffectController.EffectParent);
+            }
+
             bool played = cardController.RequestPlayCard(cardView.RuntimeCard);
             if (!played)
             {
+                if (effectVisual != null)
+                {
+                    Destroy(effectVisual.gameObject);
+                }
+
                 cardView.ReturnToHandPosition();
+                return false;
             }
 
-            return played;
+            if (playEffectController != null && effectVisual != null)
+            {
+                playEffectController.Play(effectVisual);
+            }
+            else if (playEffectController == null)
+            {
+                Debug.LogWarning($"{nameof(CardHandView)} has no {nameof(CardPlayEffectController)} assigned. Card play animation was skipped.", this);
+            }
+
+            return true;
         }
 
         [ContextMenu("Refresh Hand")]

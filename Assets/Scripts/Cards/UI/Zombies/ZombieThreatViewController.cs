@@ -4,13 +4,22 @@ using ZombieCardSurvive.Systems;
 
 namespace ZombieCardSurvive.Cards.UI.Zombies
 {
+    /// <summary>
+    /// 殭屍威脅列的 UI 控制器。
+    /// 負責依 CombatSystem 目前的 ZombieThreatRuntime 建立、刷新、移除畫面上的殭屍物件。
+    /// </summary>
     public class ZombieThreatViewController : MonoBehaviour
     {
+        // 殭屍 UI 實例要掛載的父節點。
         [SerializeField] private Transform zombieRoot;
+        // 單一殭屍威脅的 UI Prefab。
         [SerializeField] private ZombieThreatView zombieThreatViewPrefab;
+        // 點選殭屍後開啟的詳細資訊面板。
         [SerializeField] private ZombieThreatDetailView detailView;
 
+        // RuntimeId -> UI View 的對照表，用來重用既有殭屍 UI。
         private readonly Dictionary<int, ZombieThreatView> viewsByThreatId = new Dictionary<int, ZombieThreatView>();
+        // 暫存這次刷新後已不存在的殭屍 ID，避免邊走訪 Dictionary 邊刪除。
         private readonly List<int> staleViewIds = new List<int>();
 
         private void Reset()
@@ -35,6 +44,9 @@ namespace ZombieCardSurvive.Cards.UI.Zombies
             CombatSystem.StateChanged -= Refresh;
         }
 
+        /// <summary>
+        /// 依 CombatSystem 的目前狀態同步殭屍 UI：新增缺少的 View，刪除已消失的 View。
+        /// </summary>
         [ContextMenu("Refresh")]
         public void Refresh()
         {
@@ -70,6 +82,10 @@ namespace ZombieCardSurvive.Cards.UI.Zombies
             }
         }
 
+        /// <summary>
+        /// 選取一個殭屍威脅並開啟詳細面板。
+        /// </summary>
+        /// <param name="threat">被玩家點選的殭屍 Runtime。</param>
         public void SelectThreat(ZombieThreatRuntime threat)
         {
             if (ResolveDetailView())
@@ -82,6 +98,10 @@ namespace ZombieCardSurvive.Cards.UI.Zombies
             }
         }
 
+        /// <summary>
+        /// 切換殭屍的擊殺標記；CombatSystem 會檢查目前戰鬥力是否足夠。
+        /// </summary>
+        /// <param name="threat">要標記或取消標記的殭屍 Runtime。</param>
         public void ToggleKillMark(ZombieThreatRuntime threat)
         {
             bool changed = CombatSystem.TryToggleZombieKillMark(threat);
@@ -93,6 +113,7 @@ namespace ZombieCardSurvive.Cards.UI.Zombies
             Refresh();
         }
 
+        // 取得既有殭屍 UI；沒有時才從 Prefab 建立新 View。
         private ZombieThreatView GetOrCreateView(ZombieThreatRuntime threat)
         {
             if (viewsByThreatId.TryGetValue(threat.RuntimeId, out ZombieThreatView existingView))
@@ -112,6 +133,7 @@ namespace ZombieCardSurvive.Cards.UI.Zombies
             return view;
         }
 
+        // 移除已經不存在的殭屍威脅 UI。
         private void RemoveView(int threatId)
         {
             if (!viewsByThreatId.TryGetValue(threatId, out ZombieThreatView view))
@@ -126,6 +148,7 @@ namespace ZombieCardSurvive.Cards.UI.Zombies
             }
         }
 
+        // 嘗試取得詳細面板；即使一開始沒開啟，也會包含 inactive 物件搜尋。
         private bool ResolveDetailView()
         {
             if (detailView == null)

@@ -18,6 +18,7 @@ namespace ZombieCardSurvive.Cards.Data
         [SerializeField] private string description;
         [Header("Rules")]
         [SerializeField] private CardType cardType = CardType.Special;
+        [SerializeField] private CardRarity rarity = CardRarity.Common;
         [SerializeField] private CardPlayMode playMode = CardPlayMode.Playable;
         [SerializeField] private List<DeckSlotType> allowedSlots = new List<DeckSlotType>();
         [SerializeField] private bool isAdditiveCard;
@@ -37,6 +38,7 @@ namespace ZombieCardSurvive.Cards.Data
         public string Description => description;
         public CardType CardType => cardType;
         public CardType EffectiveCardType => ResolveEffectiveCardType();
+        public CardRarity Rarity => rarity;
         public CardPlayMode PlayMode => playMode;
         public CardPlayMode EffectivePlayMode => ResolveEffectivePlayMode();
         public IReadOnlyList<DeckSlotType> AllowedSlots => allowedSlots;
@@ -47,6 +49,7 @@ namespace ZombieCardSurvive.Cards.Data
         public virtual bool HasLimitedUses => hasLimitedUses;
         public virtual int MaxUsesPerRun => Mathf.Max(1, maxUsesPerRun);
         public virtual bool CreatesExhaustionRefillRequest => true;
+        public virtual bool ExpiresBeforeNextRound => false;
         public IReadOnlyList<GameEffectData> Costs => costs;
         public IReadOnlyList<GameEffectData> Effects => effects;
         public string Id => cardId;

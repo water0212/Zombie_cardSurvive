@@ -84,6 +84,7 @@ namespace ZombieCardSurvive.Run
 
             report.FoodConsumption = FoodPlanSystem.GetRoundFoodConsumption();
             RoundFoodConsumptionResult foodResult = FoodSystem.ConsumeRoundFoodAllowShortage(report.FoodConsumption);
+            FoodPlanSystem.ClearTemporaryRoundConsumptionModifiers();
             report.FoodBefore = foodResult.PermanentBefore;
             report.TemporaryFoodBefore = foodResult.TemporaryBefore;
             report.TemporaryFoodConsumed = foodResult.TemporaryConsumed;

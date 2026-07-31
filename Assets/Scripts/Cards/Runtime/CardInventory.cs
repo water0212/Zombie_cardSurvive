@@ -236,6 +236,34 @@ namespace ZombieCardSurvive.Cards.Runtime
             return removed;
         }
 
+        public int ReplaceCardData(CardBase source, CardBase replacement)
+        {
+            if (source == null || replacement == null || ReferenceEquals(source, replacement))
+            {
+                return 0;
+            }
+
+            int replaced = 0;
+            for (int i = 0; i < entries.Count; i++)
+            {
+                CardInventoryEntry entry = entries[i];
+                if (entry == null || !ReferenceEquals(entry.Data, source))
+                {
+                    continue;
+                }
+
+                entries[i] = new CardInventoryEntry(replacement, -1, entry.InstanceId);
+                replaced++;
+            }
+
+            if (replaced > 0)
+            {
+                RebuildCardDataCache();
+            }
+
+            return replaced;
+        }
+
         private void RemoveEntryAt(int index)
         {
             entries.RemoveAt(index);

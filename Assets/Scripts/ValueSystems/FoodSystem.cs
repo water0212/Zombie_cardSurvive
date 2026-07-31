@@ -9,13 +9,16 @@ namespace ZombieCardSurvive.Systems
         private static readonly List<TurnProductionEffect> productionEffects = new List<TurnProductionEffect>();
         private static int food;
         private static int temporaryFood;
-        private static int storageCapacity = 50;
+        private static int baseStorageCapacity = 50;
+        private static int storageCapacityBonus;
 
         public static int Food => food;
         public static int TemporaryFood => temporaryFood;
         public static int AvailableFood => ResourceReservationService.AvailableFood;
         public static int ReservedFood => ResourceReservationService.ReservedFood;
-        public static int StorageCapacity => storageCapacity;
+        public static int BaseStorageCapacity => baseStorageCapacity;
+        public static int StorageCapacityBonus => storageCapacityBonus;
+        public static int StorageCapacity => Mathf.Max(0, baseStorageCapacity + storageCapacityBonus);
         public static IReadOnlyList<TurnProductionEffect> ProductionEffects => productionEffects;
 
         public static int GetFood()
@@ -35,7 +38,12 @@ namespace ZombieCardSurvive.Systems
 
         public static void SetStorageCapacity(int capacity)
         {
-            storageCapacity = Mathf.Max(0, capacity);
+            baseStorageCapacity = Mathf.Max(0, capacity);
+        }
+
+        public static void SetStorageCapacityBonus(int bonus)
+        {
+            storageCapacityBonus = Mathf.Max(0, bonus);
         }
 
         public static bool SpendFood(int amount)
@@ -96,7 +104,7 @@ namespace ZombieCardSurvive.Systems
 
         public static int TrimToStorageCapacity()
         {
-            int protectedCapacity = Mathf.Max(storageCapacity, ReservedFood);
+            int protectedCapacity = Mathf.Max(StorageCapacity, ReservedFood);
             if (food <= protectedCapacity)
             {
                 return 0;

@@ -17,7 +17,7 @@ MonoBehaviour:
   energyCost: 0
   artwork: {fileID: 21300000, guid: a7f25ffaac2bdb04bb86448c23ac530a, type: 3}
   background: {fileID: 21300000, guid: a7f25ffaac2bdb04bb86448c23ac530a, type: 3}
-  description: "\u7121\u9650\u5236\u9810\u8A2D\u724C \u6253\u51FA\u6C92\u7528"
+  description: "\u7121\u9650\u5236\u9810\u8A2D\u724C \u7121\u6CD5\u6253\u51FA"
   cardType: 4
   playMode: 2
   allowedSlots: 03000000

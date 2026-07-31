@@ -30,6 +30,27 @@ namespace ZombieCardSurvive.Cards.Runtime
         public bool HasRemainingUses => Data == null || !Data.HasLimitedUses || RemainingUses > 0;
         public bool IsExhausted => Zone == DeckZone.Exhausted;
 
+        private int turnEnergyCostModifier;
+
+        public int EffectiveEnergyCost
+        {
+            get
+            {
+                int baseCost = Data != null ? Data.EnergyCost : 0;
+                return Math.Max(0, baseCost + turnEnergyCostModifier);
+            }
+        }
+
+        public void AddTurnEnergyCostModifier(int amount)
+        {
+            turnEnergyCostModifier += amount;
+        }
+
+        public void ResetTurnModifiers()
+        {
+            turnEnergyCostModifier = 0;
+        }
+
         public void SetZone(DeckZone zone)
         {
             Zone = zone;

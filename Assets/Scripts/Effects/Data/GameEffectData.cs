@@ -1,5 +1,7 @@
 using System;
 using UnityEngine;
+using ZombieCardSurvive.Buildings.Runtime;
+using ZombieCardSurvive.Cards.Data;
 using ZombieCardSurvive.Systems;
 
 namespace ZombieCardSurvive.Effects.Data
@@ -13,10 +15,19 @@ namespace ZombieCardSurvive.Effects.Data
         [SerializeField] private CardFlowEffectType cardFlowEffectType;
         [SerializeField] private BuildingEffectType buildingEffectType;
         [SerializeField] private SurvivorEffectType survivorEffectType;
+        [SerializeField] private CardBase cardData;
         [SerializeField] private int amount = 1;
+        [Min(1)]
+        [SerializeField] private int selectionCount = 1;
+        [SerializeField] private CardSelectionFilterData cardSelectionFilter = new CardSelectionFilterData();
         [SerializeField] private string effectId;
         [SerializeField] private bool isPermanent = true;
         [SerializeField] private int remainingTurns;
+        [Header("Optional Building Condition")]
+        [SerializeField] private string requiredBuildingId;
+        [Min(0)]
+        [SerializeField] private int requiredBuildingLevel;
+        [SerializeField] private bool invertBuildingRequirement;
 
         public GameEffectCarrier Carrier => carrier;
         public GameEffectCategory Category => category;
@@ -24,13 +35,24 @@ namespace ZombieCardSurvive.Effects.Data
         public CardFlowEffectType CardFlowEffectType => cardFlowEffectType;
         public BuildingEffectType BuildingEffectType => buildingEffectType;
         public SurvivorEffectType SurvivorEffectType => survivorEffectType;
+        public CardBase CardData => cardData;
         public int Amount => amount;
+        public int SelectionCount => Mathf.Max(1, selectionCount);
+        public CardSelectionFilterData CardSelectionFilter => cardSelectionFilter;
         public string EffectId => effectId;
         public bool IsPermanent => isPermanent;
         public int RemainingTurns => Mathf.Max(0, remainingTurns);
+        public string RequiredBuildingId => requiredBuildingId;
+        public int RequiredBuildingLevel => Mathf.Max(0, requiredBuildingLevel);
+        public bool InvertBuildingRequirement => invertBuildingRequirement;
 
         public bool CanApply(GameEffectContext context)
         {
+            if (!ShouldApplyForBuildingRequirement())
+            {
+                return true;
+            }
+
             switch (category)
             {
                 case GameEffectCategory.Value:
@@ -44,6 +66,11 @@ namespace ZombieCardSurvive.Effects.Data
 
         public bool TryApply(GameEffectContext context)
         {
+            if (!ShouldApplyForBuildingRequirement())
+            {
+                return true;
+            }
+
             switch (category)
             {
                 case GameEffectCategory.Value:
@@ -85,6 +112,9 @@ namespace ZombieCardSurvive.Effects.Data
                     return true;
                 case ValueEffectType.AddTemporaryFood:
                     FoodSystem.AddTemporaryFood(amount);
+                    return true;
+                case ValueEffectType.AddRoundFoodConsumptionModifier:
+                    FoodPlanSystem.AddTemporaryRoundConsumptionModifier(amount);
                     return true;
                 case ValueEffectType.SpendFood:
                     return FoodSystem.SpendFood(amount);
@@ -150,9 +180,44 @@ namespace ZombieCardSurvive.Effects.Data
                 case CardFlowEffectType.DrawCards:
                     context.CardController.DrawCards(amount);
                     return true;
+                case CardFlowEffectType.GrantReplacementChance:
+                    context.CardController.GrantPlanningReplacement(amount);
+                    return true;
+                case CardFlowEffectType.AddCardToDiscardPile:
+                    bool addedAny = false;
+                    for (int i = 0; i < Mathf.Max(0, amount); i++)
+                    {
+                        addedAny |= context.CardController.AddCardToDiscardPile(cardData);
+                    }
+
+                    return addedAny;
+                case CardFlowEffectType.ReduceOtherHandEnergyCosts:
+                    context.CardController.ReduceOtherHandEnergyCosts(
+                        cardSelectionFilter?.CreateRuntimeFilter(),
+                        context.Card,
+                        amount);
+                    return true;
+                case CardFlowEffectType.ReduceDrawPileEnergyCosts:
+                    context.CardController.ReduceDrawPileEnergyCosts(
+                        cardSelectionFilter?.CreateRuntimeFilter(),
+                        context.Card,
+                        SelectionCount,
+                        amount);
+                    return true;
                 default:
                     return true;
             }
+        }
+
+        private bool ShouldApplyForBuildingRequirement()
+        {
+            if (string.IsNullOrWhiteSpace(requiredBuildingId))
+            {
+                return true;
+            }
+
+            bool met = BuildingSystem.HasActiveBuildingLevel(requiredBuildingId, RequiredBuildingLevel);
+            return invertBuildingRequirement ? !met : met;
         }
     }
 }

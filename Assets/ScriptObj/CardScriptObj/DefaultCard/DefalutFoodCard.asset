@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardId: card_796dcf19c87a44ff81e339d610a38fb7
   displayName: "\u9810\u8A2D\u98DF\u7269"
-  energyCost: 0
-  artwork: {fileID: 21300000, guid: 0bb0abed29167424a96a38bfb3b2099a, type: 3}
-  background: {fileID: 21300000, guid: 0bb0abed29167424a96a38bfb3b2099a, type: 3}
-  description: "\u98DF\u7269\u9810\u8A2D\u724C "
+  energyCost: 1
+  artwork: {fileID: 21300000, guid: 3e1004b5a2ea35540bb4df72424d0c4d, type: 3}
+  background: {fileID: 21300000, guid: 9fc2bca0e9e98934bbe80692475fcfeb, type: 3}
+  description: "\u9810\u8A2D\u98DF\u7269\u724C\uFF0C\u6253\u51FA\u6642\u7372\u5F972\u9EDE\u81E8\u6642\u98DF\u7269 "
   cardType: 0
   playMode: 0
   allowedSlots: 00000000
@@ -29,11 +29,11 @@ MonoBehaviour:
   effects:
   - carrier: 0
     category: 0
-    valueEffectType: 0
+    valueEffectType: 16
     cardFlowEffectType: 0
     buildingEffectType: 0
     survivorEffectType: 0
-    amount: 1
+    amount: 2
     effectId: 
     isPermanent: 0
     remainingTurns: 0

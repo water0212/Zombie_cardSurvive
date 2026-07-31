@@ -24,6 +24,19 @@ namespace ZombieCardSurvive.Events.Data
         public void ApplyEffects()
         {
             GameEffectContext context = GameEffectContext.ForEvent();
+            ApplyEffects(context);
+        }
+
+        public void ApplyEffects(GameEffectContext context)
+        {
+            foreach (GameEffectData effect in effects)
+            {
+                if (effect != null && !effect.CanApply(context))
+                {
+                    return;
+                }
+            }
+
             foreach (GameEffectData effect in effects)
             {
                 effect?.Apply(context);

@@ -17,24 +17,9 @@ MonoBehaviour:
   description: "\u4F60\u5011\u7684\u5016\u5B58\u8005\u63A2\u8A62\u5230\u4E86\u4E00\u500B\u5EE2\u68C4\u7684\u8FB2\u838A\uFF0C\u88E1\u9762\u6709\u4E00\u584A\u7834\u6557\u4E0D\u582A\u7684\u571F\u5730\u8207\u623F\u5C4B\u3002"
   artwork: {fileID: 21300000, guid: 400985b7da1a8d243bdabff94e44e666, type: 3}
   choices:
-  - choiceText: "\u958B\u58BE\u571F\u5730"
-    resultTitle: "\u958B\u58BE\u571F\u5730\u5F8C"
-    resultDescription: "\u4F60\u5011\u591A\u4E86\u4E00\u7247\u8FB2\u7530(\u6BCF\u56DE\u5408+1\u98DF\u7269)"
-    resultArtwork: {fileID: 21300000, guid: f311ee81c0e13194589a7d551117faaa, type: 3}
-    effects:
-    - carrier: 1
-      category: 0
-      valueEffectType: 2
-      cardFlowEffectType: 0
-      buildingEffectType: 0
-      survivorEffectType: 0
-      amount: 1
-      effectId: 
-      isPermanent: 1
-      remainingTurns: 0
-  - choiceText: "\u7372\u53D6\u8CC7\u6E90"
+  - choiceText: "(\u8CC7\u6E90+4)"
     resultTitle: "\u4F60\u5011\u641C\u7D22\u5230\u4E86\u8CC7\u6E90"
-    resultDescription: "\u4F60\u5011\u641C\u7D22\u5230\u4E86\u4E00\u4E9B\u8CC7\u6E90(\u8CC7\u6E90+4)"
+    resultDescription: "\u4F60\u5011\u641C\u7D22\u5230\u4E86\u4E00\u4E9B\u8CC7\u6E90"
     resultArtwork: {fileID: 21300000, guid: 4acb2e9c69717ee4aa0672d1c18d1d8e, type: 3}
     effects:
     - carrier: 1
@@ -47,7 +32,7 @@ MonoBehaviour:
       effectId: 
       isPermanent: 0
       remainingTurns: 0
-  - choiceText: "\u7A2E\u690D\u98DF\u7269"
+  - choiceText: "(\u98DF\u7269+6)"
     resultTitle: "\u7DCA\u6025\u98DF\u7269"
     resultDescription: "\u4F60\u5011\u7A2E\u4E86\u4E00\u4E9B\u690D\u7269"
     resultArtwork: {fileID: 21300000, guid: 400985b7da1a8d243bdabff94e44e666, type: 3}

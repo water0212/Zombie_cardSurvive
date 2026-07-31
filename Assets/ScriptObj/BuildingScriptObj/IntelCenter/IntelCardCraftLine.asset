@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16aa215722db4c1ab3c79cfb507f2ed2, type: 3}
+  m_Name: IntelCardCraftLine
+  m_EditorClassIdentifier: 
+  interactionId: interaction_intel_dispatch_craft
+  displayName: "\u8ABF\u5EA6\u88FD\u4F5C\u5217"
+  requiredBuildingLevel: 1
+  baseProduction: 2
+  queueCapacity: 2
+  recipes:
+  - {fileID: 11400000, guid: 2040fc6a140441141a45f0cffed5d603, type: 2}

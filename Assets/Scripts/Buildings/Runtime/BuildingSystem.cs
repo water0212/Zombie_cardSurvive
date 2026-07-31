@@ -7,6 +7,7 @@ using ZombieCardSurvive.Cards.Data;
 using ZombieCardSurvive.Cards.Runtime;
 using ZombieCardSurvive.Cards.UI.Replacement;
 using ZombieCardSurvive.Run;
+using ZombieCardSurvive.Systems;
 
 namespace ZombieCardSurvive.Buildings.Runtime
 {
@@ -71,6 +72,7 @@ namespace ZombieCardSurvive.Buildings.Runtime
                 }
             }
 
+            ApplyBuildingPassiveEffects();
             NotifyChanged();
         }
 
@@ -91,9 +93,19 @@ namespace ZombieCardSurvive.Buildings.Runtime
             BuildingRuntime runtime = new BuildingRuntime(data);
             runtimes.Add(buildingId, runtime);
             CreateWorldView(runtime);
+            ApplyBuildingPassiveEffects();
             BuildingUnlocked?.Invoke(runtime);
             NotifyChanged();
             return true;
+        }
+
+        public static bool HasActiveBuildingLevel(string buildingId, int minimumLevel = 1)
+        {
+            BuildingSystem system = activeInstance != null ? activeInstance : FindObjectOfType<BuildingSystem>();
+            BuildingRuntime runtime = system != null ? system.GetBuilding(buildingId) : null;
+            return runtime != null
+                && (runtime.State == BuildingState.Active || runtime.State == BuildingState.Upgrading)
+                && runtime.CurrentLevel >= Mathf.Max(1, minimumLevel);
         }
 
         public BuildingRuntime GetBuilding(string buildingId)
@@ -210,6 +222,54 @@ namespace ZombieCardSurvive.Buildings.Runtime
             }
 
             job.RequestCancel();
+            NotifyChanged();
+            return true;
+        }
+
+        public bool TryApplyCardUpgrade(string buildingId, string interactionId)
+        {
+            if (!CanSubmitActions)
+            {
+                return false;
+            }
+
+            BuildingRuntime runtime = GetBuilding(buildingId);
+            CardUpgradeInteractionData upgrade = FindInteraction<CardUpgradeInteractionData>(runtime, interactionId);
+            if (runtime == null
+                || runtime.State != BuildingState.Active
+                || upgrade == null
+                || !runtime.IsInteractionUnlocked(upgrade)
+                || runtime.IsCardUpgradeCompleted(upgrade)
+                || upgrade.SourceCard == null
+                || upgrade.UpgradedCard == null)
+            {
+                return false;
+            }
+
+            if (!ResourceReservationService.TryReserve(upgrade.Cost, out ResourceReservationToken reservation))
+            {
+                return false;
+            }
+
+            if (!ResourceReservationService.Commit(reservation))
+            {
+                ResourceReservationService.Release(reservation);
+                return false;
+            }
+
+            int replaced = 0;
+            if (inventory != null)
+            {
+                replaced += inventory.ReplaceCardData(upgrade.SourceCard, upgrade.UpgradedCard);
+            }
+
+            if (cardController != null)
+            {
+                replaced += cardController.ReplaceRuntimeCardData(upgrade.SourceCard, upgrade.UpgradedCard);
+            }
+
+            runtime.MarkCardUpgradeCompleted(upgrade);
+            Debug.Log($"Card upgrade applied by '{runtime.Data?.DisplayName}': {upgrade.SourceCard.DisplayName} -> {upgrade.UpgradedCard.DisplayName}. Replaced {replaced} existing cards.");
             NotifyChanged();
             return true;
         }
@@ -372,6 +432,7 @@ namespace ZombieCardSurvive.Buildings.Runtime
 
             RemoveConstructionCards(job, DeckVacancyReason.BuildingCompleted, report);
             runtime.CompleteConstruction();
+            ApplyBuildingPassiveEffects();
             report.CompletedConstructions++;
             RefreshWorldView(runtime);
         }
@@ -478,9 +539,46 @@ namespace ZombieCardSurvive.Buildings.Runtime
 
             for (int i = 0; i < recipe.OutputCount; i++)
             {
-                inventory.AddCard(recipe.OutputCard);
+                inventory.AddCard(ResolveUpgradedCard(recipe.OutputCard));
                 report.ProducedCards++;
             }
+        }
+
+        private CardBase ResolveUpgradedCard(CardBase card)
+        {
+            if (card == null)
+            {
+                return null;
+            }
+
+            CardBase resolved = card;
+            bool changed;
+            do
+            {
+                changed = false;
+                foreach (BuildingRuntime runtime in runtimes.Values)
+                {
+                    if (runtime?.Data?.Interactions == null)
+                    {
+                        continue;
+                    }
+
+                    foreach (BuildingInteractionData interaction in runtime.Data.Interactions)
+                    {
+                        if (interaction is CardUpgradeInteractionData upgrade
+                            && runtime.IsCardUpgradeCompleted(upgrade)
+                            && ReferenceEquals(upgrade.SourceCard, resolved)
+                            && upgrade.UpgradedCard != null)
+                        {
+                            resolved = upgrade.UpgradedCard;
+                            changed = true;
+                        }
+                    }
+                }
+            }
+            while (changed);
+
+            return resolved;
         }
 
         private Dictionary<BuildingRuntime, HashSet<string>> SnapshotActiveCraftLines()
@@ -550,6 +648,20 @@ namespace ZombieCardSurvive.Buildings.Runtime
             runPhaseController = runPhaseController != null ? runPhaseController : FindObjectOfType<RunPhaseController>();
         }
 
+        private void ApplyBuildingPassiveEffects()
+        {
+            int foodCapacityBonus = 0;
+            foreach (BuildingRuntime runtime in runtimes.Values)
+            {
+                if (runtime != null && (runtime.State == BuildingState.Active || runtime.State == BuildingState.Upgrading))
+                {
+                    foodCapacityBonus += runtime.GetFoodCapacityBonus();
+                }
+            }
+
+            FoodSystem.SetStorageCapacityBonus(foodCapacityBonus);
+        }
+
         private void NotifyChanged()
         {
             BuildingsChanged?.Invoke();
@@ -571,6 +683,24 @@ namespace ZombieCardSurvive.Buildings.Runtime
             }
 
             return false;
+        }
+
+        private static T FindInteraction<T>(BuildingRuntime runtime, string interactionId) where T : BuildingInteractionData
+        {
+            if (runtime?.Data?.Interactions == null || string.IsNullOrWhiteSpace(interactionId))
+            {
+                return null;
+            }
+
+            foreach (BuildingInteractionData interaction in runtime.Data.Interactions)
+            {
+                if (interaction is T typed && typed.InteractionId == interactionId)
+                {
+                    return typed;
+                }
+            }
+
+            return null;
         }
 
         private static bool ContainsId(IReadOnlyList<string> ids, string target)

@@ -19,8 +19,10 @@ namespace ZombieCardSurvive.Buildings.UI
         [SerializeField] private Button closeButton;
         [SerializeField] private Transform interactionRoot;
         [SerializeField] private CardCraftView cardCraftPrefab;
+        [SerializeField] private FoodPlanInteractionView foodPlanPrefab;
+        [SerializeField] private CardUpgradeView cardUpgradePrefab;
 
-        private readonly List<CardCraftView> generatedCraftViews = new List<CardCraftView>();
+        private readonly List<Component> generatedInteractionViews = new List<Component>();
         private BuildingSystem system;
         private BuildingRuntime runtime;
 
@@ -70,29 +72,22 @@ namespace ZombieCardSurvive.Buildings.UI
                 return;
             }
 
-            if (titleText != null)
-            {
-                titleText.text = runtime.Data.DisplayName;
-            }
-
-            if (statusText != null)
-            {
-                statusText.text = $"狀態：{GetStateLabel(runtime.State)}　等級：{runtime.CurrentLevel}";
-            }
+            SetText(titleText, runtime.Data.DisplayName);
+            SetText(statusText, $"狀態: {GetStateLabel(runtime.State)} / 等級: {runtime.CurrentLevel}");
 
             BuildingLevelData next = runtime.GetNextLevel();
-            if (requirementText != null)
+            if (next != null)
             {
-                requirementText.text = next != null
-                    ? $"下一級：進度 {next.RequiredConstructionProgress}　食物 {next.ConstructionCost.Food}　資源 {next.ConstructionCost.Resource}"
-                    : "已達最高等級";
+                SetText(requirementText,
+                    $"下一級: {next.Level} / 施工需求 {next.RequiredConstructionProgress} / 食物 {next.ConstructionCost.Food} / 資源 {next.ConstructionCost.Resource}");
+            }
+            else
+            {
+                SetText(requirementText, "已達目前最高等級");
             }
 
-            if (rewardText != null)
-            {
-                BuildingLevelData current = runtime.Data.GetLevel(runtime.CurrentLevel);
-                rewardText.text = current != null ? current.RewardDescription : "解鎖後可開始施工";
-            }
+            BuildingLevelData current = runtime.Data.GetLevel(runtime.CurrentLevel);
+            SetText(rewardText, current != null ? current.RewardDescription : "尚未啟用");
 
             bool canStart = system != null && system.CanSubmitActions
                 && next != null
@@ -120,7 +115,7 @@ namespace ZombieCardSurvive.Buildings.UI
             runtime = null;
             system = null;
             SetVisible(false);
-            DestroyCraftViews();
+            DestroyInteractionViews();
         }
 
         private void StartConstruction()
@@ -141,23 +136,74 @@ namespace ZombieCardSurvive.Buildings.UI
 
         private void RebuildInteractions()
         {
-            DestroyCraftViews();
-            if (interactionRoot == null || cardCraftPrefab == null || runtime == null)
+            DestroyInteractionViews();
+            if (interactionRoot == null || runtime == null)
             {
                 return;
             }
 
             foreach (CraftLineRuntime line in runtime.CraftLines)
             {
+                if (cardCraftPrefab == null)
+                {
+                    continue;
+                }
+
                 CardCraftView view = Instantiate(cardCraftPrefab, interactionRoot);
                 view.Bind(system, runtime, line);
-                generatedCraftViews.Add(view);
+                generatedInteractionViews.Add(view);
+            }
+
+            if (runtime.Data.Interactions == null)
+            {
+                return;
+            }
+
+            foreach (BuildingInteractionData interaction in runtime.Data.Interactions)
+            {
+                if (!runtime.IsInteractionUnlocked(interaction))
+                {
+                    continue;
+                }
+
+                if (interaction is FoodPlanInteractionData foodPlan)
+                {
+                    CreateFoodPlanView(foodPlan);
+                }
+                else if (interaction is CardUpgradeInteractionData cardUpgrade)
+                {
+                    CreateCardUpgradeView(cardUpgrade);
+                }
             }
         }
 
-        private void DestroyCraftViews()
+        private void CreateFoodPlanView(FoodPlanInteractionData interaction)
         {
-            foreach (CardCraftView view in generatedCraftViews)
+            if (foodPlanPrefab == null)
+            {
+                return;
+            }
+
+            FoodPlanInteractionView view = Instantiate(foodPlanPrefab, interactionRoot);
+            view.Bind(system, runtime, interaction);
+            generatedInteractionViews.Add(view);
+        }
+
+        private void CreateCardUpgradeView(CardUpgradeInteractionData interaction)
+        {
+            if (cardUpgradePrefab == null)
+            {
+                return;
+            }
+
+            CardUpgradeView view = Instantiate(cardUpgradePrefab, interactionRoot);
+            view.Bind(system, runtime, interaction);
+            generatedInteractionViews.Add(view);
+        }
+
+        private void DestroyInteractionViews()
+        {
+            foreach (Component view in generatedInteractionViews)
             {
                 if (view != null)
                 {
@@ -165,7 +211,7 @@ namespace ZombieCardSurvive.Buildings.UI
                 }
             }
 
-            generatedCraftViews.Clear();
+            generatedInteractionViews.Clear();
         }
 
         private void UnhookSystem()
@@ -179,6 +225,14 @@ namespace ZombieCardSurvive.Buildings.UI
         private void SetVisible(bool visible)
         {
             (root != null ? root : gameObject).SetActive(visible);
+        }
+
+        private static void SetText(TMP_Text target, string value)
+        {
+            if (target != null)
+            {
+                target.text = value;
+            }
         }
 
         private static string GetStateLabel(BuildingState state)

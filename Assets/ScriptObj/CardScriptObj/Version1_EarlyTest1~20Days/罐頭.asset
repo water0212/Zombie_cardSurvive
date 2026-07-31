@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a929fd0962534f778437074501ae74e8, type: 3}
+  m_Name: "\u7F50\u982D"
+  m_EditorClassIdentifier: 
+  cardId: card_f767b014ed4546d190aae245cad60d49
+  displayName: "\u7F50\u982D"
+  energyCost: 2
+  artwork: {fileID: 0}
+  background: {fileID: 21300000, guid: 9fc2bca0e9e98934bbe80692475fcfeb, type: 3}
+  description: "\u4E00\u7FA4\u64FA\u653E\u6574\u9F4A\u7684\u7F50\u982D\uFF0C\n\u7372\u5F973\u9EDE\u98DF\u7269"
+  cardType: 0
+  playMode: 0
+  allowedSlots: 
+  isAdditiveCard: 0
+  drawReplacementOnAutoResolve: 0
+  hasLimitedUses: 1
+  maxUsesPerRun: 4
+  costs: []
+  effects:
+  - carrier: 0
+    category: 0
+    valueEffectType: 0
+    cardFlowEffectType: 0
+    buildingEffectType: 0
+    survivorEffectType: 0
+    cardData: {fileID: 0}
+    amount: 3
+    effectId: 
+    isPermanent: 0
+    remainingTurns: 0
+    requiredBuildingId: 
+    requiredBuildingLevel: 0
+    invertBuildingRequirement: 0
