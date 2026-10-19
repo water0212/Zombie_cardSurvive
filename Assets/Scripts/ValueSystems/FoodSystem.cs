@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using ZombieCardSurvive.Buildings.Runtime;
@@ -11,6 +12,8 @@ namespace ZombieCardSurvive.Systems
         private static int temporaryFood;
         private static int baseStorageCapacity = 50;
         private static int storageCapacityBonus;
+
+        public static event Action StateChanged;
 
         public static int Food => food;
         public static int TemporaryFood => temporaryFood;
@@ -28,22 +31,26 @@ namespace ZombieCardSurvive.Systems
 
         public static void AddFood(int amount)
         {
-            food = Mathf.Max(0, food + amount);
+            food = AddClamped(food, amount);
+            NotifyStateChanged();
         }
 
         public static void AddTemporaryFood(int amount)
         {
-            temporaryFood = Mathf.Max(0, temporaryFood + Mathf.Max(0, amount));
+            temporaryFood = AddClamped(temporaryFood, Mathf.Max(0, amount));
+            NotifyStateChanged();
         }
 
         public static void SetStorageCapacity(int capacity)
         {
             baseStorageCapacity = Mathf.Max(0, capacity);
+            NotifyStateChanged();
         }
 
         public static void SetStorageCapacityBonus(int bonus)
         {
             storageCapacityBonus = Mathf.Max(0, bonus);
+            NotifyStateChanged();
         }
 
         public static bool SpendFood(int amount)
@@ -55,6 +62,7 @@ namespace ZombieCardSurvive.Systems
             }
 
             food -= cost;
+            NotifyStateChanged();
             return true;
         }
 
@@ -63,6 +71,7 @@ namespace ZombieCardSurvive.Systems
             food = Mathf.Max(0, startingFood);
             temporaryFood = 0;
             productionEffects.Clear();
+            NotifyStateChanged();
         }
 
         public static RoundFoodConsumptionResult PreviewRoundFoodConsumption(int amount)
@@ -91,15 +100,22 @@ namespace ZombieCardSurvive.Systems
             RoundFoodConsumptionResult result = PreviewRoundFoodConsumption(amount);
             food -= result.PermanentConsumed;
             temporaryFood = 0;
+            NotifyStateChanged();
             return result;
         }
 
         public static int ConsumeFoodAllowShortage(int amount)
         {
-            int cost = Mathf.Max(0, amount);
-            int paid = Mathf.Min(AvailableFood, cost);
-            food -= paid;
-            return cost - paid;
+            return ConsumePermanentFoodAllowShortage(amount).Shortage;
+        }
+
+        public static ValueConsumptionResult ConsumePermanentFoodAllowShortage(int amount)
+        {
+            int requested = Mathf.Max(0, amount);
+            int consumed = Mathf.Min(AvailableFood, requested);
+            food -= consumed;
+            NotifyStateChanged();
+            return new ValueConsumptionResult(requested, consumed);
         }
 
         public static int TrimToStorageCapacity()
@@ -112,6 +128,7 @@ namespace ZombieCardSurvive.Systems
 
             int removed = food - protectedCapacity;
             food = protectedCapacity;
+            NotifyStateChanged();
             return removed;
         }
 
@@ -121,7 +138,7 @@ namespace ZombieCardSurvive.Systems
             return Mathf.Max(0, food - paid);
         }
 
-        internal static bool SpendReservedFood(int amount)
+        internal static bool SpendReservedFood(int amount, bool notifyStateChanged = true)
         {
             int cost = Mathf.Max(0, amount);
             if (food < cost)
@@ -130,6 +147,10 @@ namespace ZombieCardSurvive.Systems
             }
 
             food -= cost;
+            if (notifyStateChanged)
+            {
+                NotifyStateChanged();
+            }
             return true;
         }
 
@@ -137,6 +158,7 @@ namespace ZombieCardSurvive.Systems
         {
             TurnProductionEffect effect = new TurnProductionEffect(id, amountPerTurn, isPermanent, remainingTurns);
             productionEffects.Add(effect);
+            NotifyStateChanged();
             return effect;
         }
 
@@ -148,15 +170,24 @@ namespace ZombieCardSurvive.Systems
             }
 
             int removedCount = productionEffects.RemoveAll(effect => effect.Id == id);
+            if (removedCount > 0)
+            {
+                NotifyStateChanged();
+            }
             return removedCount > 0;
         }
 
         public static void ApplyTurnStartProduction()
         {
+            if (productionEffects.Count == 0)
+            {
+                return;
+            }
+
             for (int i = productionEffects.Count - 1; i >= 0; i--)
             {
                 TurnProductionEffect effect = productionEffects[i];
-                AddFood(effect.AmountPerTurn);
+                food = AddClamped(food, effect.AmountPerTurn);
                 effect.Tick();
 
                 if (effect.IsExpired)
@@ -164,6 +195,19 @@ namespace ZombieCardSurvive.Systems
                     productionEffects.RemoveAt(i);
                 }
             }
+
+            NotifyStateChanged();
+        }
+
+        internal static void NotifyStateChanged()
+        {
+            StateChanged?.Invoke();
+        }
+
+        private static int AddClamped(int current, int delta)
+        {
+            long value = (long)current + delta;
+            return (int)Math.Max(0, Math.Min(int.MaxValue, value));
         }
     }
 }

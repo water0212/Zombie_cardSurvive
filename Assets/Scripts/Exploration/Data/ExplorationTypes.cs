@@ -49,6 +49,14 @@ namespace ZombieCardSurvive.Exploration.Data
         UltraRare
     }
 
+    public enum RegionResourceState
+    {
+        Abundant,
+        Normal,
+        Scarce,
+        Depleted
+    }
+
     public enum RegionRiskType
     {
         AddZombieCardToDiscard,
@@ -96,6 +104,7 @@ namespace ZombieCardSurvive.Exploration.Data
     {
         [SerializeField] private RegionRiskType riskType = RegionRiskType.AddZombieCardToDiscard;
         [Range(0, 100)]
+        [Tooltip("Used by non-zombie risks. Zombie card risks use the region's dynamic encounter chance.")]
         [SerializeField] private int chancePercent = 10;
         [SerializeField] private int amount = 1;
         [SerializeField] private ZombieCardData zombieCard;
@@ -163,6 +172,28 @@ namespace ZombieCardSurvive.Exploration.Data
                 default:
                     return danger.ToString();
             }
+        }
+
+        public static string GetResourceStateLabel(RegionResourceState resourceState)
+        {
+            switch (resourceState)
+            {
+                case RegionResourceState.Abundant:
+                    return "充足";
+                case RegionResourceState.Normal:
+                    return "普通";
+                case RegionResourceState.Scarce:
+                    return "稀少";
+                case RegionResourceState.Depleted:
+                    return "枯竭";
+                default:
+                    return resourceState.ToString();
+            }
+        }
+
+        public static string FormatRegionStatus(RegionResourceState resourceState, DangerLevel danger)
+        {
+            return $"物資：{GetResourceStateLabel(resourceState)}｜危險：{GetDangerLabel(danger)}";
         }
     }
 }

@@ -27,6 +27,10 @@ namespace ZombieCardSurvive.Exploration.Runtime
         public int InitialCount { get; }
         public int RemainingCount { get; private set; }
         public int BaseWeight { get; }
+        public float CurrentWeight => InitialCount <= 0 || RemainingCount <= 0
+            ? 0f
+            : BaseWeight * (RemainingCount / (float)InitialCount);
+        public bool IsDrawable => CurrentWeight > 0f;
 
         internal bool TryConsume(int amount)
         {
@@ -36,6 +40,17 @@ namespace ZombieCardSurvive.Exploration.Runtime
             }
 
             RemainingCount -= amount;
+            return true;
+        }
+
+        internal bool TryAdd(int amount)
+        {
+            if (amount <= 0 || InitialCount <= 0 || RemainingCount > int.MaxValue - amount)
+            {
+                return false;
+            }
+
+            RemainingCount += amount;
             return true;
         }
     }

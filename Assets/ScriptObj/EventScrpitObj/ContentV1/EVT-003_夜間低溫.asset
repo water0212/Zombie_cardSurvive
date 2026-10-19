@@ -17,22 +17,187 @@ MonoBehaviour:
   description: "\u5BD2\u6D41\u704C\u5165\u57FA\u5730\uFF0C\u6240\u6709\u4EBA\u90FD\u9700\u8981\u66F4\u591A\u71B1\u91CF\u6490\u904E\u9019\u665A\u3002"
   artwork: {fileID: 0}
   choices:
-  - choiceText: "\u6490\u904E\u53BB"
-    resultTitle: "\u6D88\u8017\u4E0A\u5347"
-    resultDescription: "\u672C\u8F2A\u56FA\u5B9A\u98DF\u7269\u6D88\u8017 +2\u3002"
+  - choiceText: "\u589E\u6DFB\u6696\u7210"
+    resultTitle: "\u6696\u7210\u9EDE\u71C3"
+    resultDescription: "\u652F\u4ED8 {value:0} \u8CC7\u6E90\u3002"
     resultArtwork: {fileID: 0}
     effects:
     - carrier: 1
       category: 0
-      valueEffectType: 17
+      valueEffectType: 4
       cardFlowEffectType: 0
       buildingEffectType: 0
       survivorEffectType: 0
+      eventStateEffectType: 0
+      threatEffectType: 0
       cardData: {fileID: 0}
-      amount: 2
+      runFlagData: {fileID: 0}
+      runFlagId: 
+      clampRunFlagToDefinition: 1
+      amount: 1
+      selectionCount: 1
+      cardSelectionFilter:
+        useCardTypeFilter: 0
+        allowedCardTypes: 
+        useCardRarityFilter: 0
+        allowedCardRarities: 000000000100000002000000
+        useEnergyCostFilter: 0
+        energyCostFilterMode: 0
+        energyCost: 0
       effectId: 
-      isPermanent: 0
+      isPermanent: 1
       remainingTurns: 0
+      eventScaling:
+        scaleSource: 5
+        scalingStrength: 1
+        minimumFinalMagnitude: 0
+        maximumFinalMagnitude: 0
+        roundingMode: 1
+      eventPaymentMode: 0
+      hordeProfile: {fileID: 0}
+      eventBonusBudget: 0
       requiredBuildingId: 
       requiredBuildingLevel: 0
       invertBuildingRequirement: 0
+    forcedLossConsequences: []
+  - choiceText: "\u591C\u665A\u7684\u71B1\u6E6F"
+    resultTitle: "\u71B1\u6E6F\u4E0A\u684C"
+    resultDescription: "\u652F\u4ED8 {value:0} \u98DF\u7269\uFF0C\u58EB\u6C23\u589E\u52A0
+      {value:1}\u3002"
+    resultArtwork: {fileID: 0}
+    effects:
+    - carrier: 1
+      category: 0
+      valueEffectType: 1
+      cardFlowEffectType: 0
+      buildingEffectType: 0
+      survivorEffectType: 0
+      eventStateEffectType: 0
+      threatEffectType: 0
+      cardData: {fileID: 0}
+      runFlagData: {fileID: 0}
+      runFlagId: 
+      clampRunFlagToDefinition: 1
+      amount: 2
+      selectionCount: 1
+      cardSelectionFilter:
+        useCardTypeFilter: 0
+        allowedCardTypes: 
+        useCardRarityFilter: 0
+        allowedCardRarities: 000000000100000002000000
+        useEnergyCostFilter: 0
+        energyCostFilterMode: 0
+        energyCost: 0
+      effectId: 
+      isPermanent: 1
+      remainingTurns: 0
+      eventScaling:
+        scaleSource: 5
+        scalingStrength: 1
+        minimumFinalMagnitude: 0
+        maximumFinalMagnitude: 0
+        roundingMode: 1
+      eventPaymentMode: 0
+      hordeProfile: {fileID: 0}
+      eventBonusBudget: 0
+      requiredBuildingId: 
+      requiredBuildingLevel: 0
+      invertBuildingRequirement: 0
+    - carrier: 1
+      category: 0
+      valueEffectType: 14
+      cardFlowEffectType: 0
+      buildingEffectType: 0
+      survivorEffectType: 0
+      eventStateEffectType: 0
+      threatEffectType: 0
+      cardData: {fileID: 0}
+      runFlagData: {fileID: 0}
+      runFlagId: 
+      clampRunFlagToDefinition: 1
+      amount: 1
+      selectionCount: 1
+      cardSelectionFilter:
+        useCardTypeFilter: 0
+        allowedCardTypes: 
+        useCardRarityFilter: 0
+        allowedCardRarities: 000000000100000002000000
+        useEnergyCostFilter: 0
+        energyCostFilterMode: 0
+        energyCost: 0
+      effectId: 
+      isPermanent: 1
+      remainingTurns: 0
+      eventScaling:
+        scaleSource: 5
+        scalingStrength: 1
+        minimumFinalMagnitude: 0
+        maximumFinalMagnitude: 0
+        roundingMode: 1
+      eventPaymentMode: 0
+      hordeProfile: {fileID: 0}
+      eventBonusBudget: 0
+      requiredBuildingId: 
+      requiredBuildingLevel: 0
+      invertBuildingRequirement: 0
+    forcedLossConsequences: []
+  - choiceText: "\u7121\u80FD\u70BA\u529B"
+    resultTitle: "\u5BD2\u591C\u96E3\u71AC"
+    resultDescription: "\u58EB\u6C23\u6E1B\u5C11 {value:0}\u3002"
+    resultArtwork: {fileID: 0}
+    effects:
+    - carrier: 1
+      category: 0
+      valueEffectType: 15
+      cardFlowEffectType: 0
+      buildingEffectType: 0
+      survivorEffectType: 0
+      eventStateEffectType: 0
+      threatEffectType: 0
+      cardData: {fileID: 0}
+      runFlagData: {fileID: 0}
+      runFlagId: 
+      clampRunFlagToDefinition: 1
+      amount: 1
+      selectionCount: 1
+      cardSelectionFilter:
+        useCardTypeFilter: 0
+        allowedCardTypes: 
+        useCardRarityFilter: 0
+        allowedCardRarities: 000000000100000002000000
+        useEnergyCostFilter: 0
+        energyCostFilterMode: 0
+        energyCost: 0
+      effectId: 
+      isPermanent: 1
+      remainingTurns: 0
+      eventScaling:
+        scaleSource: 5
+        scalingStrength: 1
+        minimumFinalMagnitude: 0
+        maximumFinalMagnitude: 0
+        roundingMode: 1
+      eventPaymentMode: 0
+      hordeProfile: {fileID: 0}
+      eventBonusBudget: 0
+      requiredBuildingId: 
+      requiredBuildingLevel: 0
+      invertBuildingRequirement: 0
+    forcedLossConsequences: []
+  moodCategory: 2
+  contentCategory: 0
+  implementationStatus: 0
+  impactLevel: "\u5C0F"
+  specialRules: 
+  implementationNotes: 
+  earliestDay: 3
+  latestDay: 0
+  baseWeight: 30
+  canRepeat: 1
+  maximumAppearancesPerRun: 0
+  minimumDaysBetweenAppearances: 5
+  eligibilityConditions:
+    matchMode: 0
+    invertResult: 0
+    conditions: []
+  weightModifiers: []

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardId: card_fce22bf4470f4c109c089c96bd6fa594
   displayName: 
-  energyCost: 1
+  energyCost: 10
   artwork: {fileID: 0}
   background: {fileID: 0}
   description: 
@@ -24,32 +24,11 @@ MonoBehaviour:
   allowedSlots: 
   isAdditiveCard: 1
   drawReplacementOnAutoResolve: 1
-  hasLimitedUses: 0
-  maxUsesPerRun: 1
-  costs:
-  - carrier: 0
-    category: 0
-    valueEffectType: 15
-    cardFlowEffectType: 0
-    buildingEffectType: 0
-    survivorEffectType: 0
-    cardData: {fileID: 0}
-    amount: 5
-    selectionCount: 0
-    cardSelectionFilter:
-      useCardTypeFilter: 0
-      allowedCardTypes: 
-      useCardRarityFilter: 0
-      allowedCardRarities: 
-      useEnergyCostFilter: 0
-      energyCostFilterMode: 0
-      energyCost: 0
-    effectId: 
-    isPermanent: 0
-    remainingTurns: 0
-    requiredBuildingId: 
-    requiredBuildingLevel: 0
-    invertBuildingRequirement: 0
+  hasLimitedUses: 1
+  maxUsesPerRun: 2
+  costs: []
   effects: []
   health: 2
   attack: 1
+  permanentMaximumMoraleDamage: 0
+  survivalNextRoundEffect: {fileID: 0}

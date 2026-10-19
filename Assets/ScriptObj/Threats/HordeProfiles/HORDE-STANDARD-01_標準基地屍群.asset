@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd692d789f8a08542a7ebaf56ff90d95, type: 3}
+  m_Name: "HORDE-STANDARD-01_\u6A19\u6E96\u57FA\u5730\u5C4D\u7FA4"
+  m_EditorClassIdentifier: 
+  profileId: HORDE-STANDARD-01
+  displayName: "\u6A19\u6E96\u57FA\u5730\u5C4D\u7FA4"
+  description: "EVT-014 \u4F7F\u7528\u7684\u9996\u7248\u57FA\u5730\u5C4D\u7FA4\u3002\u9810\u7B97\u540C\u6642\u8CFC\u8CB7\u6578\u91CF\u8207\u9AD4\u8CEA\uFF0C\u4E26\u9650\u5236\u55AE\u6B21
+    UI \u58D3\u529B\u3002"
+  compositionStyle: 0
+  baseBudget: 3
+  worldThreatBudgetPerTier: 2
+  baseAttentionBudgetPerPoint: 1
+  regionPressureBudgetMultiplier: 4
+  minimumBudget: 3
+  maximumBudget: 10
+  zombiePool:
+  - zombieCard: {fileID: 11400000, guid: 5e7a6b5888fb38e48a12fcb3794f0279, type: 2}
+    budgetCost: 1
+    baseWeight: 60
+    minWorldThreatTier: 1
+    maxWorldThreatTier: 0
+    maxCountPerHorde: 6
+  - zombieCard: {fileID: 11400000, guid: 2005183a89589ef48ae80e4b6ba059fa, type: 2}
+    budgetCost: 2
+    baseWeight: 30
+    minWorldThreatTier: 2
+    maxWorldThreatTier: 0
+    maxCountPerHorde: 3
+  - zombieCard: {fileID: 11400000, guid: dd22b002d8ddd134480daa9b9d3de871, type: 2}
+    budgetCost: 4
+    baseWeight: 10
+    minWorldThreatTier: 3
+    maxWorldThreatTier: 0
+    maxCountPerHorde: 2

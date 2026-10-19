@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55e7408c4e352944ab27086d52cb2770, type: 3}
+  m_Name: "EVT-010_\u53EF\u7591\u4FE1\u865F"
+  m_EditorClassIdentifier: 
+  eventId: EVT-010
+  displayTitle: "\u53EF\u7591\u4FE1\u865F"
+  description: "\u65B7\u7E8C\u7684\u7121\u7DDA\u96FB\u4FE1\u865F\u5728\u591C\u88E1\u91CD\u8907\u64AD\u653E\uFF0C\u4F86\u6E90\u59CB\u7D42\u7121\u6CD5\u5B9A\u4F4D\u3002"
+  artwork: {fileID: 0}
+  choices:
+  - choiceText: "\u63A5\u6536\u4FE1\u865F"
+    resultTitle: "\u4FDD\u7559\u4FE1\u865F"
+    resultDescription: "\u4E0B\u4E00\u6B21\u5C4D\u7FA4\u96E3\u5EA6\u8207\u5206\u6578\u7FFB\u500D\uFF0C\u4E26\u986F\u793A\u5C4D\u7FA4\u6642\u9593\u3002"
+    resultArtwork: {fileID: 0}
+    effects: []
+    forcedLossConsequences: []
+  - choiceText: "\u6467\u6BC0\u7121\u7DDA\u96FB"
+    resultTitle: "\u5207\u65B7\u4FE1\u865F"
+    resultDescription: "\u7121\u4E8B\u767C\u751F\u3002"
+    resultArtwork: {fileID: 0}
+    effects: []
+    forcedLossConsequences: []
+  moodCategory: 0
+  contentCategory: 4
+  implementationStatus: 1
+  impactLevel: "\u9AD8"
+  specialRules: 
+  implementationNotes: "\u9700\u8981\u5C4D\u7FA4\u96E3\u5EA6\u3001\u8A08\u5206\u500D\u7387\u3001\u5C4D\u7FA4\u6642\u9593\u60C5\u5831\u8207\u5287\u60C5\u65D7\u6A19\u3002"
+  earliestDay: 10
+  latestDay: 20
+  baseWeight: 50
+  canRepeat: 0
+  maximumAppearancesPerRun: 1
+  minimumDaysBetweenAppearances: 0
+  eligibilityConditions:
+    matchMode: 0
+    invertResult: 0
+    conditions: []
+  weightModifiers: []

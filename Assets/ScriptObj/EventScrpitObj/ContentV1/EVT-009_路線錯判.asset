@@ -14,25 +14,35 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   eventId: EVT-009
   displayTitle: "\u8DEF\u7DDA\u932F\u5224"
-  description: "\u820A\u5730\u5716\u4E0A\u7684\u6377\u5F91\u5DF2\u7D93\u574D\u584C\uFF0C\u4E0B\u4E00\u6B21\u63A2\u7D22\u53EF\u80FD\u66F4\u5371\u96AA\u3002"
+  description: "\u820A\u5730\u5716\u4E0A\u7684\u6377\u5F91\u5DF2\u7D93\u574D\u584C\uFF0C\u63A2\u7D22\u968A\u4E0D\u5F97\u4E0D\u91CD\u65B0\u898F\u5283\u8DEF\u7DDA\u3002"
   artwork: {fileID: 0}
   choices:
-  - choiceText: "\u6A19\u8A18\u98A8\u96AA"
-    resultTitle: "\u66AB\u8A18"
-    resultDescription: "\u58EB\u6C23 -1\u3002\u63A2\u7D22\u4FEE\u6B63\u4FDD\u7559\u5F8C\u7E8C\u5BE6\u4F5C\u3002"
+  - choiceText: "\u7E7C\u7E8C\u524D\u9032"
+    resultTitle: "\u4ED8\u51FA\u4EE3\u50F9"
+    resultDescription: "\u58EB\u6C23\u6E1B\u5C11\u6700\u5927\u80FD\u91CF\u7684\u4E09\u500D\u3002"
     resultArtwork: {fileID: 0}
-    effects:
-    - carrier: 1
-      category: 0
-      valueEffectType: 15
-      cardFlowEffectType: 0
-      buildingEffectType: 0
-      survivorEffectType: 0
-      cardData: {fileID: 0}
-      amount: 1
-      effectId: 
-      isPermanent: 0
-      remainingTurns: 0
-      requiredBuildingId: 
-      requiredBuildingLevel: 0
-      invertBuildingRequirement: 0
+    effects: []
+    forcedLossConsequences: []
+  - choiceText: "\u64A4\u9000"
+    resultTitle: "\u4E2D\u6B62\u63A2\u7D22"
+    resultDescription: "\u4E0B\u4E00\u8F2A\u7121\u6CD5\u6253\u51FA\u63A2\u7D22\u5361\u3002"
+    resultArtwork: {fileID: 0}
+    effects: []
+    forcedLossConsequences: []
+  moodCategory: 2
+  contentCategory: 2
+  implementationStatus: 1
+  impactLevel: "\u4F4E"
+  specialRules: 
+  implementationNotes: "\u9700\u8981\u4E0B\u4E00\u8F2A\u7981\u6B62\u4F7F\u7528\u63A2\u7D22\u5361\u7684\u8DE8\u8F2A\u72C0\u614B\u3002"
+  earliestDay: 4
+  latestDay: 0
+  baseWeight: 30
+  canRepeat: 1
+  maximumAppearancesPerRun: 0
+  minimumDaysBetweenAppearances: 5
+  eligibilityConditions:
+    matchMode: 0
+    invertResult: 0
+    conditions: []
+  weightModifiers: []

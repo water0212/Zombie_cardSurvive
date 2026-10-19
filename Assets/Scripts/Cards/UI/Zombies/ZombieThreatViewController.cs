@@ -16,9 +16,19 @@ namespace ZombieCardSurvive.Cards.UI.Zombies
         [SerializeField] private ZombieThreatView zombieThreatViewPrefab;
         // 點選殭屍後開啟的詳細資訊面板。
         [SerializeField] private ZombieThreatDetailView detailView;
+        // 每一排保留的殭屍空位數。第一隻在中心，後續由中心向左右補位。
+        [SerializeField, Min(1)] private int slotsPerRow = 7;
+        // 第一個空位的中心位置；維持為 0 時，第一隻殭屍會留在 ZombieThreatRoot 中心。
+        [SerializeField] private Vector2 layoutOrigin = Vector2.zero;
+        // 空位間距。Y 通常為負值，讓超過第一排的殭屍往下排。
+        [SerializeField] private Vector2 slotSpacing = new Vector2(190f, -210f);
+        // 第二排之後的縮放，避免屍潮數量變多時遮住主要畫面。
+        [SerializeField, Min(0.1f)] private float overflowRowScale = 0.85f;
 
         // RuntimeId -> UI View 的對照表，用來重用既有殭屍 UI。
         private readonly Dictionary<int, ZombieThreatView> viewsByThreatId = new Dictionary<int, ZombieThreatView>();
+        // 依 CombatSystem 順序收集本次可見 View，用於套用穩定排版。
+        private readonly List<ZombieThreatView> orderedViews = new List<ZombieThreatView>();
         // 暫存這次刷新後已不存在的殭屍 ID，避免邊走訪 Dictionary 邊刪除。
         private readonly List<int> staleViewIds = new List<int>();
 
@@ -26,10 +36,17 @@ namespace ZombieCardSurvive.Cards.UI.Zombies
         {
             zombieRoot = transform;
             detailView = FindObjectOfType<ZombieThreatDetailView>(true);
+            NormalizeLayoutSettings();
+        }
+
+        private void OnValidate()
+        {
+            NormalizeLayoutSettings();
         }
 
         private void Awake()
         {
+            NormalizeLayoutSettings();
             ResolveDetailView();
         }
 
@@ -55,6 +72,7 @@ namespace ZombieCardSurvive.Cards.UI.Zombies
                 zombieRoot = transform;
             }
 
+            orderedViews.Clear();
             staleViewIds.Clear();
             foreach (int id in viewsByThreatId.Keys)
             {
@@ -73,6 +91,7 @@ namespace ZombieCardSurvive.Cards.UI.Zombies
                 if (view != null)
                 {
                     view.Bind(threat, this);
+                    orderedViews.Add(view);
                 }
             }
 
@@ -80,6 +99,8 @@ namespace ZombieCardSurvive.Cards.UI.Zombies
             {
                 RemoveView(staleViewIds[i]);
             }
+
+            ApplyLayout();
         }
 
         /// <summary>
@@ -133,6 +154,51 @@ namespace ZombieCardSurvive.Cards.UI.Zombies
             return view;
         }
 
+        // 套用中心向外的固定空位排版，避免多隻殭屍生成在同一個位置。
+        private void ApplyLayout()
+        {
+            for (int i = 0; i < orderedViews.Count; i++)
+            {
+                ZombieThreatView view = orderedViews[i];
+                if (view == null)
+                {
+                    continue;
+                }
+
+                ZombieThreatLayoutSlot slot = ZombieThreatLayoutCalculator.CalculateSlot(
+                    i,
+                    slotsPerRow,
+                    layoutOrigin,
+                    slotSpacing,
+                    overflowRowScale);
+
+                ApplySlot(view.transform, slot);
+                view.transform.SetSiblingIndex(i);
+            }
+        }
+
+        private static void ApplySlot(Transform viewTransform, ZombieThreatLayoutSlot slot)
+        {
+            if (viewTransform == null)
+            {
+                return;
+            }
+
+            if (viewTransform is RectTransform rectTransform)
+            {
+                rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+                rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+                rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                rectTransform.anchoredPosition = slot.AnchoredPosition;
+            }
+            else
+            {
+                viewTransform.localPosition = new Vector3(slot.AnchoredPosition.x, slot.AnchoredPosition.y, 0f);
+            }
+
+            viewTransform.localScale = Vector3.one * slot.Scale;
+        }
+
         // 移除已經不存在的殭屍威脅 UI。
         private void RemoveView(int threatId)
         {
@@ -157,6 +223,18 @@ namespace ZombieCardSurvive.Cards.UI.Zombies
             }
 
             return detailView != null;
+        }
+
+        private void NormalizeLayoutSettings()
+        {
+            slotsPerRow = Mathf.Max(1, slotsPerRow);
+
+            if (slotSpacing == Vector2.zero)
+            {
+                slotSpacing = new Vector2(190f, -210f);
+            }
+
+            overflowRowScale = Mathf.Max(0.1f, overflowRowScale);
         }
     }
 }

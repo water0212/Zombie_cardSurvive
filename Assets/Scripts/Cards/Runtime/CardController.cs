@@ -54,6 +54,13 @@ namespace ZombieCardSurvive.Cards.Runtime
         // 抽牌遞迴保護：自動觸發卡可能補抽，最外層抽牌結束後才刷新 UI。
         private int drawOperationDepth;
 
+        // 手動與抽牌自動觸發共用同一條打牌管線；來源只決定是否支付能量。
+        private enum CardPlayOrigin
+        {
+            Manual,
+            AutoResolveOnDraw
+        }
+
         /// <summary>
         /// 任何牌堆、手牌、能量或替換狀態改變時觸發，UI 會用它重繪。
         /// </summary>
@@ -191,6 +198,7 @@ namespace ZombieCardSurvive.Cards.Runtime
             FoodPlanSystem.BeginTurn();
             FoodSystem.ApplyTurnStartProduction();
             ResourceSystem.ApplyTurnStartProduction();
+            MoralePyramidSystem.CommitPendingTurnEffects();
             EnergySystem.RefillToMax();
             DrawCards(DrawCountPerTurn);
             NotifyStateChanged();
@@ -221,7 +229,7 @@ namespace ZombieCardSurvive.Cards.Runtime
                     if (topCard.Data.EffectivePlayMode == CardPlayMode.AutoResolveOnDraw)
                     {
                         bool countsAsReplacementDraw = topCard.Data.EffectiveDrawReplacementOnAutoResolve;
-                        ResolveAutoDrawCard(topCard);
+                        TryAutoPlayDrawnCard(topCard);
 
                         if (!countsAsReplacementDraw)
                         {
@@ -254,6 +262,15 @@ namespace ZombieCardSurvive.Cards.Runtime
         /// <returns>成功打出回傳 true；費用不足、不是手牌或不可打出時回傳 false。</returns>
         public bool RequestPlayCard(CardRuntime card)
         {
+            return TryPlayCard(card, CardPlayOrigin.Manual, true);
+        }
+
+        /// <summary>
+        /// 手動與自動打出共用的結算核心：檢查並支付卡牌 Cost、執行 Effects、扣除使用次數與處理去向。
+        /// 自動打出免付 EnergyCost；手動打出（包含先前自動失敗而留在手上的牌）必須支付 EnergyCost。
+        /// </summary>
+        private bool TryPlayCard(CardRuntime card, CardPlayOrigin origin, bool notifyStateChanged)
+        {
             if (card == null || card.Data == null)
             {
                 return false;
@@ -264,22 +281,29 @@ namespace ZombieCardSurvive.Cards.Runtime
                 return false;
             }
 
-            if (card.Data.EffectivePlayMode != CardPlayMode.Playable)
+            CardPlayMode playMode = card.Data.EffectivePlayMode;
+            bool isAutoPlay = origin == CardPlayOrigin.AutoResolveOnDraw;
+            bool isAllowedPlayMode = isAutoPlay
+                ? playMode == CardPlayMode.AutoResolveOnDraw
+                : playMode == CardPlayMode.Playable || playMode == CardPlayMode.AutoResolveOnDraw;
+
+            if (!isAllowedPlayMode)
             {
-                NotifyStateChanged();
+                NotifyAfterPlayAttempt(notifyStateChanged);
                 return false;
             }
 
             if (!card.HasRemainingUses)
             {
-                NotifyStateChanged();
+                NotifyAfterPlayAttempt(notifyStateChanged);
                 return false;
             }
 
             int effectiveEnergyCost = card.EffectiveEnergyCost;
-            if (!EnergySystem.CanSpend(effectiveEnergyCost))
+            bool paysEnergy = !isAutoPlay;
+            if (paysEnergy && !EnergySystem.CanSpend(effectiveEnergyCost))
             {
-                NotifyStateChanged();
+                NotifyAfterPlayAttempt(notifyStateChanged);
                 return false;
             }
 
@@ -287,30 +311,26 @@ namespace ZombieCardSurvive.Cards.Runtime
 
             if (!card.Data.CanPayCosts(context))
             {
-                NotifyStateChanged();
+                NotifyAfterPlayAttempt(notifyStateChanged);
                 return false;
             }
 
             if (!card.Data.PayCosts(context))
             {
-                NotifyStateChanged();
+                NotifyAfterPlayAttempt(notifyStateChanged);
                 return false;
             }
 
-            EnergySystem.SpendEnergy(effectiveEnergyCost);
+            if (paysEnergy && !EnergySystem.SpendEnergy(effectiveEnergyCost))
+            {
+                NotifyAfterPlayAttempt(notifyStateChanged);
+                return false;
+            }
+
             handCards.Remove(card);
             card.Data.Resolve(context);
-
-            if (card.ConsumeUse())
-            {
-                MoveToExhausted(card);
-            }
-            else
-            {
-                MoveToDiscardPile(card);
-            }
-
-            NotifyStateChanged();
+            CompleteSuccessfulPlay(card);
+            NotifyAfterPlayAttempt(notifyStateChanged);
             return true;
         }
 
@@ -527,7 +547,7 @@ namespace ZombieCardSurvive.Cards.Runtime
                 }
 
                 drawPile.RemoveAt(i);
-                ResolveAutoDrawCard(card);
+                TryAutoPlayDrawnCard(card);
             }
 
             NotifyStateChanged();
@@ -1068,17 +1088,37 @@ namespace ZombieCardSurvive.Cards.Runtime
             StateChanged?.Invoke();
         }
 
-        // 結算抽到即自動觸發的卡，例如附加殭屍卡。
-        private void ResolveAutoDrawCard(CardRuntime card)
+        // 抽到自動牌時先把它放進手牌，再走共用打牌管線；Cost 失敗時因此會自然留在手上。
+        private bool TryAutoPlayDrawnCard(CardRuntime card)
         {
             if (card == null || card.Data == null)
             {
+                return false;
+            }
+
+            card.SetZone(DeckZone.Hand);
+            handCards.Add(card);
+            return TryPlayCard(card, CardPlayOrigin.AutoResolveOnDraw, false);
+        }
+
+        // 成功打出後一律依使用次數決定進耗盡區或棄牌堆，不替自動牌建立特殊去向。
+        private void CompleteSuccessfulPlay(CardRuntime card)
+        {
+            if (card.ConsumeUse())
+            {
+                MoveToExhausted(card);
                 return;
             }
 
-            CardPlayContext context = new CardPlayContext(this, card);
-            card.Data.Resolve(context);
-            card.SetZone(DeckZone.Removed);
+            MoveToDiscardPile(card);
+        }
+
+        private void NotifyAfterPlayAttempt(bool notifyStateChanged)
+        {
+            if (notifyStateChanged)
+            {
+                NotifyStateChanged();
+            }
         }
 
         // 將一批卡回收到抽牌堆；耗盡卡不會回到循環。
@@ -1140,7 +1180,8 @@ namespace ZombieCardSurvive.Cards.Runtime
             card.ResetTurnModifiers();
             card.MarkExhausted();
             exhaustedCards.Add(card);
-            if (card.Data == null || card.Data.CreatesExhaustionRefillRequest)
+            if (!card.IsAdditiveInstance
+                && (card.Data == null || card.Data.CreatesExhaustionRefillRequest))
             {
                 vacancyRecords.Add(new DeckVacancyRecord(card, card.AssignedSlotType, DeckVacancyReason.Exhausted));
             }

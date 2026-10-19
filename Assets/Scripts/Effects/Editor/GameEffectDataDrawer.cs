@@ -2,6 +2,7 @@ using System;
 using UnityEditor;
 using UnityEngine;
 using ZombieCardSurvive.Effects.Data;
+using ZombieCardSurvive.Threats.Data;
 
 namespace ZombieCardSurvive.Effects.Editor
 {
@@ -29,13 +30,33 @@ namespace ZombieCardSurvive.Effects.Editor
         private static readonly GameEffectCategory[] CardCategoryValues =
         {
             GameEffectCategory.Value,
-            GameEffectCategory.CardFlow
+            GameEffectCategory.CardFlow,
+            GameEffectCategory.NextRoundEffect
         };
 
         private static readonly string[] CardCategoryLabels =
         {
             "\u6578\u503c\u6548\u679c",
-            "\u5361\u724c\u6d41\u7a0b"
+            "\u5361\u724c\u6d41\u7a0b",
+            "\u4e0b\u8f2a\u6548\u679c"
+        };
+
+        private static readonly GameEffectCategory[] EventCategoryValues =
+        {
+            GameEffectCategory.Value,
+            GameEffectCategory.CardFlow,
+            GameEffectCategory.EventState,
+            GameEffectCategory.Threat,
+            GameEffectCategory.NextRoundEffect
+        };
+
+        private static readonly string[] EventCategoryLabels =
+        {
+            "\u6578\u503c\u6548\u679c",
+            "\u5361\u724c\u6d41\u7a0b",
+            "\u4e8b\u4ef6\u72c0\u614b",
+            "\u5a01\u8105\uff0f\u5c4d\u7fa4",
+            "\u4e0b\u8f2a\u6548\u679c"
         };
 
         private static readonly GameEffectCategory[] ValueOnlyCategoryValues =
@@ -110,11 +131,60 @@ namespace ZombieCardSurvive.Effects.Editor
             "\u9078\u64c7\u62bd\u724c\u5806\u5361\u724c\u964d\u4f4e\u8cbb\u7528"
         };
 
+        private static readonly EventStateEffectType[] EventStateEffectValues =
+        {
+            EventStateEffectType.SetRunFlagValue,
+            EventStateEffectType.AddRunFlagValue,
+            EventStateEffectType.ClearRunFlag
+        };
+
+        private static readonly string[] EventStateEffectLabels =
+        {
+            "\u8a2d\u5b9a Run Flag \u6578\u503c",
+            "\u589e\u52a0 Run Flag \u6578\u503c",
+            "\u6e05\u9664 Run Flag"
+        };
+
+        private static readonly ThreatEffectType[] ThreatEffectValues =
+        {
+            ThreatEffectType.SpawnHorde
+        };
+
+        private static readonly string[] ThreatEffectLabels =
+        {
+            "\u751f\u6210\u5c4d\u7fa4"
+        };
+
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             SerializedProperty categoryProperty = property.FindPropertyRelative("category");
             GameEffectCategory category = (GameEffectCategory)categoryProperty.enumValueIndex;
-            int lineCount = 4;
+            int lineCount = 3;
+
+            if (ShouldShowAmountField(category))
+            {
+                lineCount += 1;
+            }
+
+            if (ShouldShowThreatFields(category))
+            {
+                lineCount += 2;
+            }
+
+            if (ShouldShowNextRoundEffectField(category))
+            {
+                lineCount += 1;
+            }
+
+            if (ShouldShowEventScalingFields(property))
+            {
+                lineCount += 6;
+            }
+
+            if (ShouldShowEventPaymentModeField(property))
+            {
+                lineCount += 1;
+            }
 
             if (ShouldShowProductionFields(property, category))
             {
@@ -139,6 +209,11 @@ namespace ZombieCardSurvive.Effects.Editor
                 height += EditorGUI.GetPropertyHeight(filterProperty, true) + LineSpacing;
             }
 
+            if (ShouldShowEventStateFields(category))
+            {
+                height += 3 * (LineHeight + LineSpacing);
+            }
+
             return height;
         }
 
@@ -153,13 +228,23 @@ namespace ZombieCardSurvive.Effects.Editor
             SerializedProperty categoryProperty = property.FindPropertyRelative("category");
             SerializedProperty valueEffectProperty = property.FindPropertyRelative("valueEffectType");
             SerializedProperty cardFlowEffectProperty = property.FindPropertyRelative("cardFlowEffectType");
+            SerializedProperty eventStateEffectProperty = property.FindPropertyRelative("eventStateEffectType");
+            SerializedProperty threatEffectProperty = property.FindPropertyRelative("threatEffectType");
             SerializedProperty cardDataProperty = property.FindPropertyRelative("cardData");
+            SerializedProperty runFlagDataProperty = property.FindPropertyRelative("runFlagData");
+            SerializedProperty runFlagIdProperty = property.FindPropertyRelative("runFlagId");
+            SerializedProperty clampRunFlagToDefinitionProperty = property.FindPropertyRelative("clampRunFlagToDefinition");
             SerializedProperty amountProperty = property.FindPropertyRelative("amount");
             SerializedProperty selectionCountProperty = property.FindPropertyRelative("selectionCount");
             SerializedProperty cardSelectionFilterProperty = property.FindPropertyRelative("cardSelectionFilter");
             SerializedProperty effectIdProperty = property.FindPropertyRelative("effectId");
             SerializedProperty isPermanentProperty = property.FindPropertyRelative("isPermanent");
             SerializedProperty remainingTurnsProperty = property.FindPropertyRelative("remainingTurns");
+            SerializedProperty eventScalingProperty = property.FindPropertyRelative("eventScaling");
+            SerializedProperty eventPaymentModeProperty = property.FindPropertyRelative("eventPaymentMode");
+            SerializedProperty hordeProfileProperty = property.FindPropertyRelative("hordeProfile");
+            SerializedProperty eventBonusBudgetProperty = property.FindPropertyRelative("eventBonusBudget");
+            SerializedProperty nextRoundEffectProperty = property.FindPropertyRelative("nextRoundEffect");
             SerializedProperty requiredBuildingIdProperty = property.FindPropertyRelative("requiredBuildingId");
             SerializedProperty requiredBuildingLevelProperty = property.FindPropertyRelative("requiredBuildingLevel");
             SerializedProperty invertBuildingRequirementProperty = property.FindPropertyRelative("invertBuildingRequirement");
@@ -180,6 +265,18 @@ namespace ZombieCardSurvive.Effects.Editor
             {
                 DrawMappedEnum(line, "\u6548\u679c\u985e\u578b", cardFlowEffectProperty, CardFlowEffectValues, CardFlowEffectLabels);
             }
+            else if (category == GameEffectCategory.EventState)
+            {
+                DrawMappedEnum(line, "\u6548\u679c\u985e\u578b", eventStateEffectProperty, EventStateEffectValues, EventStateEffectLabels);
+            }
+            else if (category == GameEffectCategory.Threat)
+            {
+                DrawMappedEnum(line, "\u6548\u679c\u985e\u578b", threatEffectProperty, ThreatEffectValues, ThreatEffectLabels);
+            }
+            else if (category == GameEffectCategory.NextRoundEffect)
+            {
+                EditorGUI.LabelField(line, "\u6548\u679c\u985e\u578b", "\u6392\u7a0b\u4e0b\u8f2a\u6548\u679c");
+            }
             else
             {
                 EditorGUI.LabelField(line, "\u6548\u679c\u985e\u578b", "\u5c1a\u672a\u5be6\u4f5c");
@@ -187,8 +284,51 @@ namespace ZombieCardSurvive.Effects.Editor
 
             line.y += LineHeight + LineSpacing;
 
-            EditorGUI.PropertyField(line, amountProperty, new GUIContent("\u6578\u503c"));
-            line.y += LineHeight + LineSpacing;
+            if (ShouldShowAmountField(category))
+            {
+                EditorGUI.PropertyField(line, amountProperty, new GUIContent("\u6578\u503c"));
+                line.y += LineHeight + LineSpacing;
+            }
+
+            if (ShouldShowThreatFields(category))
+            {
+                // hordeProfile 帶有 HeaderAttribute；PropertyField 會額外畫出 Header，
+                // 但這個 Drawer 使用固定行高，所以改用 ObjectField 避免裝飾器擠壓後續欄位。
+                hordeProfileProperty.objectReferenceValue = EditorGUI.ObjectField(
+                    line,
+                    new GUIContent("\u5c4d\u7fa4 Profile"),
+                    hordeProfileProperty.objectReferenceValue,
+                    typeof(HordeProfileData),
+                    false);
+                line.y += LineHeight + LineSpacing;
+                EditorGUI.PropertyField(line, eventBonusBudgetProperty, new GUIContent("\u4e8b\u4ef6\u984d\u5916\u9810\u7b97"));
+                line.y += LineHeight + LineSpacing;
+            }
+
+            if (ShouldShowNextRoundEffectField(category))
+            {
+                nextRoundEffectProperty.objectReferenceValue = EditorGUI.ObjectField(
+                    line,
+                    new GUIContent("\u4e0b\u8f2a\u6548\u679c Data"),
+                    nextRoundEffectProperty.objectReferenceValue,
+                    typeof(NextRoundEffectData),
+                    false);
+                line.y += LineHeight + LineSpacing;
+            }
+
+            if (ShouldShowEventPaymentModeField(property) && eventPaymentModeProperty != null)
+            {
+                EditorGUI.PropertyField(
+                    line,
+                    eventPaymentModeProperty,
+                    new GUIContent("\u4e8b\u4ef6\u652f\u4ed8\u908a\u754c"));
+                line.y += LineHeight + LineSpacing;
+            }
+
+            if (ShouldShowEventScalingFields(carrier, category) && eventScalingProperty != null)
+            {
+                DrawEventScalingFields(ref line, eventScalingProperty);
+            }
 
             if (ShouldShowSelectionCountField(property, category))
             {
@@ -227,6 +367,24 @@ namespace ZombieCardSurvive.Effects.Editor
                 line.y += LineHeight + LineSpacing;
             }
 
+            if (ShouldShowEventStateFields(category))
+            {
+                EditorGUI.PropertyField(line, runFlagDataProperty, new GUIContent("Run Flag"));
+                line.y += LineHeight + LineSpacing;
+
+                runFlagIdProperty.stringValue = EditorGUI.TextField(
+                    line,
+                    new GUIContent("Fallback Flag ID"),
+                    runFlagIdProperty.stringValue);
+                line.y += LineHeight + LineSpacing;
+
+                clampRunFlagToDefinitionProperty.boolValue = EditorGUI.Toggle(
+                    line,
+                    new GUIContent("\u9650\u5236\u5728 Flag \u7bc4\u570d"),
+                    clampRunFlagToDefinitionProperty.boolValue);
+                line.y += LineHeight + LineSpacing;
+            }
+
             EditorGUI.LabelField(line, "\u5efa\u7bc9\u689d\u4ef6\uff08\u7559\u7a7a = \u4e0d\u9650\u5236\uff09", EditorStyles.boldLabel);
             line.y += LineHeight + LineSpacing;
 
@@ -251,12 +409,22 @@ namespace ZombieCardSurvive.Effects.Editor
 
         private static GameEffectCategory[] GetCategoryValues(GameEffectCarrier carrier)
         {
-            return carrier == GameEffectCarrier.Card || carrier == GameEffectCarrier.Event ? CardCategoryValues : ValueOnlyCategoryValues;
+            if (carrier == GameEffectCarrier.Event)
+            {
+                return EventCategoryValues;
+            }
+
+            return carrier == GameEffectCarrier.Card ? CardCategoryValues : ValueOnlyCategoryValues;
         }
 
         private static string[] GetCategoryLabels(GameEffectCarrier carrier)
         {
-            return carrier == GameEffectCarrier.Card || carrier == GameEffectCarrier.Event ? CardCategoryLabels : ValueOnlyCategoryLabels;
+            if (carrier == GameEffectCarrier.Event)
+            {
+                return EventCategoryLabels;
+            }
+
+            return carrier == GameEffectCarrier.Card ? CardCategoryLabels : ValueOnlyCategoryLabels;
         }
 
         private static bool ShouldShowProductionFields(SerializedProperty property, GameEffectCategory category)
@@ -269,6 +437,78 @@ namespace ZombieCardSurvive.Effects.Editor
             SerializedProperty valueEffectProperty = property.FindPropertyRelative("valueEffectType");
             ValueEffectType valueEffectType = (ValueEffectType)valueEffectProperty.enumValueIndex;
             return valueEffectType == ValueEffectType.AddFoodProduction || valueEffectType == ValueEffectType.AddResourceProduction;
+        }
+
+        private static bool ShouldShowEventScalingFields(SerializedProperty property)
+        {
+            SerializedProperty carrierProperty = property.FindPropertyRelative("carrier");
+            SerializedProperty categoryProperty = property.FindPropertyRelative("category");
+            return carrierProperty != null
+                && categoryProperty != null
+                && ShouldShowEventScalingFields(
+                    (GameEffectCarrier)carrierProperty.enumValueIndex,
+                    (GameEffectCategory)categoryProperty.enumValueIndex);
+        }
+
+        internal static bool ShouldShowEventScalingFields(
+            GameEffectCarrier carrier,
+            GameEffectCategory category)
+        {
+            return carrier == GameEffectCarrier.Event
+                && category != GameEffectCategory.Threat
+                && category != GameEffectCategory.NextRoundEffect;
+        }
+
+        private static bool ShouldShowEventPaymentModeField(SerializedProperty property)
+        {
+            SerializedProperty carrierProperty = property.FindPropertyRelative("carrier");
+            SerializedProperty categoryProperty = property.FindPropertyRelative("category");
+            SerializedProperty valueEffectProperty = property.FindPropertyRelative("valueEffectType");
+            if (carrierProperty == null || categoryProperty == null || valueEffectProperty == null)
+            {
+                return false;
+            }
+
+            if ((GameEffectCarrier)carrierProperty.enumValueIndex != GameEffectCarrier.Event
+                || (GameEffectCategory)categoryProperty.enumValueIndex != GameEffectCategory.Value)
+            {
+                return false;
+            }
+
+            ValueEffectType valueEffectType = (ValueEffectType)valueEffectProperty.enumValueIndex;
+            return valueEffectType == ValueEffectType.SpendFood
+                || valueEffectType == ValueEffectType.SpendResource;
+        }
+
+        private static void DrawEventScalingFields(
+            ref Rect line,
+            SerializedProperty eventScalingProperty)
+        {
+            EditorGUI.LabelField(line, "\u4e8b\u4ef6\u7e2e\u653e", EditorStyles.boldLabel);
+            line.y += LineHeight + LineSpacing;
+
+            SerializedProperty source = eventScalingProperty.FindPropertyRelative("scaleSource");
+            SerializedProperty strength = eventScalingProperty.FindPropertyRelative("scalingStrength");
+            SerializedProperty minimum = eventScalingProperty.FindPropertyRelative("minimumFinalMagnitude");
+            SerializedProperty maximum = eventScalingProperty.FindPropertyRelative("maximumFinalMagnitude");
+            SerializedProperty rounding = eventScalingProperty.FindPropertyRelative("roundingMode");
+
+            EditorGUI.PropertyField(line, source, new GUIContent("\u7e2e\u653e\u4f86\u6e90"));
+            line.y += LineHeight + LineSpacing;
+            strength.floatValue = Mathf.Max(
+                0f,
+                EditorGUI.FloatField(line, new GUIContent("\u7e2e\u653e\u5f37\u5ea6"), strength.floatValue));
+            line.y += LineHeight + LineSpacing;
+            minimum.intValue = Mathf.Max(
+                0,
+                EditorGUI.IntField(line, new GUIContent("\u6700\u5c0f\u6700\u7d42\u503c"), minimum.intValue));
+            line.y += LineHeight + LineSpacing;
+            maximum.intValue = Mathf.Max(
+                0,
+                EditorGUI.IntField(line, new GUIContent("\u6700\u5927\u6700\u7d42\u503c\uff080 = \u7121\u4e0a\u9650\uff09"), maximum.intValue));
+            line.y += LineHeight + LineSpacing;
+            EditorGUI.PropertyField(line, rounding, new GUIContent("\u53d6\u6574\u65b9\u5f0f"));
+            line.y += LineHeight + LineSpacing;
         }
 
         private static bool ShouldShowCardDataField(SerializedProperty property, GameEffectCategory category)
@@ -293,6 +533,27 @@ namespace ZombieCardSurvive.Effects.Editor
             CardFlowEffectType? effectType = GetCardFlowEffectType(property, category);
             return effectType == CardFlowEffectType.ReduceOtherHandEnergyCosts
                 || effectType == CardFlowEffectType.ReduceDrawPileEnergyCosts;
+        }
+
+        private static bool ShouldShowEventStateFields(GameEffectCategory category)
+        {
+            return category == GameEffectCategory.EventState;
+        }
+
+        private static bool ShouldShowAmountField(GameEffectCategory category)
+        {
+            return category != GameEffectCategory.Threat
+                && category != GameEffectCategory.NextRoundEffect;
+        }
+
+        private static bool ShouldShowThreatFields(GameEffectCategory category)
+        {
+            return category == GameEffectCategory.Threat;
+        }
+
+        private static bool ShouldShowNextRoundEffectField(GameEffectCategory category)
+        {
+            return category == GameEffectCategory.NextRoundEffect;
         }
 
         private static CardFlowEffectType? GetCardFlowEffectType(SerializedProperty property, GameEffectCategory category)

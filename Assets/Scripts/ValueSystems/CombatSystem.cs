@@ -7,11 +7,15 @@ namespace ZombieCardSurvive.Systems
 {
     public static class CombatSystem
     {
+        public const int MaxZombieThreatBatchSize = 256;
+
         private static readonly List<ZombieThreatRuntime> zombieThreats = new List<ZombieThreatRuntime>();
         private static int pendingDamage;
         private static int maxCombatValue = 9;
         private static int overcapLossPercent = 50;
         private static int nextZombieRuntimeId = 1;
+        private static int currentRoundIndex;
+        private static int defaultFirstConsequenceRoundEnd = 1;
 
         public static event Action StateChanged;
 
@@ -21,6 +25,25 @@ namespace ZombieCardSurvive.Systems
         public static int OvercapLossPercent => overcapLossPercent;
         public static int ZombieThreatCount => zombieThreats.Count;
         public static IReadOnlyList<ZombieThreatRuntime> ZombieThreats => zombieThreats;
+        public static int CurrentRoundIndex => currentRoundIndex;
+        public static int DefaultFirstConsequenceRoundEnd => defaultFirstConsequenceRoundEnd;
+
+        /// <summary>進入玩家可操作的新一輪；之後生成的殭屍可在本輪輪末首次結算。</summary>
+        public static void BeginRound(int roundIndex)
+        {
+            currentRoundIndex = Mathf.Max(1, roundIndex);
+            defaultFirstConsequenceRoundEnd = currentRoundIndex;
+        }
+
+        /// <summary>
+        /// 進入輪末揭露階段；從此刻到下一輪開始前生成的殭屍，
+        /// 必須等下一輪輪末才取得完整反應窗口。
+        /// </summary>
+        public static void BeginRoundEnd(int roundIndex)
+        {
+            currentRoundIndex = Mathf.Max(0, roundIndex);
+            defaultFirstConsequenceRoundEnd = Mathf.Max(1, currentRoundIndex + 1);
+        }
 
         public static void Configure(int maxValue, int lossPercent)
         {
@@ -82,10 +105,61 @@ namespace ZombieCardSurvive.Systems
 
         public static ZombieThreatRuntime SpawnZombieThreat(ZombieCardData sourceCard)
         {
-            ZombieThreatRuntime threat = new ZombieThreatRuntime(nextZombieRuntimeId++, sourceCard);
+            ZombieThreatRuntime threat = new ZombieThreatRuntime(
+                nextZombieRuntimeId++,
+                sourceCard,
+                defaultFirstConsequenceRoundEnd);
             zombieThreats.Add(threat);
             NotifyStateChanged();
             return threat;
+        }
+
+        /// <summary>檢查整批殭屍卡是否能在不產生部分結果的情況下生成。</summary>
+        public static bool CanSpawnZombieThreats(IReadOnlyList<ZombieCardData> sourceCards)
+        {
+            if (sourceCards == null
+                || sourceCards.Count <= 0
+                || sourceCards.Count > MaxZombieThreatBatchSize)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < sourceCards.Count; index++)
+            {
+                if (sourceCards[index] == null)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 驗證整批輸入後一次生成所有殭屍，並只發送一次 StateChanged。
+        /// 無效輸入不會修改場上狀態。
+        /// </summary>
+        public static IReadOnlyList<ZombieThreatRuntime> SpawnZombieThreats(
+            IReadOnlyList<ZombieCardData> sourceCards)
+        {
+            if (!CanSpawnZombieThreats(sourceCards))
+            {
+                return Array.Empty<ZombieThreatRuntime>();
+            }
+
+            List<ZombieThreatRuntime> spawned = new List<ZombieThreatRuntime>(sourceCards.Count);
+            for (int index = 0; index < sourceCards.Count; index++)
+            {
+                ZombieThreatRuntime threat = new ZombieThreatRuntime(
+                    nextZombieRuntimeId++,
+                    sourceCards[index],
+                    defaultFirstConsequenceRoundEnd);
+                zombieThreats.Add(threat);
+                spawned.Add(threat);
+            }
+
+            NotifyStateChanged();
+            return spawned.AsReadOnly();
         }
 
         public static bool TryToggleZombieKillMark(ZombieThreatRuntime threat)
@@ -181,6 +255,8 @@ namespace ZombieCardSurvive.Systems
             maxCombatValue = Mathf.Max(0, maxValue);
             overcapLossPercent = Mathf.Clamp(lossPercent, 0, 100);
             nextZombieRuntimeId = 1;
+            currentRoundIndex = 0;
+            defaultFirstConsequenceRoundEnd = 1;
             NotifyStateChanged();
         }
 

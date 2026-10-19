@@ -17,10 +17,13 @@ namespace ZombieCardSurvive.Exploration.Data
         [Min(0)]
         [SerializeField] private int initialZombieCount;
         [Range(0f, 1f)]
+        [Tooltip("Base probability for a natural zombie encounter. Runtime heat and clearance modify this value.")]
         [SerializeField] private float baseEncounterChance;
         [Min(0f)]
+        [Tooltip("Encounter chance added after each exploration, affecting later explorations.")]
         [SerializeField] private float heatPerExploration;
         [Min(0f)]
+        [Tooltip("Heat removed at the daily event boundary when this region was not explored that day.")]
         [SerializeField] private float dailyHeatDecay;
         [SerializeField] private int baseOfferWeight = 10;
         [SerializeField] private bool isRareRegion;

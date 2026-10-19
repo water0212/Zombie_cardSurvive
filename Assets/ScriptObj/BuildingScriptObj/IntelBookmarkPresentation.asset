@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7846fd13dfa74844586e750edba714d1, type: 3}
+  m_Name: IntelBookmarkPresentation
+  m_EditorClassIdentifier: 
+  pages:
+  - pageId: interaction-interaction_intel_dispatch_craft
+    title: "\u8ABF\u5EA6\u88FD\u4F5C\u5217"
+    order: 0
+    isPublic: 1
+    interaction: {fileID: 11400000, guid: 71e8c81df39324b469262f89fcd8299e, type: 2}
+    informationPagePrefab: {fileID: 0}
+  - pageId: interaction-interaction_intel_food_plan
+    title: "\u98DF\u7269\u8A08\u756B"
+    order: 1
+    isPublic: 1
+    interaction: {fileID: 11400000, guid: 7da6d513d5b41374eb95f92a757c607f, type: 2}
+    informationPagePrefab: {fileID: 0}
+  - pageId: interaction-interaction_upgrade_dispatch
+    title: "\u8ABF\u5EA6\u5F37\u5316"
+    order: 2
+    isPublic: 1
+    interaction: {fileID: 11400000, guid: 6d61bc3ac7045c74db91e805bf7f6dae, type: 2}
+    informationPagePrefab: {fileID: 0}
+  - pageId: base-details
+    title: "\u57FA\u5730\u8A73\u60C5"
+    order: 3
+    isPublic: 1
+    interaction: {fileID: 0}
+    informationPagePrefab: {fileID: 8949019744733893908, guid: a7f9b38c5de17e24cad942cf9a1c5b06, type: 3}

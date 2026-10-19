@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6218a125e1602645b93b254a971c715, type: 3}
+  m_Name: "NRE-001_\u4E0B\u8F2A\u98DF\u7269\u9700\u6C42\u589E\u52A03"
+  m_EditorClassIdentifier: 
+  nextRoundEffectId: NRE-001
+  effects:
+  - effectType: 0
+    amount: 3

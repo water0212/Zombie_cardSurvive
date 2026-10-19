@@ -52,11 +52,6 @@ namespace ZombieCardSurvive.Cards.UI
             Refresh();
         }
 
-        public void SetTightPlan()
-        {
-            TrySetPlan(FoodPlanLevel.Tight);
-        }
-
         public void SetNormalPlan()
         {
             TrySetPlan(FoodPlanLevel.Normal);
@@ -69,12 +64,21 @@ namespace ZombieCardSurvive.Cards.UI
 
         public void Refresh()
         {
-            SetText(currentPlanText, FoodPlanSystem.CurrentPlan.ToString());
-            SetText(pendingPlanText, FoodPlanSystem.HasPendingPlan ? FoodPlanSystem.PendingPlan.ToString() : "-");
+            SetText(currentPlanText, FoodPlanSystem.GetDisplayName(FoodPlanSystem.CurrentPlan));
+            SetText(
+                pendingPlanText,
+                FoodPlanSystem.HasPendingPlan
+                    ? FoodPlanSystem.GetDisplayName(FoodPlanSystem.PendingPlan)
+                    : "-");
             SetText(changeStateText, BuildChangeStateText());
+            if (tightPlanButton != null)
+            {
+                tightPlanButton.gameObject.SetActive(false);
+            }
+            SetButtonLabel(normalPlanButton, "標準供應");
+            SetButtonLabel(generousPlanButton, "鼓舞餐點");
 
             bool canChange = CanChangePlan();
-            SetButtonInteractable(tightPlanButton, canChange);
             SetButtonInteractable(normalPlanButton, canChange);
             SetButtonInteractable(generousPlanButton, canChange);
         }
@@ -116,12 +120,6 @@ namespace ZombieCardSurvive.Cards.UI
 
         private void HookButtons()
         {
-            if (tightPlanButton != null)
-            {
-                tightPlanButton.onClick.RemoveListener(SetTightPlan);
-                tightPlanButton.onClick.AddListener(SetTightPlan);
-            }
-
             if (normalPlanButton != null)
             {
                 normalPlanButton.onClick.RemoveListener(SetNormalPlan);
@@ -137,11 +135,6 @@ namespace ZombieCardSurvive.Cards.UI
 
         private void UnhookButtons()
         {
-            if (tightPlanButton != null)
-            {
-                tightPlanButton.onClick.RemoveListener(SetTightPlan);
-            }
-
             if (normalPlanButton != null)
             {
                 normalPlanButton.onClick.RemoveListener(SetNormalPlan);
@@ -166,6 +159,14 @@ namespace ZombieCardSurvive.Cards.UI
             if (target != null)
             {
                 target.interactable = interactable;
+            }
+        }
+
+        private static void SetButtonLabel(Button target, string value)
+        {
+            if (target != null)
+            {
+                SetText(target.GetComponentInChildren<TMP_Text>(true), value);
             }
         }
     }

@@ -12,18 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b8dae5c7c6141328c97f8da37474e16, type: 3}
   m_Name: "\u7C21\u6613\u8CC7\u6E90\u5305"
   m_EditorClassIdentifier: 
-  packId: pack_00dc2115595e4eb69afb1162b8b7c857
-  displayName: 
+  packId: PACK-COMMON-RESOURCE-01
+  displayName: "\u7C21\u6613\u8CC7\u6E90\u5305"
   artwork: {fileID: 0}
   packType: 1
-  cardsToGenerate: 4
+  cardsToGenerate: 2
   cardPool:
-  - card: {fileID: 11400000, guid: 0a20066248a82ff4ca3684877867e6bb, type: 2}
+  - card: {fileID: 11400000, guid: a322f6dc208bd924891a0e339df5d62c, type: 2}
     weight: 80
     isZombiePollution: 0
-  - card: {fileID: 11400000, guid: 337db676956248540b902cc1dd21a6b4, type: 2}
-    weight: 10
-    isZombiePollution: 0
-  - card: {fileID: 11400000, guid: 9d3dae7b2f4286847a5b73d0f4718588, type: 2}
+  - card: {fileID: 11400000, guid: d558edb3d4854b94799e5fc17438bca4, type: 2}
     weight: 10
     isZombiePollution: 0

@@ -60,6 +60,79 @@ namespace ZombieCardSurvive.Tests.Editor
         }
 
         [Test]
+        public void ReservationCommit_AllNotificationsObserveFinalState()
+        {
+            Assert.That(
+                ResourceReservationService.TryReserve(
+                    new ResourceCost(4, 3),
+                    out ResourceReservationToken token),
+                Is.True);
+            int notificationCount = 0;
+            bool sawIntermediateState = false;
+            void Capture()
+            {
+                notificationCount++;
+                sawIntermediateState |= ResourceReservationService.ReservedFood > FoodSystem.Food;
+                sawIntermediateState |= ResourceReservationService.ReservedResource > ResourceSystem.Resource;
+                sawIntermediateState |= FoodSystem.Food != 6;
+                sawIntermediateState |= ResourceSystem.Resource != 2;
+            }
+
+            FoodSystem.StateChanged += Capture;
+            ResourceSystem.StateChanged += Capture;
+            ResourceReservationService.StateChanged += Capture;
+            try
+            {
+                Assert.That(ResourceReservationService.Commit(token), Is.True);
+            }
+            finally
+            {
+                FoodSystem.StateChanged -= Capture;
+                ResourceSystem.StateChanged -= Capture;
+                ResourceReservationService.StateChanged -= Capture;
+            }
+
+            Assert.That(notificationCount, Is.GreaterThanOrEqualTo(1));
+            Assert.That(sawIntermediateState, Is.False);
+            Assert.That(ResourceReservationService.ReservedFood, Is.Zero);
+            Assert.That(ResourceReservationService.ReservedResource, Is.Zero);
+        }
+
+        [Test]
+        public void ReservationCommit_RemovesTokenBeforePublishingCallbacks()
+        {
+            Assert.That(
+                ResourceReservationService.TryReserve(
+                    new ResourceCost(4, 3),
+                    out ResourceReservationToken token),
+                Is.True);
+            bool releaseAttempted = false;
+            bool releaseSucceeded = true;
+            void TryReentrantRelease()
+            {
+                releaseAttempted = true;
+                releaseSucceeded = ResourceReservationService.Release(token);
+            }
+
+            FoodSystem.StateChanged += TryReentrantRelease;
+            try
+            {
+                Assert.That(ResourceReservationService.Commit(token), Is.True);
+            }
+            finally
+            {
+                FoodSystem.StateChanged -= TryReentrantRelease;
+            }
+
+            Assert.That(releaseAttempted, Is.True);
+            Assert.That(releaseSucceeded, Is.False);
+            Assert.That(FoodSystem.Food, Is.EqualTo(6));
+            Assert.That(ResourceSystem.Resource, Is.EqualTo(2));
+            Assert.That(ResourceReservationService.ReservedFood, Is.Zero);
+            Assert.That(ResourceReservationService.ReservedResource, Is.Zero);
+        }
+
+        [Test]
         public void CraftJob_ReturnsOverflowWhenProductionExceedsRequirement()
         {
             CardCraftRecipeData recipe = ScriptableObject.CreateInstance<CardCraftRecipeData>();

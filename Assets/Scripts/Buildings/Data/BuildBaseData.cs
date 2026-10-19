@@ -16,6 +16,7 @@ namespace ZombieCardSurvive.Buildings.Data
         [SerializeField] private List<string> unlockRequirementIds = new List<string>();
         [SerializeField] private List<BuildingLevelData> levels = new List<BuildingLevelData>();
         [SerializeField] private List<BuildingInteractionData> interactions = new List<BuildingInteractionData>();
+        [SerializeField] private BuildingPresentationData presentation;
 
         public string BuildingId => buildingId;
         public string DisplayName => displayName;
@@ -26,6 +27,7 @@ namespace ZombieCardSurvive.Buildings.Data
         public IReadOnlyList<string> UnlockRequirementIds => unlockRequirementIds;
         public IReadOnlyList<BuildingLevelData> Levels => levels;
         public IReadOnlyList<BuildingInteractionData> Interactions => interactions;
+        public BuildingPresentationData Presentation => presentation;
         public string Id => buildingId;
 
         private void OnValidate()

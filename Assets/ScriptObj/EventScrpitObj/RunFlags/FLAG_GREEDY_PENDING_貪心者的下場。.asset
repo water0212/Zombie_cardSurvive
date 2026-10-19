@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ded64a2d13a7abd4ebcdcbd482961f94, type: 3}
+  m_Name: "FLAG_GREEDY_PENDING_\u8CAA\u5FC3\u8005\u7684\u4E0B\u5834\u3002"
+  m_EditorClassIdentifier: 
+  flagId: FLAG_GREEDY_PENDING
+  displayName: "\u9078\u64C7\u8CAA\u5FC3\u4E8B\u4EF6\u5F8C\u53EF\u89F8\u767C"
+  description: "\u9078\u64C7\u8CAA\u5FC3\u4E8B\u4EF6\u5F8C\u53EF\u89F8\u767C\uFF0C\u53EF\u89F8\u767C\u5F8C\u7E8C\u7279\u6B8A\u4E8B\u4EF6"
+  defaultValue: 0
+  minimumValue: 0
+  maximumValue: 5

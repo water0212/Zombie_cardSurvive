@@ -1,0 +1,167 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55e7408c4e352944ab27086d52cb2770, type: 3}
+  m_Name: DefaultDeckNegetive
+  m_EditorClassIdentifier: 
+  eventId: event_9fe04231043a4975a37f311bea33213f
+  displayTitle: "\u6E2C\u8A66\u8CA0\u9762\u4E8B\u4EF6"
+  description: "\u6E2C\u8A66\u8CA0\u9762\u4E8B\u4EF6 {paid:N} {shortage:N}"
+  artwork: {fileID: 0}
+  choices:
+  - choiceText: "\u640D\u5931{magnitude:0}\u9EDE\u8CC7\u6E90"
+    resultTitle: "\u640D\u5931\u4E86 {magnitude:0} \u9EDE\u8CC7\u6E90"
+    resultDescription: "\u640D\u5931\u4E86{magnitude:0} \u9EDE\u8CC7\u6E90\u3002\u5BE6\u969B\u640D\u5931{paid:0}
+      \uFF0C\u5171\u77ED\u7F3A{shortage:0}\u9EDE\u8CC7\u6E90"
+    resultArtwork: {fileID: 0}
+    effects:
+    - carrier: 1
+      category: 0
+      valueEffectType: 4
+      cardFlowEffectType: 0
+      buildingEffectType: 0
+      survivorEffectType: 0
+      cardData: {fileID: 0}
+      amount: 10
+      selectionCount: 0
+      cardSelectionFilter:
+        useCardTypeFilter: 0
+        allowedCardTypes: 
+        useCardRarityFilter: 0
+        allowedCardRarities: 
+        useEnergyCostFilter: 0
+        energyCostFilterMode: 0
+        energyCost: 0
+      effectId: 
+      isPermanent: 0
+      remainingTurns: 0
+      eventScaling:
+        scaleSource: 0
+        scalingStrength: 0
+        minimumFinalMagnitude: 0
+        maximumFinalMagnitude: 0
+        roundingMode: 0
+      eventPaymentMode: 1
+      requiredBuildingId: 
+      requiredBuildingLevel: 0
+      invertBuildingRequirement: 0
+    forcedLossConsequences:
+    - sourceEffectIndex: 0
+      amountMode: 1
+      consequenceEffect:
+        carrier: 1
+        category: 0
+        valueEffectType: 15
+        cardFlowEffectType: 0
+        buildingEffectType: 0
+        survivorEffectType: 0
+        cardData: {fileID: 0}
+        amount: 2
+        selectionCount: 0
+        cardSelectionFilter:
+          useCardTypeFilter: 0
+          allowedCardTypes: 
+          useCardRarityFilter: 0
+          allowedCardRarities: 
+          useEnergyCostFilter: 0
+          energyCostFilterMode: 0
+          energyCost: 0
+        effectId: 
+        isPermanent: 0
+        remainingTurns: 0
+        eventScaling:
+          scaleSource: 0
+          scalingStrength: 0
+          minimumFinalMagnitude: 0
+          maximumFinalMagnitude: 0
+          roundingMode: 0
+        eventPaymentMode: 0
+        requiredBuildingId: 
+        requiredBuildingLevel: 0
+        invertBuildingRequirement: 0
+  - choiceText: "\u6E1B\u5C11 {magnitude:0}\u9EDE\u98DF\u7269\uFF0C\u7372\u5F97{magnitude:1}\u9EDE\u8CC7\u6E90"
+    resultTitle: "\u98DF\u7269\u63DB\u8CC7\u6E90"
+    resultDescription: "\u6E1B\u5C11 {magnitude:0}\u9EDE\u98DF\u7269\uFF0C\u7372\u5F97{magnitude:1}\u9EDE\u8CC7\u6E90"
+    resultArtwork: {fileID: 0}
+    effects:
+    - carrier: 1
+      category: 0
+      valueEffectType: 1
+      cardFlowEffectType: 0
+      buildingEffectType: 0
+      survivorEffectType: 0
+      cardData: {fileID: 0}
+      amount: 2
+      selectionCount: 0
+      cardSelectionFilter:
+        useCardTypeFilter: 0
+        allowedCardTypes: 
+        useCardRarityFilter: 0
+        allowedCardRarities: 
+        useEnergyCostFilter: 0
+        energyCostFilterMode: 0
+        energyCost: 0
+      effectId: 
+      isPermanent: 0
+      remainingTurns: 0
+      eventScaling:
+        scaleSource: 1
+        scalingStrength: 2
+        minimumFinalMagnitude: 0
+        maximumFinalMagnitude: 0
+        roundingMode: 0
+      eventPaymentMode: 0
+      requiredBuildingId: 
+      requiredBuildingLevel: 0
+      invertBuildingRequirement: 0
+    - carrier: 1
+      category: 0
+      valueEffectType: 3
+      cardFlowEffectType: 0
+      buildingEffectType: 0
+      survivorEffectType: 0
+      cardData: {fileID: 0}
+      amount: 4
+      selectionCount: 0
+      cardSelectionFilter:
+        useCardTypeFilter: 0
+        allowedCardTypes: 
+        useCardRarityFilter: 0
+        allowedCardRarities: 
+        useEnergyCostFilter: 0
+        energyCostFilterMode: 0
+        energyCost: 0
+      effectId: 
+      isPermanent: 0
+      remainingTurns: 0
+      eventScaling:
+        scaleSource: 1
+        scalingStrength: 2
+        minimumFinalMagnitude: 0
+        maximumFinalMagnitude: 0
+        roundingMode: 0
+      eventPaymentMode: 0
+      requiredBuildingId: 
+      requiredBuildingLevel: 0
+      invertBuildingRequirement: 0
+    forcedLossConsequences: []
+  moodCategory: 2
+  contentCategory: 0
+  earliestDay: 1
+  latestDay: 0
+  baseWeight: 100
+  canRepeat: 1
+  maximumAppearancesPerRun: 0
+  minimumDaysBetweenAppearances: 1
+  eligibilityConditions:
+    matchMode: 0
+    invertResult: 0
+    conditions: []

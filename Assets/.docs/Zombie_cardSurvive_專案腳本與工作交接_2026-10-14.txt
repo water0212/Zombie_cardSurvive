@@ -1,0 +1,491 @@
+Zombie_cardSurvive 專案腳本與工作交接
+更新日期：2026-10-14
+專案工作目錄：C:\Users\water\Desktop\GameDev\Zombie_cardSurvive\Assets
+
+======================================================================
+一、專案摘要
+======================================================================
+
+本作是基地指揮者視角的末日生存卡牌 Roguelite。玩家透過卡組、建築、探索、
+事件、食物／資源／戰鬥值調度與士氣管理，使基地度過長期生存壓力。
+
+目前已具備可玩的核心循環：
+卡牌與牌組 → 探索／卡包 → 事件 → 建築施工與製作 → 殭屍威脅與輪末結算。
+士氣已成為正式失敗條件，具有永久上限損傷、不可逆 Stage 與基地崩潰。
+
+目前最新完成的大型工作是：
+BUILDING-UI-001「建築詳情與書籤式功能面板」。
+狀態為 Complete with Notes，已通過使用者小範圍 Play 與輕量結案 Review。
+
+
+======================================================================
+二、接手時必讀文件
+======================================================================
+
+1. Docs/CodexHandoff/current-context.md
+   舊專案總體交接。部分早期描述已被後來的 GDD／Backlog 規則取代，不能單獨
+   當成最新權威。
+
+2. Docs/GameDesign/ZombieSurvivalCard_GDD.md
+   遊戲設計權威文件；數值、流程和系統目的以此為主要依據。
+
+3. Docs/GameDesign/ZombieSurvivalCard_Scrum_Backlog.md
+   PB 項目、Sprint 狀態、完成紀錄及推薦下一步。
+
+4. design/ux/hud.md
+   HUD、事件／探索畫面、資訊層級、士氣金字塔與互動方式的 UX 決策。
+
+5. design/art/art-bible.md
+   目前視覺方向：末日勤務手冊、紙張／筆記感、黑白主體與有限功能色。
+
+6. design/assets/asset-manifest.md
+   Gameplay HUD 與相關視覺資產的用途和技術邊界。
+
+7. Docs/Architecture/adr-0001-sprite-renderer-base-world-and-canvas-hud-boundary.md
+   中央基地世界物件採 SpriteRenderer、HUD 採 Canvas 的邊界決策。
+
+8. Docs/Architecture/adr-0002-building-bookmark-presentation.md
+   建築書籤 UI 與 Runtime 權威分離的正式決策。
+
+9. production/epics/building-ui/BUILDING-UI-001.md
+   最新建築面板工作範圍與 16 項驗收條件。
+
+10. production/qa/evidence/building-bookmark-panel-evidence.md
+    最新建築面板驗收證據、剩餘備註與不可執行事項。
+
+
+======================================================================
+三、程式架構總覽
+======================================================================
+
+整體採「Data / Runtime / UI / Editor」分工：
+
+- Data：ScriptableObject 與序列化設定，只描述規則和內容。
+- Runtime：一局遊戲的權威狀態、驗證、支付與結算。
+- UI：讀取 Runtime、顯示資料、把玩家要求送給 Runtime；不可自行修改經濟狀態。
+- Editor：建立／更新 Asset、Prefab、場景引用的可重複套用工具。
+
+重要原則：
+
+- 不要手寫 Unity .asset YAML，使用 Unity Editor API 或既有 Setup Utility。
+- UI 不可保存第二份資源、製作工作、士氣或卡牌權威資料。
+- 事件、探索與建築等全螢幕流程必須遵守共同流程鎖定。
+- Setup Utility 應保持冪等，可重複執行而不生成重複物件。
+- 專案工作樹目前有大量尚未提交的修改與新增檔案；不可重置、覆蓋或清除。
+
+
+======================================================================
+四、主要 Script 模組與用途
+======================================================================
+
+【A. 回合與 Run 流程】Scripts/Run/
+
+- RunPhase.cs
+  定義目前局內階段。
+- RunPhaseController.cs
+  控制 Turn／Round／事件／建築結算／失敗停止點；士氣崩潰後阻止繼續流程。
+- RoundEndResolver.cs
+  輪末核心結算：殭屍擊殺與漏防、下輪效果、食物、士氣批次、Stage 效果等。
+- RoundEndReport.cs
+  保存輪末因果結果，供 Debug 與未來正式結算回饋使用。
+- RunPhaseDebugView.cs
+  開發期流程狀態顯示。
+
+【B. 全局數值與失敗條件】Scripts/ValueSystems/
+
+- FoodSystem.cs
+  永久食物、臨時食物、保留量、消耗與容量的權威。
+- FoodPlanSystem.cs
+  標準供應／鼓舞餐點；正規化舊方案並計算輪末需求。
+  已知修正：同一正規化方案不可再次消耗本輪調整機會。
+- ResourceSystem.cs
+  資源數值、保留、消耗與狀態通知。
+- CombatSystem.cs
+  戰鬥值、殭屍擊殺分配及場上威脅處理。
+- EnergySystem.cs
+  基礎最大能量、Stage 修正、Turn 補滿與最低 0 的處理。
+- MoraleSystem.cs
+  士氣唯一權威：Current、Maximum、不可逆 Stage、批次提交與基地崩潰。
+- MoralePyramidSystem.cs
+  鎖定本局 Profile Snapshot，切換並整組取代 Stage 效果。
+- MoralePyramidProfileData.cs
+  定義三階士氣 Profile 的顯示資料和效果。
+- MoraleBatchResult.cs / MoraleChangeResult.cs / MoraleCollapseStage.cs
+  士氣結算資料、變更結果和階段型別。
+- ZombieThreatRuntime.cs
+  場上殭屍威脅的 Runtime 狀態與完整反應窗口資料。
+- NextRoundEffectSystem.cs
+  卡牌、事件、殭屍共用的下輪效果排程、啟用與消耗。
+- RoundFoodConsumptionResult.cs / ValueConsumptionResult.cs
+  食物及通用數值消耗結果。
+- TurnProductionEffect.cs
+  Turn 產出效果資料。
+
+士氣現行規則：
+- 新局 100／100。
+- 士氣低於 70 進 Stage 1，低於 35 進 Stage 2；跨越後不可回復舊 Stage。
+- 士氣歸 0 時基地崩潰，Run 進入 Failed。
+- 食物短缺每缺 1 扣 3 士氣，單輪最多扣 15。
+- 鼓舞餐點成功恢復 5；高士氣自然回落每輪最多 3，最低停在 70。
+- Demo Profile：Stage 0 無效果、Stage 1 每輪資源 -1、Stage 2 最大能量 -1。
+
+【C. 卡牌、牌組與替換】Scripts/Cards/
+
+Data：
+- CardBase.cs：所有卡牌的共用資料與 Cost／Effects／使用次數。
+- FoodCardData、ResourceCardData、CombatCardData、ExplorationCardData：各類卡牌資料。
+- ConstructionCardData：建築施工卡。
+- ZombieCardData：殭屍卡的血量、攻擊、永久士氣上限損傷及存活下輪效果。
+- DeckLayoutDefinition / DeckSlotDefinition / DeckSlotType：資料驅動牌組欄位設定。
+- ZombieWorldVisualProfile.cs：殭屍世界視覺設定。
+
+Runtime：
+- CardController.cs：抽牌、打牌、Cost、Effects、使用次數、棄牌／耗盡的核心管線。
+- CardRuntime.cs：單張卡的局內狀態。
+- CardInventory.cs：卡牌倉庫。
+- DeckBuildSystem.cs / DeckBuildResult.cs：建立合法正規牌組。
+- DeckReplacementSystem 與相關 Request／Session／Option：換卡流程。
+- CardSelectionRequest / CardSelectionFilter：通用選牌要求。
+
+重要規則：
+- 手動與抽到自動打出共用 Costs → Effects → 使用次數 → 棄牌／耗盡流程。
+- 自動打出免付 EnergyCost，但一般 Cost 仍必須支付；Cost 不足時留在手牌。
+- 留在手牌後可於同 Turn 改為手動打出，屆時需要支付能量。
+- 使用次數耗盡後自然進入耗盡區，不為殭屍卡建立額外特例。
+
+UI：
+- CardView、CardHandView：單卡及手牌顯示。
+- CardPlayEffectController：打牌替身／回饋。
+- DeckReplacementView 系列：換卡操作。
+- CardPileViewSystem：抽牌堆、棄牌堆等查看。
+- ZombieThreatViewController / ZombieThreatView / ZombieThreatDetailView：殭屍威脅 UI。
+- ZombieThreatLayoutCalculator / Slot：多殭屍中心向外、多列縮放排版。
+
+【D. 通用效果】Scripts/Effects/
+
+- GameEffectData.cs
+  卡牌與事件共用效果資料；依 Category 和子型別決定處理方式。
+- GameEffectCategory.cs
+  效果大類，例如數值、卡牌流程、事件狀態、威脅與下輪效果。
+- GameEffectContext.cs
+  執行時上下文，保存載體、來源與必要 Runtime 資訊。
+- GameEffectCarrier.cs
+  表示效果由 Card／Event／Other 等載體執行；不是效果 Runtime 本身。
+- NextRoundEffectData.cs
+  可重用的延遲效果定義。V1 已支援下一輪固定食物需求增加。
+- ValueEffectType / CardFlowEffectType / EventStateEffectType /
+  ThreatEffectType / SurvivorEffectType
+  各效果分類的具體型別。
+- GameEffectDataDrawer.cs
+  依效果分類顯示正確 Inspector 欄位，避免無關欄位混在一起。
+
+【E. 事件系統】Scripts/Events/
+
+Data：
+- EventData.cs：事件本體、標題、敘述、選項與結果文字。
+- EventChoiceData.cs：選項文字、Cost、Effects、結果與可用條件。
+- EventConditionData.cs：事件／選項條件。
+- EventEffectScalingData 與 EventMagnitudeTypes：效果縮放來源。
+- EventSchedulerSettingsData / EventScheduleTypes / EventWeightModifierData：排程與動態權重。
+- RunFlagData：事件旗標資產。
+- EventForcedLossConsequenceData：無法付款時的強制後果。
+
+Runtime：
+- EventScheduler.cs：每日事件選取與事件池排程。
+- EventFlowController.cs / EventFlowState.cs：事件畫面的正式狀態切換。
+- EventMagnitudeRuntime 與相關 Snapshot／Input：事件規模計算與鎖定。
+- EventEffectScalingResolver.cs：把選定縮放來源換成實際數值。
+- EventChoiceAvailability / ExecutionPlan / ExecutionResult：事前驗證與原子執行。
+- RunFlagRuntimeStore.cs：本局 Flag 狀態。
+- EventRunHistory.cs：事件出現紀錄。
+- ResolvedEventRuntime / ResolvedEventChoiceRuntime：顯示時鎖定的事件內容。
+- ResolvedHordeSpawnRuntime：事件屍群快照與提交。
+- EventTextFormatter.cs：TMP Sprite Asset 圖示文字格式化。
+
+UI：
+- EventFlowView.cs：事件標題、圖片、敘述、選項、結果與暫時查看遊戲資訊。
+- EventChoiceButtonView.cs：選項可用／不可用、成本圖示、停用理由。
+- EventPresentationFormatter.cs：把資料轉成事件畫面文案。
+- EventResultValuesView.cs：事件結算數值圖示與結果。
+
+Editor：
+- EventContentV1SetupUtility / Specification：建立正式事件內容 V1。
+- EventScheduleSimulationUtility：事件排程模擬。
+
+已完成：EventMagnitude、ChoiceCost、ForcedLoss、RunFlag、事件條件、動態權重、
+事件生成屍群，以及文字內 TMP Sprite 圖示。
+
+【F. 探索與地區】Scripts/Exploration/
+
+Data：
+- ExplorationRegionData.cs：地區設定、卡包、風險、數量與顯示資訊。
+- CardPackData.cs：卡包產出內容。
+- ExplorationTypes.cs：探索相關型別。
+
+Runtime：
+- ExplorationSystem.cs：探索選擇、支付、結果與卡包發放。
+- RegionRuntime.cs：地區剩餘資源、殭屍、熱度、清理度與枯竭狀態。
+- RegionPackRuntime.cs：卡包剩餘數量與依剩餘比例計算權重。
+- ExplorationResult.cs：探索結果資料。
+
+UI：
+- ExplorationFlowView.cs：探索全螢幕流程與結果切換。
+- ExplorationRegionCardView.cs：地區選項、模糊情報、可用性與原因。
+
+Editor：
+- RegionContentV1SetupUtility.cs：建立／更新正式地區內容。
+
+【G. 威脅與屍群】Scripts/Threats/
+
+Data：
+- ThreatSettingsData / ThreatBandThresholds / ThreatBand：威脅曲線設定。
+- HordeProfileData：屍群預算、候選殭屍、權重、數量上限與組成規則。
+- ZombieArchetypeEntry / HordeCompositionStyle：候選資料與組成風格。
+
+Runtime：
+- ThreatRuntime.cs：WorldThreat、BaseAttention、RegionPressure 的計算入口。
+- ThreatSnapshot / ThreatInputSnapshot / RegionPressureSnapshot：威脅快照。
+- HordeBudgetRuntime / Snapshot / InputSnapshot：把威脅換算成遭遇預算。
+- HordeCompositionRuntime / Result / Entry / StopReason：按預算選出殭屍組合。
+
+Editor：
+- HordeContentV1SetupUtility / Specification：建立 3 種正式殭屍與標準屍群 Profile。
+
+完成狀態：PB-P2-009A～D 已完成。正式事件可鎖定威脅快照、計算屍群並在
+玩家確認後一次加入 CombatSystem；失敗時不扣成本、不清 Flag、不生成半套屍群。
+
+【H. 建築、施工與製作】Scripts/Buildings/
+
+Data：
+- BuildBaseData.cs：建築本體、等級、互動與呈現配置引用。
+- BuildingLevelData.cs：各等級效果、施工需求與解鎖內容。
+- BuildingInteractionData.cs：建築功能的共同基底。
+- CardCraftInteractionData / CardCraftRecipeData：製作列、食譜、成本與製造力。
+- CardUpgradeInteractionData：卡牌強化功能。
+- FoodPlanInteractionData：情報中心的食物計畫功能。
+- FoodStorageInteractionData：倉庫／食物容量功能。
+- BuildingPresentationData.cs：書籤頁 ID、標題、順序、公開狀態及頁面引用。
+- BuildingWorldVisualProfile.cs：建築世界物件視覺資料。
+
+Runtime：
+- BuildingSystem.cs：建築建立、升級、互動、製作下單／取消與輪末結算入口。
+- BuildingRuntime.cs：單一建築的局內狀態。
+- ConstructionJobRuntime.cs：施工工作。
+- CraftLineRuntime.cs：獨立製作列、產能與佇列。
+- CraftJobRuntime.cs：以 JobId 辨識的單筆製作任務。
+- ResourceReservationService.cs：製作／施工成本的保留、提交與解除。
+- BuildingResolutionReport.cs：建築輪末結算報告。
+
+UI：
+- BuildingDetailView.cs：左側建築資料、中間功能書籤、右側功能頁與最右任務列。
+- CardCraftView.cs：食譜展開、加入製作、選定 Job、頁面閱讀狀態。
+- CraftRecipeRowView.cs：單一食譜列；點擊只展開／收合，不直接排程。
+- CraftJobRowView.cs：左鍵查看、右鍵取消、待取消與進度顯示。
+- FoodPlanInteractionView.cs：情報中心食物計畫。
+- CardUpgradeView.cs：卡牌強化功能。
+- BuildingInformationPageView.cs：資訊頁 Bind／Refresh／Unbind 共用入口。
+- BaseDetailsPageView.cs：情報中心唯讀基地目前數值頁；尚無昨日統計。
+- BuildingWorldView.cs：Canvas 版本的建築世界互動。
+
+Editor：
+- BuildingV1SetupUtility / BuildingContentV1SetupUtility：建築內容與資產建立。
+- BuildingBookmarkPanelSetupUtility：冪等套用建築書籤面板、Prefab 與 SampleScene 引用。
+
+最新驗收：BUILDING-UI-001 的 16／16 條件已以程式檢查、4 項針對性測試、
+雙解析度證據與使用者 Play 組合覆蓋。
+
+剩餘備註：
+- 卡牌強化仍沿用既有 Active-only 規則，建築升級期間暫不可強化；此點與 GDD
+  「升級維持原等級功能」有既有差異，尚未另行修改 Runtime。
+- 無食譜、極長文字、隱藏後重新公開等低風險案例主要是靜態檢查，沒有逐項 Play。
+
+【I. Gameplay HUD、世界呈現與流程查看】Scripts/UI/
+
+- GameplayHudRuntimePresenter.cs
+  事件式讀取士氣、食物、資源、戰鬥、能量、手牌與牌堆；不持有權威數值。
+- P0GameplayHudSliceController.cs
+  P0 HUD 整合切片控制器。
+- BuildingWorldSpriteView.cs / ZombieThreatSpriteView.cs
+  SpriteRenderer 世界物件呈現。
+- ZombieThreatSpriteViewController.cs
+  殭屍世界 Sprite 管理。
+- WorldInteractionRouter.cs / IWorldInteractionTarget.cs
+  Physics2D 世界點擊與共同流程鎖定。
+- WorldLabelController.cs
+  共用 WorldLabelCanvas 標籤管理；避免每個物件各自建立 Canvas。
+- FlowInspectionController.cs
+  事件／探索期間暫時退出，僅允許查看指定資訊與卡牌倉庫。
+
+Editor：
+- GameplayHudP0SetupUtility：建立 P0 HUD 驗證場景。
+- PaperUiMaterialPreviewSetupUtility：紙張 UI 材質預覽場景。
+- PaperUiFlowSkinUtility：事件／探索等流程紙張樣式套用。
+- EventTextIconSetupUtility：建立 TMP Sprite Asset 與事件文字圖示引用。
+- ApprovedResourceIconSetupUtility：套用食物、資源、戰鬥值、能量四種核准圖示。
+- ExplorationPresentationSetupUtility：探索畫面排版與引用。
+
+美術／UX 方向：
+- 主畫面清楚區分中央基地世界物件與邊緣 HUD。
+- 建築與殭屍採 SpriteRenderer，以支援粒子、光影和「活著的基地」。
+- HUD、事件、探索、詳情仍使用 Canvas。
+- 紙張材質採較灰暗、破碎但可讀的末日筆記風。
+- 資源圖示使用有限功能色；背景透明。
+
+【J. 終局資料】Scripts/Endings/
+
+- EndingScenarioData、EndingEventPackData、EndingConditionData、EndingKeyItemData、EndingTypes
+  已建立特殊終局的資料結構：出現條件、選擇事件、事件包、達成／過時流程。
+- EndingDataEditors.cs
+  終局資料的 Inspector 編輯支援。
+
+目前終局主要是資料與設計骨架，完整 Runtime／正式內容仍未完成。
+
+【K. 輸入、資源 Debug、共用工具】
+
+- Scripts/InputSystem/ShortcutInputController.cs
+  新 Input System 快捷鍵與流程輸入。
+- Scripts/Resources/ResourceControl.cs
+  早期資源控制／相容入口；新增功能應優先確認 ResourceSystem 的權威。
+- Scripts/Shared/AutoId/
+  IAutoIdAsset、AutoIdUtility 及自訂 Inspector，為 Card／Event 等資產產生穩定 ID。
+- Scripts/Editor/TmpFontMigrationUtility.cs
+  TMP 字型與缺字遷移工具。
+
+
+======================================================================
+五、測試與驗證現況
+======================================================================
+
+Tests/Editor 目前涵蓋：
+
+- 士氣崩潰、批次結算、Profile 與 Stage 效果。
+- 食物／臨時食物及數值狀態通知。
+- 下輪效果。
+- Threat、HordeBudget、事件生成屍群與正式內容引用。
+- EventMagnitude、排程、RunFlag、付款邊界與結果呈現。
+- RegionRuntime 與正式地區內容。
+- BuildingRuntime、製作呈現、JobId、取消與鎖定預覽。
+- GameplayHudRuntimePresenter。
+- 殭屍排版與詳細畫面。
+- GameEffectData Inspector。
+
+重要限制：
+- 曾執行完整 EditMode 套件時，系統／pagefile 使用率達 97%，Unity 崩潰。
+- 不要直接執行完整高記憶體測試套件。
+- 優先採離線低併發編譯、針對性 EditMode、Console 0 errors 和小範圍 Play。
+- BUILDING-UI-001 最近紀錄：離線編譯 0 errors、Unity Console 0 errors、4 項針對性
+  檢查通過、使用者 Play 通過。
+
+
+======================================================================
+六、目前已完成或可用的主要項目
+======================================================================
+
+- 卡牌抽取、手牌、打出、棄牌、耗盡、使用次數。
+- 正規牌組合法性、卡牌倉庫與換卡流程。
+- 卡牌／事件共用 GameEffectData。
+- 有限地區資源、卡包剩餘比例權重、探索熱度與枯竭。
+- 探索三選一及獎勵流程。
+- 每日事件、條件、旗標、倍率、付款、Forced Loss 與結果 UI。
+- 威脅三層模型及 HordeBudget／Composition。
+- 正式屍群事件與 3 種殭屍內容骨架。
+- 食物、臨時食物、資源、戰鬥值、能量。
+- 士氣批次、永久上限、不可逆 Stage、Profile 效果與基地崩潰。
+- 殭屍完整反應窗口、漏防士氣傷害和下輪效果。
+- 建築、施工卡、獨立製作列、成本保留、工作取消與結算。
+- 建築書籤式詳情面板和情報中心唯讀基地詳情。
+- 事件／探索紙張 UI、TMP 文字圖示與四種資源圖示。
+- P0 Gameplay HUD 事件式 Presenter 與世界 Sprite 呈現骨架。
+
+
+======================================================================
+七、未完成、待定與建議下一步
+======================================================================
+
+最高優先候選：PB-P0-014E
+- 正式士氣 HUD。
+- 分散在各永久資源區塊的輪末預警。
+- 跨越 Stage 門檻時的停頓、金字塔放大、舊效果移除與新效果加入動畫。
+- 基地崩潰報告。
+- 局前 Morale Profile 選擇入口與架構；目前 Demo 仍可採固定 Profile。
+
+其他候選：
+- 修正卡牌強化在建築升級期間的 Active-only 規則差異。
+- 對建築書籤面板補做無食譜、極長文字、隱藏／重新公開等 Play case。
+- 完成 3 種正式殭屍的獨立美術。
+- 擴充事件正式內容池及長局節奏 Playtest。
+- 完成特殊終局 Runtime、Save State 與後期欄位強化。
+- 完成 P0 HUD 尚未驗收的 10 手牌、7 建築／12 殭屍壓力、灰階／色弱、
+  Reduced Motion 與效能量測。
+
+接手代理不可直接假設下一項一定是 014E。應先向使用者簡短說明上述候選，讓
+使用者選定；大型實作仍維持「先討論／確認，再開始修改」的工作方式。
+
+
+======================================================================
+八、Unity／MCP 與常用 Editor 入口
+======================================================================
+
+Unity 版本：2022.3.62f3
+Unity MCP：使用者通常會主動告知已開啟；需要改 Scene／Prefab 時優先使用 MCP。
+
+已知入口：
+- Tools > Zombie Card Survive > Gameplay HUD > Build P0 Integration Slice
+- Tools > Zombie Card Survive > Gameplay HUD > Build Paper UI Material Preview
+- 建築書籤面板入口由 BuildingBookmarkPanelSetupUtility 提供；執行前先在 Unity
+  選單確認實際名稱，工具應可重複套用。
+
+場景：
+- Scenes/SampleScene.unity：主要遊戲場景，包含大量使用者手動排版。
+- Scenes/GameplayHUD_P0_Integration.unity：P0 HUD 驗證場景。
+- Scenes/PaperUI_MaterialPreview.unity：紙張材質預覽。
+- Scenes/PaperUI_FlowReview.unity：事件／探索流程樣式檢視。
+- Scenes/UI Scene.unity：UI 排版工作場景。
+
+不得重建整個 SampleScene，也不要覆寫使用者手動調整的 UI。
+
+
+======================================================================
+九、工作樹與安全注意事項
+======================================================================
+
+- 目前 git status 有大量 Modified、Deleted、Untracked 項目，包含 GDD、Backlog、
+  Scene、Prefab、ScriptableObject、程式、測試和美術資產。
+- 這些修改視為使用者與先前工作成果，不可執行 git reset --hard、checkout --、
+  clean 或大量刪除。
+- 部分同 ID Event／CardPack 資產顯示為舊檔刪除＋新檔新增，可能是重新命名；
+  不可在未檢查 Unity GUID／引用前自行還原。
+- 不要把目前的未提交工作誤判為垃圾檔案。
+
+
+======================================================================
+十、與使用者合作方式
+======================================================================
+
+- 使用者偏好繁體中文。
+- 大型設計與系統修改先討論並確認；小型明確 bug 可直接修。
+- 使用者正在學 C#，解釋需包含「資料從哪裡來、誰有權修改、何時呼叫、為何
+  這樣分層」，不能只報告檔名。
+- Inspector、ScriptableObject、Runtime、UI 的關係要用初學者可理解的語言說明。
+- 使用者會親自進 Unity 做 Play 驗收；應提供短而明確的操作步驟。
+- 若 MCP 未連線，可先做唯讀程式檢查、文件、離線編譯或純 Data 規劃。
+
+
+======================================================================
+十一、新工作對話建議開場任務
+======================================================================
+
+請先閱讀：
+1. Assets/.docs/Zombie_cardSurvive_專案腳本與工作交接_2026-10-14.txt
+2. Assets/Docs/GameDesign/ZombieSurvivalCard_GDD.md
+3. Assets/Docs/GameDesign/ZombieSurvivalCard_Scrum_Backlog.md
+4. Assets/production/session-state/active.md
+
+接著：
+- 先確認工作樹，不要還原既有修改。
+- 告知使用者 BUILDING-UI-001 已輕量結案，目前尚未指定下一個 story。
+- 列出 PB-P0-014E、建築升級期卡牌強化規則差異、P0 HUD 剩餘驗收三個候選。
+- 等使用者選定後，先討論範圍與驗收方式，再開始實作。
+
+交接結論：目前沒有明確進行中的未完成程式修改；最新建築書籤面板已結案。
+下一個工作應由使用者選定，不要自行擴大範圍。

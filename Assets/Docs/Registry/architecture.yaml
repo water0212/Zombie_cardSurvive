@@ -1,0 +1,240 @@
+version: 1
+last_updated: "2026-09-17"
+project: "Zombie_cardSurvive"
+
+status_definitions:
+  proposed: "Decision is documented but still requires its ADR validation gate."
+  accepted: "Decision passed validation and its ADR is accepted."
+  superseded: "Decision has been replaced by a newer ADR."
+
+sources:
+  - id: "ADR-0001"
+    title: "SpriteRenderer 基地世界與 Canvas HUD 邊界"
+    path: "Docs/Architecture/adr-0001-sprite-renderer-base-world-and-canvas-hud-boundary.md"
+    status: "proposed"
+    validation_gate: "P0 Gameplay HUD integration slice"
+
+  - id: "ADR-0002"
+    title: "建築書籤式功能面板與 Runtime 分離"
+    path: "Docs/Architecture/adr-0002-building-bookmark-presentation.md"
+    status: "accepted"
+    validation_gate: "User explicitly accepted decision on 2026-09-17; implementation verification tracked separately in BUILDING-UI-001"
+
+engine_context:
+  engine: "Unity"
+  engine_version: "2022.3.62f3"
+  render_pipeline: "Universal Render Pipeline 14.0.12"
+  renderer: "URP 2D Renderer"
+  renderer_asset: "Settings/Renderer2D.asset"
+  source: "ADR-0001"
+  status: "proposed"
+
+state_ownership:
+  - id: "gameplay_runtime_authority"
+    owner: "Existing domain runtime systems"
+    consumers:
+      - "BuildingWorldSpriteView"
+      - "ZombieThreatSpriteView"
+      - "WorldLabelController"
+      - "HUDCanvas presenters"
+    access: "read_and_forward_input_only"
+    rule: "World and HUD presentation components must not become authoritative owners of Gameplay state."
+    source: "ADR-0001"
+    status: "proposed"
+
+  - id: "flow_lock_authority"
+    owner: "RunPhaseController and active flow controllers"
+    consumers:
+      - "HUDCanvas input layer"
+      - "WorldInteractionRouter"
+    access: "authoritative_read_only_lock_state"
+    rule: "The same authoritative flow state must lock both Canvas interaction and Physics2D world interaction."
+    source: "ADR-0001"
+    status: "proposed"
+
+  - id: "building_page_reading_state"
+    owner: "BuildingDetailView and function page views"
+    rule: "UI owns page selection, per-opening scroll, expanded recipe and selected JobId only; close/rebind resets reading state."
+    source: "ADR-0002"
+    status: "accepted"
+
+  - id: "building_crafting_and_resources"
+    owner: "BuildingSystem, BuildingRuntime, CraftLineRuntime and ResourceReservationService"
+    rule: "UI reads job state and forwards existing queue/cancel requests; runtime owns production, reservations and settlement."
+    source: "ADR-0002"
+    status: "accepted"
+
+interface_contracts:
+  - id: "building_world_binding"
+    signature: "BuildingWorldSpriteView.Bind(BuildingRuntime, BuildingWorldVisualProfile)"
+    provider: "BuildingWorldSpriteView"
+    responsibility: "Bind runtime building state to world artwork, visual states, label anchors and effect anchors."
+    source: "ADR-0001"
+    status: "proposed"
+
+  - id: "zombie_world_binding"
+    signature: "ZombieThreatSpriteView.Bind(ZombieThreatRuntime, ZombieWorldVisualProfile)"
+    provider: "ZombieThreatSpriteView"
+    responsibility: "Bind runtime threat state to zombie world artwork, labels, effects and interaction feedback."
+    source: "ADR-0001"
+    status: "proposed"
+
+  - id: "world_label_binding"
+    signature: "WorldLabelController.Bind(runtimeId, worldAnchor)"
+    provider: "WorldLabelController"
+    responsibility: "Project pooled labels from world anchors into one shared Canvas and preserve runtime-ID identity."
+    source: "ADR-0001"
+    status: "proposed"
+
+  - id: "world_input_lock"
+    signature: "WorldInteractionRouter.SetInputLocked(bool)"
+    provider: "WorldInteractionRouter"
+    responsibility: "Reject Physics2D hover, click and card-target queries whenever the authoritative flow lock is active."
+    source: "ADR-0001"
+    status: "proposed"
+
+  - id: "building_information_page_lifecycle"
+    signature: "Bind(BuildingSystem, BuildingRuntime); Refresh(); Unbind()"
+    provider: "Explicitly registered building information page views"
+    responsibility: "Read existing sources without economic writes; hidden pages are not automatically discovered from DetailPanel."
+    source: "ADR-0002"
+    status: "accepted"
+
+architecture_decisions:
+  - id: "building_information_page_registration"
+    decision: "explicit_presentation_configuration"
+    rule: "Only explicitly configured public information pages become bookmarks; legacy unconfigured buildings derive interaction bookmarks from Interactions order."
+    source: "ADR-0002"
+    status: "accepted"
+  - id: "central_base_rendering"
+    decision: "sprite_renderer_world_with_canvas_hud"
+    rule: "Render the central base, buildings, zombies, world lights, shadows and world particles under a fixed orthographic camera with SpriteRenderer and URP 2D; keep permanent HUD, cards, notifications, details and flow overlays on Canvas."
+    source: "ADR-0001"
+    status: "proposed"
+
+  - id: "world_label_rendering"
+    decision: "shared_screen_space_world_label_canvas"
+    rule: "Project all world labels into one pooled WorldLabelCanvas so labels remain sharp and unaffected by world lighting."
+    source: "ADR-0001"
+    status: "proposed"
+
+  - id: "world_entity_sorting"
+    decision: "locked_sorting_layers_and_sorting_groups"
+    rule: "Use dedicated world sorting layers and SortingGroup; World_Zombie must remain in front of World_Building."
+    required_layers:
+      - "World_Backdrop"
+      - "World_Ground"
+      - "World_Decal"
+      - "World_PropBack"
+      - "World_Building"
+      - "World_Zombie"
+      - "World_FX"
+      - "World_Overlay"
+    source: "ADR-0001"
+    status: "proposed"
+
+  - id: "world_input_routing"
+    decision: "ui_first_then_physics2d"
+    priority:
+      - "forced_flow_lock"
+      - "HUD_GraphicRaycaster"
+      - "WorldLabelCanvas_actions"
+      - "card_drag_target_query"
+      - "zombie_Physics2D_collider"
+      - "building_Physics2D_collider"
+      - "ground_or_clear_selection"
+    rule: "World interaction uses Physics2D only after higher-priority UI checks and the authoritative flow-lock check."
+    source: "ADR-0001"
+    status: "proposed"
+
+  - id: "world_visual_data_separation"
+    decision: "separate_card_and_world_visual_profiles"
+    rule: "BuildingWorldVisualProfile and ZombieWorldVisualProfile own world prefabs and anchors; card artwork fields must not be reused as world artwork fields."
+    source: "ADR-0001"
+    status: "proposed"
+
+  - id: "world_lighting_policy"
+    decision: "global_base_light_plus_restrained_local_lights"
+    rule: "Use one stable Global Light2D and restrained local lights for campfire, windows and functional activity; Light2D must not affect UI paper, text, icons or labels."
+    source: "ADR-0001"
+    status: "proposed"
+
+performance_budgets:
+  - id: "gameplay_hud_demo_world"
+    target_fps: 60
+    target_resolutions:
+      - "1280x720"
+      - "1920x1080"
+    stress_case:
+      buildings: 7
+      zombies: 12
+    limits:
+      local_lights: 6
+      shadow_casting_local_lights: 2
+      simplified_shadow_casters: 20
+      active_particles: 250
+      looping_particle_emitters: 6
+      simultaneous_one_shot_emitters: 4
+      visible_sprite_renderers: 80
+      world_draw_calls: 100
+      total_frame_draw_calls: 150
+    implementation_rules:
+      - "Use layer masks and non-allocating Physics2D queries."
+      - "Pool world labels and particle effects."
+      - "Disable particle collision and trails by default."
+      - "Prefer blob shadows for zombies unless profiling permits otherwise."
+    source: "ADR-0001"
+    status: "proposed"
+
+forbidden_patterns:
+  - id: "canvas_world_entities"
+    rule: "Do not implement final buildings or zombies as Canvas Image world entities."
+    reason: "Canvas world entities do not naturally support the required URP 2D lighting, shadow and spatial-effect pipeline."
+    source: "ADR-0001"
+    status: "proposed"
+
+  - id: "card_artwork_as_world_visual"
+    rule: "Do not reuse a card artwork reference as the world sprite reference for a building or zombie."
+    reason: "Card and world assets have different composition, pivot, lighting and state requirements."
+    source: "ADR-0001"
+    status: "proposed"
+
+  - id: "per_entity_canvas"
+    rule: "Do not create one Canvas per building or zombie label."
+    reason: "All projected world labels belong to one shared pooled WorldLabelCanvas."
+    source: "ADR-0001"
+    status: "proposed"
+
+  - id: "visual_only_input_blocker"
+    rule: "Do not rely on an opaque or transparent overlay alone to lock Gameplay interaction."
+    reason: "The shared flow state must also disable Physics2D interaction."
+    source: "ADR-0001"
+    status: "proposed"
+
+  - id: "runtime_state_in_view"
+    rule: "Do not store authoritative Gameplay state inside SpriteRenderer or Canvas presentation components."
+    reason: "Runtime systems remain the only authority for Gameplay state."
+    source: "ADR-0001"
+    status: "proposed"
+
+  - id: "unbudgeted_light_and_shadow_growth"
+    rule: "Do not add local lights, shadow casters or persistent particle emitters beyond the registered Demo budgets without profiling and an ADR update."
+    reason: "The P0 integration slice must establish the cost of the living-base presentation before full migration."
+    source: "ADR-0001"
+    status: "proposed"
+
+validation_gates:
+  - id: "p0_gameplay_hud_integration_slice"
+    required_before: "ADR-0001 acceptance and full Canvas-world migration"
+    checks:
+      - "60 FPS at both target resolutions under the registered stress case"
+      - "Seven buildings and twelve zombies remain visible, sorted and individually clickable"
+      - "Zombies always render in front of buildings"
+      - "Event and exploration temporary viewing cannot interact with Physics2D world objects"
+      - "World labels remain aligned and readable"
+      - "World lighting does not affect HUD or labels"
+      - "Reduced-motion mode preserves state information"
+      - "Albedo and normal pairs show no fringe, atlas mismatch or plastic paper texture"
+      - "Existing card, event, exploration, combat and building runtime behaviour remains unchanged"
+    source: "ADR-0001"
+    status: "proposed"

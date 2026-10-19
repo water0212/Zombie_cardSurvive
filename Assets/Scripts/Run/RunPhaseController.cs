@@ -21,6 +21,8 @@ namespace ZombieCardSurvive.Run
         [SerializeField] private DeckReplacementView deckReplacementView;
         // 輪末固定消耗與報表結算器。
         [SerializeField] private RoundEndResolver roundEndResolver;
+        // PB-P0-014D：PB-P0-014E 局前選擇 UI 完成前，自動鎖定的完整士氣金字塔 Profile。
+        [SerializeField] private MoralePyramidProfileData defaultMoraleProfile;
         // 建築系統；事件後會在這裡結算施工、取消與製作列。
         [SerializeField] private BuildingSystem buildingSystem;
         // 探索系統；每次開始新局時會由地區 Asset 重建所有 RegionRuntime。
@@ -37,11 +39,15 @@ namespace ZombieCardSurvive.Run
         private int postEventReplacementStep;
         // 確保同一次事件後只執行一次建築結算。
         private bool postEventResolved;
+        // 士氣歸零後鎖住本局流程，直到 StartRun 完整重置。
+        private bool isRunEnded;
 
         /// <summary>
         /// 階段切換時觸發，HUD 會用它更新目前 Phase 顯示。
         /// </summary>
         public event Action<RunPhase> PhaseChanged;
+        /// <summary>基地首次崩潰時觸發；正式失敗畫面會在 PB-P0-014E 訂閱。</summary>
+        public event Action<MoraleChangeResult> RunFailed;
 
         /// <summary>目前所處遊戲階段。</summary>
         public RunPhase CurrentPhase { get; private set; } = RunPhase.Event;
@@ -49,11 +55,20 @@ namespace ZombieCardSurvive.Run
         public int RoundIndex { get; private set; }
         /// <summary>目前第幾個 Turn；每次 EnterTurnPhase 時加 1。</summary>
         public int TurnIndex { get; private set; }
+        /// <summary>事件排程使用的日期；第一個事件是第 1 天。</summary>
+        public int CurrentEventDay => RoundIndex + 1;
         /// <summary>最近一次輪末結算報表，供 UI 或除錯查看食物、士氣等結果。</summary>
         public RoundEndReport LastRoundEndReport => roundEndResolver != null ? roundEndResolver.LastReport : null;
+        /// <summary>士氣歸零後為 true；所有推進階段的公開入口都會停止。</summary>
+        public bool IsRunEnded => isRunEnded || MoraleSystem.IsCollapsed;
+        /// <summary>本場景在新 Run 自動鎖定的士氣金字塔 Profile。</summary>
+        public MoralePyramidProfileData DefaultMoraleProfile => defaultMoraleProfile;
 
         private void Awake()
         {
+            MoraleSystem.BaseCollapsed -= HandleBaseCollapsed;
+            MoraleSystem.BaseCollapsed += HandleBaseCollapsed;
+
             if (cardController == null)
             {
                 cardController = FindObjectOfType<CardController>();
@@ -96,8 +111,11 @@ namespace ZombieCardSurvive.Run
         [ContextMenu("Start Run")]
         public void StartRun()
         {
+            isRunEnded = false;
             RoundIndex = 0;
             TurnIndex = 0;
+            NextRoundEffectSystem.Reset();
+            MoralePyramidSystem.Reset();
 
             if (cardController != null)
             {
@@ -118,6 +136,22 @@ namespace ZombieCardSurvive.Run
             {
                 roundEndResolver.PrepareRun();
             }
+            else
+            {
+                MoraleSystem.Reset();
+            }
+
+            if (!MoralePyramidSystem.TryPrepareRun(defaultMoraleProfile, out string profileError))
+            {
+                isRunEnded = true;
+                Debug.LogError($"Run start blocked: {profileError}", this);
+                return;
+            }
+
+            if (eventFlowController != null)
+            {
+                eventFlowController.InitializeRun();
+            }
 
             EnterEventPhase();
         }
@@ -128,6 +162,11 @@ namespace ZombieCardSurvive.Run
         [ContextMenu("Confirm Event Choice")]
         public void ConfirmEventChoice()
         {
+            if (IsRunEnded)
+            {
+                return;
+            }
+
             if (eventFlowController != null)
             {
                 eventFlowController.EndEvent();
@@ -138,10 +177,15 @@ namespace ZombieCardSurvive.Run
         }
 
         /// <summary>
-        /// 從事件階段進入事件後流程：先做建築結算，再依序處理空位補位、建造卡整合與一般替換。
+        /// 從事件階段進入事件後流程：先衰減未探索地區熱度，再做建築結算與替換流程。
         /// </summary>
         public void StartRoundFromEvent()
         {
+            if (IsRunEnded)
+            {
+                return;
+            }
+
             if (CurrentPhase != RunPhase.Event && CurrentPhase != RunPhase.BuildingResolution)
             {
                 return;
@@ -155,6 +199,7 @@ namespace ZombieCardSurvive.Run
             if (!postEventResolved)
             {
                 EnterBuildingResolutionPhase();
+                explorationSystem?.ResolveDailyHeatDecay();
                 buildingSystem?.ResolveAfterEvent();
                 postEventResolved = true;
                 postEventReplacementStep = 0;
@@ -166,10 +211,17 @@ namespace ZombieCardSurvive.Run
         // 所有事件後替換都處理完後，真正開始新一輪並進入第一個 Turn。
         private void StartRoundAfterReplacement()
         {
+            if (IsRunEnded)
+            {
+                return;
+            }
+
             waitingForReplacement = false;
             postEventResolved = false;
             postEventReplacementStep = 0;
             RoundIndex++;
+            CombatSystem.BeginRound(RoundIndex);
+            NextRoundEffectSystem.BeginRound(RoundIndex);
 
             if (cardController != null)
             {
@@ -181,13 +233,15 @@ namespace ZombieCardSurvive.Run
 
         private void OnDestroy()
         {
+            MoraleSystem.BaseCollapsed -= HandleBaseCollapsed;
+            MoralePyramidSystem.Reset();
             UnhookReplacementView();
         }
 
         // 事件後固定順序：空位補位 -> 建造卡整合 -> 一般替換 -> 新一輪。
         private void ContinuePostEventFlow()
         {
-            if (waitingForReplacement)
+            if (IsRunEnded || waitingForReplacement)
             {
                 return;
             }
@@ -349,7 +403,7 @@ namespace ZombieCardSurvive.Run
         [ContextMenu("End Turn")]
         public void EndTurn()
         {
-            if (CurrentPhase != RunPhase.Turn)
+            if (IsRunEnded || CurrentPhase != RunPhase.Turn)
             {
                 return;
             }
@@ -365,7 +419,10 @@ namespace ZombieCardSurvive.Run
             if (cardController.IsDrawPileEmpty)
             {
                 EnterRoundEndPhase();
-                EnterEventPhase();
+                if (!IsRunEnded)
+                {
+                    EnterEventPhase();
+                }
             }
             else
             {
@@ -380,7 +437,7 @@ namespace ZombieCardSurvive.Run
         /// <returns>目前在 Turn 階段且 FoodPlanSystem 接受時回傳 true。</returns>
         public bool TrySetFoodPlan(FoodPlanLevel plan)
         {
-            if (CurrentPhase != RunPhase.Turn)
+            if (IsRunEnded || CurrentPhase != RunPhase.Turn)
             {
                 return false;
             }
@@ -393,6 +450,11 @@ namespace ZombieCardSurvive.Run
         /// </summary>
         public void EnterRoundEndPhase()
         {
+            if (IsRunEnded)
+            {
+                return;
+            }
+
             CurrentPhase = RunPhase.RoundEnd;
             PhaseChanged?.Invoke(CurrentPhase);
 
@@ -407,18 +469,28 @@ namespace ZombieCardSurvive.Run
         /// </summary>
         public void EnterEventPhase()
         {
+            if (IsRunEnded)
+            {
+                return;
+            }
+
             CurrentPhase = RunPhase.Event;
             PhaseChanged?.Invoke(CurrentPhase);
 
             if (eventFlowController != null)
             {
-                eventFlowController.BeginEventPhase();
+                eventFlowController.BeginEventPhase(CurrentEventDay);
             }
         }
 
         // 事件結束後的短暫階段，用來執行建築取消、施工完成與製作推進。
         private void EnterBuildingResolutionPhase()
         {
+            if (IsRunEnded)
+            {
+                return;
+            }
+
             CurrentPhase = RunPhase.BuildingResolution;
             PhaseChanged?.Invoke(CurrentPhase);
         }
@@ -428,6 +500,11 @@ namespace ZombieCardSurvive.Run
         /// </summary>
         public void EnterTurnPhase()
         {
+            if (IsRunEnded)
+            {
+                return;
+            }
+
             CurrentPhase = RunPhase.Turn;
             TurnIndex++;
 
@@ -437,6 +514,21 @@ namespace ZombieCardSurvive.Run
             }
 
             PhaseChanged?.Invoke(CurrentPhase);
+        }
+
+        private void HandleBaseCollapsed(MoraleChangeResult result)
+        {
+            if (isRunEnded)
+            {
+                return;
+            }
+
+            isRunEnded = true;
+            waitingForReplacement = false;
+            UnhookReplacementView();
+            CurrentPhase = RunPhase.Failed;
+            PhaseChanged?.Invoke(CurrentPhase);
+            RunFailed?.Invoke(result);
         }
     }
 }

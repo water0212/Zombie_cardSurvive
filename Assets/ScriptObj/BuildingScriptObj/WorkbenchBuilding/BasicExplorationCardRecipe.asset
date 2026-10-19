@@ -20,4 +20,4 @@ MonoBehaviour:
   cost:
     food: 2
     resource: 0
-  requiredProduction: 4
+  requiredProduction: 1

@@ -14,58 +14,43 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   eventId: EVT-002
   displayTitle: "\u98E2\u9913\u5016\u5B58\u8005"
-  description: "\u4E00\u540D\u964C\u751F\u4EBA\u5728\u9580\u5916\u8ACB\u6C42\u98DF\u7269\uFF0C\u8072\u7A31\u77E5\u9053\u9644\u8FD1\u5B89\u5168\u8DEF\u7DDA\u3002"
+  description: "\u4E00\u7FA4\u98E2\u9913\u7684\u5016\u5B58\u8005\u4F86\u5230\u57FA\u5730\u5916\uFF0C\u7B49\u5F85\u4F60\u6C7A\u5B9A\u662F\u5426\u4F38\u51FA\u63F4\u624B\u3002"
   artwork: {fileID: 0}
   choices:
-  - choiceText: "\u7D66\u4ED6\u98DF\u7269"
-    resultTitle: "\u63DB\u5F97\u60C5\u5831"
-    resultDescription: "\u5931\u53BB 2 \u98DF\u7269\uFF0C\u7372\u5F97 1 \u8CC7\u6E90\u4F5C\u70BA\u7DDA\u7D22\u6536\u76CA\u3002"
+  - choiceText: "\u52A0\u5165\u6211\u5011"
+    resultTitle: "\u63A5\u7D0D\u5016\u5B58\u8005"
+    resultDescription: "\u6BCF\u65E5\u9700\u6C42\u4F9D\u5DF2\u5E6B\u52A9\u4EBA\u6578\u589E\u52A0\uFF0C\u6700\u5927\u80FD\u91CF\u589E\u52A0
+      1\u3002"
     resultArtwork: {fileID: 0}
-    effects:
-    - carrier: 1
-      category: 0
-      valueEffectType: 1
-      cardFlowEffectType: 0
-      buildingEffectType: 0
-      survivorEffectType: 0
-      cardData: {fileID: 0}
-      amount: 2
-      effectId: 
-      isPermanent: 0
-      remainingTurns: 0
-      requiredBuildingId: 
-      requiredBuildingLevel: 0
-      invertBuildingRequirement: 0
-    - carrier: 1
-      category: 0
-      valueEffectType: 3
-      cardFlowEffectType: 0
-      buildingEffectType: 0
-      survivorEffectType: 0
-      cardData: {fileID: 0}
-      amount: 1
-      effectId: 
-      isPermanent: 0
-      remainingTurns: 0
-      requiredBuildingId: 
-      requiredBuildingLevel: 0
-      invertBuildingRequirement: 0
-  - choiceText: "\u62D2\u7D55"
+    effects: []
+    forcedLossConsequences: []
+  - choiceText: "\u9078\u64C7\u5E6B\u52A9"
+    resultTitle: "\u7559\u4E0B\u88DC\u7D66"
+    resultDescription: "\u6D88\u8017\u90E8\u5206\u73FE\u6709\u98DF\u7269\uFF0C\u4E26\u4F9D\u5BE6\u969B\u6D88\u8017\u91CF\u589E\u52A0\u58EB\u6C23\u3002"
+    resultArtwork: {fileID: 0}
+    effects: []
+    forcedLossConsequences: []
+  - choiceText: "\u5FFD\u8996\u8ACB\u6C42"
     resultTitle: "\u95DC\u4E0A\u5927\u9580"
-    resultDescription: "\u58EB\u6C23 -1\u3002"
+    resultDescription: "\u58EB\u6C23\u6E1B\u5C11 5\u3002"
     resultArtwork: {fileID: 0}
-    effects:
-    - carrier: 1
-      category: 0
-      valueEffectType: 15
-      cardFlowEffectType: 0
-      buildingEffectType: 0
-      survivorEffectType: 0
-      cardData: {fileID: 0}
-      amount: 1
-      effectId: 
-      isPermanent: 0
-      remainingTurns: 0
-      requiredBuildingId: 
-      requiredBuildingLevel: 0
-      invertBuildingRequirement: 0
+    effects: []
+    forcedLossConsequences: []
+  moodCategory: 2
+  contentCategory: 1
+  implementationStatus: 1
+  impactLevel: "\u4E2D"
+  specialRules: "\u53EF\u7528\u98DF\u7269\u9054\u98DF\u7269\u4E0A\u9650 50% \u6642\u6B0A\u91CD\u4E58\u4EE5
+    5\u3002"
+  implementationNotes: "\u9700\u8981\u5016\u5B58\u8005\u4EBA\u6578\u3001\u6BCF\u65E5\u9700\u6C42\u3001\u5E6B\u52A9\u6B21\u6578\u3001\u98DF\u7269\u6BD4\u4F8B\u6B0A\u91CD\u8207\u9023\u52D5\u6548\u679C\u516C\u5F0F\u3002"
+  earliestDay: 1
+  latestDay: 0
+  baseWeight: 40
+  canRepeat: 1
+  maximumAppearancesPerRun: 0
+  minimumDaysBetweenAppearances: 8
+  eligibilityConditions:
+    matchMode: 0
+    invertResult: 0
+    conditions: []
+  weightModifiers: []

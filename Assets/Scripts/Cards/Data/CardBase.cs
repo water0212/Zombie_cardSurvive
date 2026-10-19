@@ -3,6 +3,7 @@ using UnityEngine;
 using ZombieCardSurvive.Cards.Runtime;
 using ZombieCardSurvive.Effects.Data;
 using ZombieCardSurvive.Shared.AutoId;
+using ZombieCardSurvive.Systems;
 
 namespace ZombieCardSurvive.Cards.Data
 {
@@ -203,9 +204,31 @@ namespace ZombieCardSurvive.Cards.Data
         public virtual void Resolve(CardPlayContext context)
         {
             GameEffectContext effectContext = GameEffectContext.ForCard(context);
-            foreach (GameEffectData effect in effects)
+            MoraleBatchRequest moraleBatch = new MoraleBatchRequest(
+                string.IsNullOrWhiteSpace(cardId) ? "Card" : $"Card:{cardId}");
+            for (int index = 0; index < effects.Count; index++)
             {
-                effect?.Apply(effectContext);
+                GameEffectData effect = effects[index];
+                if (effect == null || !effect.ShouldApplyForCurrentState())
+                {
+                    continue;
+                }
+
+                if (effect.IsMoraleEffect)
+                {
+                    moraleBatch.Add(
+                        $"CardEffect[{index}]",
+                        effect.ResolveMoraleDelta(effect.Amount));
+                }
+                else
+                {
+                    effect.Apply(effectContext);
+                }
+            }
+
+            if (moraleBatch.Count > 0)
+            {
+                MoraleSystem.CommitBatch(moraleBatch);
             }
         }
     }

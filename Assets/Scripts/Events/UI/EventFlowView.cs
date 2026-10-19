@@ -15,6 +15,9 @@ namespace ZombieCardSurvive.Events.UI
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private TMP_Text titleText;
         [SerializeField] private TMP_Text descriptionText;
+        [SerializeField] private TMP_Text journalText;
+        [SerializeField] private TMP_Text resultSummaryText;
+        [SerializeField] private EventResultValuesView resultValuesView;
         [SerializeField] private Image artworkImage;
         [SerializeField] private EventChoiceButtonView[] choiceButtons;
         [SerializeField] private Button endEventButton;
@@ -145,21 +148,29 @@ namespace ZombieCardSurvive.Events.UI
 
             if (eventFlowController.State == EventFlowState.Choosing)
             {
-                ApplyChoosingState(eventFlowController.CurrentEvent);
+                ApplyChoosingState(eventFlowController.CurrentResolvedEvent);
                 return;
             }
 
-            ApplyResultState(eventFlowController.CurrentEvent, eventFlowController.SelectedChoice);
+            ApplyResultState(
+                eventFlowController.CurrentEvent,
+                eventFlowController.SelectedResolvedChoice,
+                eventFlowController.LastChoiceExecutionResult);
         }
 
-        private void ApplyChoosingState(EventData eventData)
+        private void ApplyChoosingState(ResolvedEventRuntime eventRuntime)
         {
+            EventData eventData = eventRuntime != null ? eventRuntime.Source : null;
             SetText(titleText, eventData != null ? eventData.DisplayTitle : string.Empty);
             SetText(descriptionText, eventData != null ? eventData.Description : string.Empty);
+            SetText(journalText, eventData != null ? eventData.JournalText : string.Empty);
+            SetText(resultSummaryText, string.Empty);
+            SetTextVisible(resultSummaryText, false);
+            if (resultValuesView != null) resultValuesView.Hide();
             SetArtwork(eventData != null ? eventData.Artwork : null);
             SetEndEventVisible(false);
 
-            int choiceCount = eventData != null ? eventData.Choices.Count : 0;
+            int choiceCount = eventRuntime != null ? eventRuntime.Choices.Count : 0;
             int buttonCount = choiceButtons != null ? choiceButtons.Length : 0;
             for (int i = 0; i < buttonCount; i++)
             {
@@ -173,19 +184,49 @@ namespace ZombieCardSurvive.Events.UI
                 choiceButton.SetVisible(visible);
                 if (visible)
                 {
-                    choiceButton.SetText(eventData.Choices[i].ChoiceText);
+                    choiceButton.SetAvailability(
+                        eventRuntime.Choices[i].ChoiceText,
+                        eventFlowController.GetChoiceAvailability(i));
                 }
             }
         }
 
-        private void ApplyResultState(EventData eventData, EventChoiceData choiceData)
+        private void ApplyResultState(
+            EventData eventData,
+            ResolvedEventChoiceRuntime choiceRuntime,
+            EventChoiceExecutionResult executionResult)
         {
-            string fallbackTitle = eventData != null ? eventData.DisplayTitle : string.Empty;
+            bool isNeutralFallback = eventFlowController != null && eventFlowController.IsNeutralFallback;
+            string fallbackTitle = eventData != null
+                ? eventData.DisplayTitle
+                : isNeutralFallback ? eventFlowController.NeutralFallbackTitle : string.Empty;
+            string fallbackDescription = isNeutralFallback
+                ? eventFlowController.NeutralFallbackDescription
+                : string.Empty;
             Sprite fallbackArtwork = eventData != null ? eventData.Artwork : null;
 
-            SetText(titleText, choiceData != null && !string.IsNullOrWhiteSpace(choiceData.ResultTitle) ? choiceData.ResultTitle : fallbackTitle);
-            SetText(descriptionText, choiceData != null ? choiceData.ResultDescription : string.Empty);
-            SetArtwork(choiceData != null && choiceData.ResultArtwork != null ? choiceData.ResultArtwork : fallbackArtwork);
+            SetText(
+                titleText,
+                executionResult != null && !string.IsNullOrWhiteSpace(executionResult.ResultTitle)
+                    ? executionResult.ResultTitle
+                    : choiceRuntime != null && !string.IsNullOrWhiteSpace(choiceRuntime.ResultTitle)
+                        ? choiceRuntime.ResultTitle
+                    : fallbackTitle);
+            SetText(
+                descriptionText,
+                executionResult != null
+                    ? executionResult.ResultDescription
+                    : choiceRuntime != null ? choiceRuntime.ResultDescription : fallbackDescription);
+            SetText(journalText, eventData != null ? eventData.JournalText : string.Empty);
+            bool coreValuesShownAsIcons = resultValuesView != null && resultValuesView.Show(executionResult);
+            SetText(
+                resultSummaryText,
+                EventPresentationFormatter.BuildResultSummary(choiceRuntime, executionResult, coreValuesShownAsIcons));
+            SetTextVisible(resultSummaryText, true);
+            SetArtwork(
+                choiceRuntime != null && choiceRuntime.ResultArtwork != null
+                    ? choiceRuntime.ResultArtwork
+                    : fallbackArtwork);
             SetEndEventVisible(true);
             SetChoicesVisible(false);
         }
@@ -311,6 +352,14 @@ namespace ZombieCardSurvive.Events.UI
             if (target != null)
             {
                 target.text = value;
+            }
+        }
+
+        private static void SetTextVisible(TMP_Text target, bool visible)
+        {
+            if (target != null)
+            {
+                target.gameObject.SetActive(visible);
             }
         }
     }

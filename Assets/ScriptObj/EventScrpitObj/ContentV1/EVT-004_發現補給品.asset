@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55e7408c4e352944ab27086d52cb2770, type: 3}
+  m_Name: "EVT-004_\u767C\u73FE\u88DC\u7D66\u54C1"
+  m_EditorClassIdentifier: 
+  eventId: EVT-004
+  displayTitle: "\u767C\u73FE\u88DC\u7D66\u54C1"
+  description: "\u5DE1\u908F\u968A\u627E\u5230\u4E00\u500B\u534A\u57CB\u5728\u74E6\u792B\u4E0B\u7684\u88DC\u7D66\u7BB1\u3002"
+  artwork: {fileID: 0}
+  choices:
+  - choiceText: "\u958B\u555F\u88DC\u7D66\u7BB1\uFF08\u5361\u5305\uFF09"
+    resultTitle: "\u53D6\u5F97\u5361\u5305"
+    resultDescription: "\u96A8\u6A5F\u53D6\u5F97\u98DF\u7269\u5361\u5305\u6216\u8CC7\u6E90\u5361\u5305\u3002"
+    resultArtwork: {fileID: 0}
+    effects: []
+    forcedLossConsequences: []
+  - choiceText: "\u958B\u555F\u88DC\u7D66\u7BB1\uFF08\u8CC7\u6E90\uFF09"
+    resultTitle: "\u53D6\u5F97\u88DC\u7D66"
+    resultDescription: "\u4F9D\u98DF\u7269\u4E0A\u9650\u589E\u52A0\u98DF\u7269\u8207\u8CC7\u6E90\u3002"
+    resultArtwork: {fileID: 0}
+    effects: []
+    forcedLossConsequences: []
+  - choiceText: "\u958B\u555F\u88DC\u7D66\u7BB1\uFF08\u7279\u5B9A\u6230\u9B25\u5361\uFF09"
+    resultTitle: "\u627E\u5230\u6D88\u9632\u65A7"
+    resultDescription: "\u53D6\u5F97 2 \u5F35\u6D88\u9632\u65A7\u3002"
+    resultArtwork: {fileID: 0}
+    effects: []
+    forcedLossConsequences: []
+  moodCategory: 0
+  contentCategory: 0
+  implementationStatus: 1
+  impactLevel: "\u5C0F"
+  specialRules: "\u4E09\u500B\u5916\u89C0\u76F8\u540C\u7684\u88DC\u7D66\u7BB1\u9078\u9805\u6703\u96A8\u6A5F\u6253\u4E82\u3002"
+  implementationNotes: "\u9700\u8981\u5361\u5305\u734E\u52F5\u3001\u7279\u5B9A\u5361\u724C\u5165\u5EAB\u3001\u5BB9\u91CF\u767E\u5206\u6BD4\u8207\u9078\u9805\u6D17\u724C\u3002"
+  earliestDay: 5
+  latestDay: 0
+  baseWeight: 40
+  canRepeat: 1
+  maximumAppearancesPerRun: 0
+  minimumDaysBetweenAppearances: 7
+  eligibilityConditions:
+    matchMode: 0
+    invertResult: 0
+    conditions: []
+  weightModifiers: []

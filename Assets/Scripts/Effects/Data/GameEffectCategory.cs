@@ -5,6 +5,9 @@ namespace ZombieCardSurvive.Effects.Data
         Value,
         CardFlow,
         Building,
-        Survivor
+        Survivor,
+        EventState,
+        Threat,
+        NextRoundEffect
     }
 }

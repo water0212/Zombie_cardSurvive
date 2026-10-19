@@ -18,12 +18,14 @@ namespace ZombieCardSurvive.Buildings.UI
         [SerializeField] private Button generousPlanButton;
 
         private BuildingSystem system;
+        private BuildingRuntime building;
         private FoodPlanInteractionData data;
         private RunPhaseController runPhaseController;
 
         public void Bind(BuildingSystem owner, BuildingRuntime building, FoodPlanInteractionData interaction)
         {
             system = owner;
+            this.building = building;
             data = interaction;
             runPhaseController = FindObjectOfType<RunPhaseController>();
             HookButtons();
@@ -43,20 +45,16 @@ namespace ZombieCardSurvive.Buildings.UI
                 return;
             }
 
-            gameObject.SetActive(true);
             SetText(titleText, data.DisplayName);
             SetText(descriptionText, data.Description);
             SetText(stateText, BuildStateText());
+            HideLegacyTightPlanButton();
+            SetButtonLabel(normalPlanButton, "標準供應");
+            SetButtonLabel(generousPlanButton, "鼓舞餐點");
 
             bool canChange = CanChangePlan();
-            SetButtonInteractable(tightPlanButton, canChange);
             SetButtonInteractable(normalPlanButton, canChange);
             SetButtonInteractable(generousPlanButton, canChange);
-        }
-
-        private void SetTightPlan()
-        {
-            TrySetPlan(FoodPlanLevel.Tight);
         }
 
         private void SetNormalPlan()
@@ -71,6 +69,7 @@ namespace ZombieCardSurvive.Buildings.UI
 
         private void TrySetPlan(FoodPlanLevel plan)
         {
+            if (!CanChangePlan()) return;
             if (runPhaseController != null)
             {
                 runPhaseController.TrySetFoodPlan(plan);
@@ -85,6 +84,9 @@ namespace ZombieCardSurvive.Buildings.UI
 
         private bool CanChangePlan()
         {
+            if (system == null || !system.CanSubmitActions || building == null
+                || !building.IsInteractionUnlocked(data)
+                || (building.State != BuildingState.Active && building.State != BuildingState.Upgrading)) return false;
             if (FoodPlanSystem.HasChangedThisTurn)
             {
                 return false;
@@ -95,29 +97,46 @@ namespace ZombieCardSurvive.Buildings.UI
                 return runPhaseController.CurrentPhase == RunPhase.Turn;
             }
 
-            return system == null || system.CanSubmitActions;
+            return true;
         }
 
         private string BuildStateText()
         {
-            string pending = FoodPlanSystem.HasPendingPlan ? $" -> {FoodPlanSystem.PendingPlan}" : string.Empty;
+            string current = FoodPlanSystem.GetDisplayName(FoodPlanSystem.CurrentPlan);
+            string pending = FoodPlanSystem.HasPendingPlan
+                ? $" -> {FoodPlanSystem.GetDisplayName(FoodPlanSystem.PendingPlan)}"
+                : string.Empty;
             string useState = CanChangePlan() ? "可調整" : "本回合不可調整";
-            return $"目前: {FoodPlanSystem.CurrentPlan}{pending} / 固定消耗: {FoodPlanSystem.GetPendingRoundFoodConsumption()} / {useState}";
+            return $"目前: {current}{pending} / 固定需求: {FoodPlanSystem.GetPendingRoundFoodConsumption()} / {useState}";
         }
 
         private void HookButtons()
         {
             UnhookButtons();
-            tightPlanButton?.onClick.AddListener(SetTightPlan);
             normalPlanButton?.onClick.AddListener(SetNormalPlan);
             generousPlanButton?.onClick.AddListener(SetGenerousPlan);
         }
 
         private void UnhookButtons()
         {
-            tightPlanButton?.onClick.RemoveListener(SetTightPlan);
             normalPlanButton?.onClick.RemoveListener(SetNormalPlan);
             generousPlanButton?.onClick.RemoveListener(SetGenerousPlan);
+        }
+
+        private void HideLegacyTightPlanButton()
+        {
+            if (tightPlanButton != null)
+            {
+                tightPlanButton.gameObject.SetActive(false);
+            }
+        }
+
+        private static void SetButtonLabel(Button target, string value)
+        {
+            if (target != null)
+            {
+                SetText(target.GetComponentInChildren<TMP_Text>(true), value);
+            }
         }
 
         private static void SetText(TMP_Text target, string value)

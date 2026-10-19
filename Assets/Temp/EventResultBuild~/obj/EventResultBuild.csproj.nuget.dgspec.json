@@ -1,0 +1,59 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\water\\Desktop\\GameDev\\Zombie_cardSurvive\\Assets\\Temp\\EventResultBuild\\EventResultBuild.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\water\\Desktop\\GameDev\\Zombie_cardSurvive\\Assets\\Temp\\EventResultBuild\\EventResultBuild.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\water\\Desktop\\GameDev\\Zombie_cardSurvive\\Assets\\Temp\\EventResultBuild\\EventResultBuild.csproj",
+        "projectName": "EventResultBuild",
+        "projectPath": "C:\\Users\\water\\Desktop\\GameDev\\Zombie_cardSurvive\\Assets\\Temp\\EventResultBuild\\EventResultBuild.csproj",
+        "packagesPath": "C:\\Users\\water\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\water\\Desktop\\GameDev\\Zombie_cardSurvive\\Assets\\Temp\\EventResultBuild\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\water\\Desktop\\GameDev\\Zombie_cardSurvive\\Assets\\Temp\\EventResultBuild\\NuGet.Config",
+          "C:\\Users\\water\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "netstandard2.1"
+        ],
+        "frameworks": {
+          "netstandard2.1": {
+            "targetAlias": "netstandard2.1",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "netstandard2.1": {
+          "targetAlias": "netstandard2.1",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "NETStandard.Library": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.101\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

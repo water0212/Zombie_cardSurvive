@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ZombieCardSurvive.Cards.Data;
 using ZombieCardSurvive.Exploration.Data;
+using ZombieCardSurvive.Systems;
 
 namespace ZombieCardSurvive.Exploration.Runtime
 {
@@ -15,6 +16,7 @@ namespace ZombieCardSurvive.Exploration.Runtime
         public IReadOnlyList<CardBase> StoredCards => storedCards;
         public IReadOnlyList<ZombieCardData> ZombieCardsAddedToDiscard => zombieCardsAddedToDiscard;
         public IReadOnlyList<string> Messages => messages;
+        public MoraleBatchResult MoraleSettlement { get; private set; }
 
         public void AddOpenedPack(CardPackData pack)
         {
@@ -46,6 +48,11 @@ namespace ZombieCardSurvive.Exploration.Runtime
             {
                 messages.Add(message);
             }
+        }
+
+        public void SetMoraleSettlement(MoraleBatchResult result)
+        {
+            MoraleSettlement = result;
         }
 
         public string BuildSummary()

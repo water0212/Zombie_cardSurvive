@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba4dfbf4a4674bb491a48a74b64cbc26, type: 3}
+  m_Name: REGION-005
+  m_EditorClassIdentifier: 
+  regionId: REGION-005
+  displayName: "\u5009\u5EAB"
+  artwork: {fileID: 0}
+  description: 
+  regionTier: 1
+  dangerLevel: 2
+  initialZombieCount: 6
+  baseEncounterChance: 0.45
+  heatPerExploration: 0.15
+  dailyHeatDecay: 0.15
+  baseOfferWeight: 10
+  isRareRegion: 0
+  expectedRewards: 
+  cardPackDrops:
+  - cardPack: {fileID: 11400000, guid: 8160c8252fc03ab4ab0273c92d60b493, type: 2}
+    supplyRarity: 0
+    initialCount: 4
+    baseWeight: 35
+    minPackCount: 1
+    maxPackCount: 1
+  - cardPack: {fileID: 11400000, guid: b685c384d2711c7448f2c98ad7173c94, type: 2}
+    supplyRarity: 0
+    initialCount: 4
+    baseWeight: 35
+    minPackCount: 1
+    maxPackCount: 1
+  - cardPack: {fileID: 11400000, guid: 738ba6d582a0e14419b64e2ed666bbcf, type: 2}
+    supplyRarity: 1
+    initialCount: 3
+    baseWeight: 25
+    minPackCount: 1
+    maxPackCount: 1
+  - cardPack: {fileID: 11400000, guid: acd43ecad175bf84496377ade2bb0a72, type: 2}
+    supplyRarity: 2
+    initialCount: 2
+    baseWeight: 5
+    minPackCount: 1
+    maxPackCount: 1
+  risks: []

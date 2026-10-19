@@ -13,8 +13,6 @@ using ZombieCardSurvive.Buildings.UI;
 using ZombieCardSurvive.Cards.Data;
 using ZombieCardSurvive.Cards.Runtime;
 using ZombieCardSurvive.Effects.Data;
-using ZombieCardSurvive.Events.Data;
-using ZombieCardSurvive.Events.Runtime;
 
 namespace ZombieCardSurvive.Buildings.Editor
 {
@@ -22,7 +20,6 @@ namespace ZombieCardSurvive.Buildings.Editor
     {
         private const string BuildingFolder = "Assets/ScriptObj/BuildingScriptObj/ContentV1";
         private const string CardFolder = "Assets/ScriptObj/CardScriptObj/ContentV1";
-        private const string EventFolder = "Assets/ScriptObj/EventScrpitObj/ContentV1";
         private const string PrefabFolder = "Assets/Prefab/Buildings";
         private const string ScenePath = "Assets/Scenes/SampleScene.unity";
 
@@ -31,12 +28,10 @@ namespace ZombieCardSurvive.Buildings.Editor
         {
             EnsureFolder("Assets/ScriptObj/BuildingScriptObj", "ContentV1");
             EnsureFolder("Assets/ScriptObj/CardScriptObj", "ContentV1");
-            EnsureFolder("Assets/ScriptObj/EventScrpitObj", "ContentV1");
             EnsureFolder("Assets/Prefab", "Buildings");
 
             Sprite fallbackIcon = LoadSprite("Assets/ArtDemos/Cards/card_bases/special_base.png");
             Sprite combatIcon = LoadSprite("Assets/ArtDemos/Cards/card_bases/combat_base.png");
-            ZombieCardData zombieCard = FindZombieCard();
 
             CardBase dispatch = CreateGenericCard(
                 $"{CardFolder}/Dispatch.asset",
@@ -81,15 +76,14 @@ namespace ZombieCardSurvive.Buildings.Editor
             BuildBaseData storage = CreateStorageBuilding(fallbackIcon);
             BuildBaseData intel = CreateIntelBuilding(fallbackIcon, dispatch, improvedDispatch);
             BuildBaseData fortification = CreateFortificationBuilding(combatIcon, guardShot, improvedGuardShot);
-            List<EventData> events = CreateEvents(zombieCard);
 
             FoodPlanInteractionView foodPlanPrefab = CreateFoodPlanPrefab();
             CardUpgradeView cardUpgradePrefab = CreateCardUpgradePrefab();
-            WireScene(new[] { storage, intel, fortification }, events, foodPlanPrefab, cardUpgradePrefab);
+            WireScene(new[] { storage, intel, fortification }, foodPlanPrefab, cardUpgradePrefab);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log("Building Content V1 setup complete: storage, intel center, fortification, cards, events, and UI references are ready.");
+            Debug.Log("Building Content V1 setup complete: storage, intel center, fortification, cards, and UI references are ready.");
         }
 
         private static BuildBaseData CreateStorageBuilding(Sprite icon)
@@ -248,84 +242,6 @@ namespace ZombieCardSurvive.Buildings.Editor
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(asset);
             return asset;
-        }
-
-        private static List<EventData> CreateEvents(ZombieCardData zombieCard)
-        {
-            List<EventData> events = new List<EventData>
-            {
-                CreateEvent("EVT-001", "罐頭受潮", "幾箱罐頭在夜裡滲水，能吃的部分比預期更少。",
-                    Choice("清點損失", "補給減少", "失去 2 永久食物。", EffectSpec.Value(ValueEffectType.SpendFood, 2))),
-                CreateEvent("EVT-002", "飢餓倖存者", "一名陌生人在門外請求食物，聲稱知道附近安全路線。",
-                    Choice("給他食物", "換得情報", "失去 2 食物，獲得 1 資源作為線索收益。", EffectSpec.Value(ValueEffectType.SpendFood, 2), EffectSpec.Value(ValueEffectType.AddResource, 1)),
-                    Choice("拒絕", "關上大門", "士氣 -1。", EffectSpec.Value(ValueEffectType.ReduceMorale, 1))),
-                CreateEvent("EVT-003", "夜間低溫", "寒流灌入基地，所有人都需要更多熱量撐過這晚。",
-                    Choice("撐過去", "消耗上升", "本輪固定食物消耗 +2。", EffectSpec.Value(ValueEffectType.AddRoundFoodConsumptionModifier, 2))),
-                CreateEvent("EVT-004", "發現補給箱", "巡邏隊找到一個半埋在瓦礫下的補給箱。",
-                    Choice("拿食物", "食物入庫", "獲得 2 食物。", EffectSpec.Value(ValueEffectType.AddFood, 2)),
-                    Choice("拿零件", "資源入庫", "獲得 2 資源。", EffectSpec.Value(ValueEffectType.AddResource, 2))),
-                CreateEvent("EVT-005", "工具損耗", "一批工具在維修時報廢，短期內很難補回。",
-                    Choice("記錄損失", "資源減少", "失去 2 資源。", EffectSpec.Value(ValueEffectType.SpendResource, 2))),
-                CreateEvent("EVT-006", "臨時修繕", "外圍路障出現缺口，現在修還來得及。",
-                    Choice("花資源修補", "路障補上", "失去 1 資源，移除 1 個殭屍威脅。", EffectSpec.Value(ValueEffectType.SpendResource, 1), EffectSpec.Value(ValueEffectType.RemoveZombieThreat, 1)),
-                    Choice("暫時不管", "缺口擴大", "加入 1 張殭屍卡到棄牌堆。", EffectSpec.CardToDiscard(zombieCard, 1))),
-                CreateEvent("EVT-007", "遠處槍聲", "槍聲從幾條街外傳來，聲音把東西引過來了。",
-                    Choice("保持安靜", "威脅逼近", "加入 1 張殭屍卡到棄牌堆。", EffectSpec.CardToDiscard(zombieCard, 1))),
-                CreateEvent("EVT-008", "屍群逼近", "屍群在街口聚集，基地周圍的動線變得危險。",
-                    Choice("固守", "威脅增加", "加入 2 張殭屍卡到棄牌堆。", EffectSpec.CardToDiscard(zombieCard, 2)),
-                    Choice("提前迎擊", "立即接戰", "立即增加 1 個殭屍威脅。", EffectSpec.Value(ValueEffectType.AddZombieThreat, 1))),
-                CreateEvent("EVT-009", "路線錯判", "舊地圖上的捷徑已經坍塌，下一次探索可能更危險。",
-                    Choice("標記風險", "暫記", "士氣 -1。探索修正保留後續實作。", EffectSpec.Value(ValueEffectType.ReduceMorale, 1))),
-                CreateEvent("EVT-010", "可疑訊號", "斷續的無線電訊號在夜裡重複播放。",
-                    Choice("解析訊號", "訊號解讀", "若有情報中心，獲得 1 次替換機會；否則獲得 1 資源。",
-                        EffectSpec.CardFlow(CardFlowEffectType.GrantReplacementChance, 1).RequireBuilding("building_intel_center", 1, false),
-                        EffectSpec.Value(ValueEffectType.AddResource, 1).RequireBuilding("building_intel_center", 1, true))),
-                CreateEvent("EVT-011", "破損路障", "基地外圍的臨時路障被撞開一角。",
-                    Choice("檢查外圍", "路障狀況", "若有防禦工事，失去 1 資源維護；否則加入 1 張殭屍卡。",
-                        EffectSpec.Value(ValueEffectType.SpendResource, 1).RequireBuilding("building_fortification", 1, false),
-                        EffectSpec.CardToDiscard(zombieCard, 1).RequireBuilding("building_fortification", 1, true))),
-                CreateEvent("EVT-012", "廢棄地圖", "一張被雨水泡皺的城市地圖仍能看出幾條補給路線。",
-                    Choice("收進檔案", "可用情報", "獲得 1 次替換機會。探索修正保留後續實作。", EffectSpec.CardFlow(CardFlowEffectType.GrantReplacementChance, 1)))
-            };
-
-            return events;
-        }
-
-        private static EventData CreateEvent(string id, string title, string description, params ChoiceSpec[] choices)
-        {
-            EventData asset = LoadOrCreate<EventData>($"{EventFolder}/{id}_{SanitizeFileName(title)}.asset");
-            SerializedObject serialized = new SerializedObject(asset);
-            SetString(serialized, "eventId", id);
-            SetString(serialized, "displayTitle", title);
-            SetString(serialized, "description", description);
-            SerializedProperty choicesProperty = serialized.FindProperty("choices");
-            choicesProperty.arraySize = choices.Length;
-            for (int i = 0; i < choices.Length; i++)
-            {
-                SetChoice(choicesProperty.GetArrayElementAtIndex(i), choices[i]);
-            }
-
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-            EditorUtility.SetDirty(asset);
-            return asset;
-        }
-
-        private static ChoiceSpec Choice(string text, string resultTitle, string resultDescription, params EffectSpec[] effects)
-        {
-            return new ChoiceSpec(text, resultTitle, resultDescription, effects);
-        }
-
-        private static void SetChoice(SerializedProperty property, ChoiceSpec spec)
-        {
-            property.FindPropertyRelative("choiceText").stringValue = spec.Text;
-            property.FindPropertyRelative("resultTitle").stringValue = spec.ResultTitle;
-            property.FindPropertyRelative("resultDescription").stringValue = spec.ResultDescription;
-            SerializedProperty effects = property.FindPropertyRelative("effects");
-            effects.arraySize = spec.Effects.Length;
-            for (int i = 0; i < spec.Effects.Length; i++)
-            {
-                SetEffect(effects.GetArrayElementAtIndex(i), spec.Effects[i]);
-            }
         }
 
         private static CardBase CreateGenericCard(string path, string id, string name, string description, Sprite artwork, CardType cardType, DeckSlotType slot, bool limited, int uses, params EffectSpec[] effects)
@@ -513,7 +429,7 @@ namespace ZombieCardSurvive.Buildings.Editor
             return SavePrefab(root, path).GetComponent<CardUpgradeView>();
         }
 
-        private static void WireScene(IEnumerable<BuildBaseData> buildings, IEnumerable<EventData> events, FoodPlanInteractionView foodPlanPrefab, CardUpgradeView cardUpgradePrefab)
+        private static void WireScene(IEnumerable<BuildBaseData> buildings, FoodPlanInteractionView foodPlanPrefab, CardUpgradeView cardUpgradePrefab)
         {
             Scene scene = SceneManager.GetActiveScene();
             if (scene.path != ScenePath)
@@ -531,18 +447,6 @@ namespace ZombieCardSurvive.Buildings.Editor
             else
             {
                 Debug.LogWarning("Building Content V1 setup could not find BuildingSystem in SampleScene. Run Setup Building V1 first.");
-            }
-
-            EventFlowController eventFlow = Object.FindObjectOfType<EventFlowController>();
-            if (eventFlow != null)
-            {
-                SerializedObject serialized = new SerializedObject(eventFlow);
-                AppendObjects(serialized.FindProperty("eventPool"), events.Cast<Object>());
-                serialized.ApplyModifiedPropertiesWithoutUndo();
-            }
-            else
-            {
-                Debug.LogWarning("Building Content V1 setup could not find EventFlowController in SampleScene.");
             }
 
             BuildingDetailView[] detailViews = Object.FindObjectsOfType<BuildingDetailView>(true);
@@ -619,22 +523,6 @@ namespace ZombieCardSurvive.Buildings.Editor
         {
             cost.FindPropertyRelative("food").intValue = food;
             cost.FindPropertyRelative("resource").intValue = resource;
-        }
-
-        private static ZombieCardData FindZombieCard()
-        {
-            string[] guids = AssetDatabase.FindAssets("t:ZombieCardData");
-            foreach (string guid in guids)
-            {
-                ZombieCardData card = AssetDatabase.LoadAssetAtPath<ZombieCardData>(AssetDatabase.GUIDToAssetPath(guid));
-                if (card != null)
-                {
-                    return card;
-                }
-            }
-
-            Debug.LogWarning("No ZombieCardData found. Zombie-card event effects will be created with an empty card reference.");
-            return null;
         }
 
         private static Sprite LoadSprite(string path)
@@ -833,22 +721,6 @@ namespace ZombieCardSurvive.Buildings.Editor
             public int ManufacturingBonus { get; }
             public Sprite Artwork { get; }
             public Color Color { get; }
-        }
-
-        private readonly struct ChoiceSpec
-        {
-            public ChoiceSpec(string text, string resultTitle, string resultDescription, EffectSpec[] effects)
-            {
-                Text = text;
-                ResultTitle = resultTitle;
-                ResultDescription = resultDescription;
-                Effects = effects ?? new EffectSpec[0];
-            }
-
-            public string Text { get; }
-            public string ResultTitle { get; }
-            public string ResultDescription { get; }
-            public EffectSpec[] Effects { get; }
         }
 
         private struct EffectSpec

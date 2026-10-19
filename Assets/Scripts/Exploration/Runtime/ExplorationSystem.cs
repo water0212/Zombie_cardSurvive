@@ -143,6 +143,32 @@ namespace ZombieCardSurvive.Exploration.Runtime
             return TryGetRegionRuntime(regionId, out RegionRuntime runtime) ? runtime : null;
         }
 
+        public bool TryRestockRegionPack(string regionId, string packId, int amount)
+        {
+            return TryGetRegionRuntime(regionId, out RegionRuntime runtime)
+                && runtime.TryRestockPack(packId, amount);
+        }
+
+        public bool TryRestockRegionZombies(string regionId, int amount)
+        {
+            return TryGetRegionRuntime(regionId, out RegionRuntime runtime)
+                && runtime.TryRestockZombie(amount);
+        }
+
+        public int ResolveDailyHeatDecay()
+        {
+            int changedRegionCount = 0;
+            foreach (RegionRuntime runtime in regionRuntimes.Values)
+            {
+                if (runtime.ResolveDailyHeatDecay())
+                {
+                    changedRegionCount++;
+                }
+            }
+
+            return changedRegionCount;
+        }
+
         public bool ChooseRegion(int index)
         {
             if (State != ExplorationFlowState.ChoosingRegion)
@@ -172,6 +198,11 @@ namespace ZombieCardSurvive.Exploration.Runtime
 
             ResolveSceneReferences();
 
+            if (!IsRunInitialized)
+            {
+                InitializeRun();
+            }
+
             CurrentExplorationCard = explorationCard;
             currentCardController = cardController;
             SelectedRegion = null;
@@ -182,9 +213,9 @@ namespace ZombieCardSurvive.Exploration.Runtime
             if (currentOffers.Count == 0)
             {
                 LastResult = new ExplorationResult();
-                LastResult.AddMessage("沒有可探索地區。請確認 ExplorationSystem 的 Region Pool。");
+                LastResult.AddMessage("目前沒有尚有物資的可探索地區。");
                 State = ExplorationFlowState.Result;
-                Debug.LogWarning("Exploration has no valid region offers.");
+                Debug.LogWarning("Exploration has no valid region offers with remaining supplies.");
             }
             else
             {
@@ -233,7 +264,10 @@ namespace ZombieCardSurvive.Exploration.Runtime
 
                 float multiplier = explorationCard.GetRegionTierMultiplier(region.RegionTier);
                 float finalWeight = region.BaseOfferWeight * multiplier;
-                if (finalWeight <= 0f)
+                if (finalWeight <= 0f
+                    || !TryGetRegionRuntime(region.RegionId, out RegionRuntime runtime)
+                    || !ReferenceEquals(runtime.Data, region)
+                    || !runtime.HasDrawablePacks)
                 {
                     continue;
                 }
@@ -280,69 +314,41 @@ namespace ZombieCardSurvive.Exploration.Runtime
                 return result;
             }
 
-            ResolveCardPackDrops(region, cardController, result);
-            ResolveRegionRisks(region, cardController, result);
+            if (!TryGetRegionRuntime(region.RegionId, out RegionRuntime runtime)
+                || !ReferenceEquals(runtime.Data, region))
+            {
+                result.AddMessage("探索失敗：找不到本局地區狀態。");
+                Debug.LogWarning($"Region '{GetRegionLabel(region)}' has no matching RegionRuntime.", region);
+                return result;
+            }
+
+            ResolveCardPackDrop(runtime, cardController, result);
+            ResolveRegionRisks(runtime, cardController, result);
+            runtime.RecordExploration();
             return result;
         }
 
-        private void ResolveCardPackDrops(ExplorationRegionData region, CardController cardController, ExplorationResult result)
+        private void ResolveCardPackDrop(RegionRuntime region, CardController cardController, ExplorationResult result)
         {
-            CardPackDropEntry selectedDrop = SelectWeightedPackDrop(region.CardPackDrops);
-            if (selectedDrop == null || selectedDrop.CardPack == null)
+            if (!region.TryDrawPack(out RegionPackRuntime selectedPack) || selectedPack.Data == null)
             {
                 result.AddMessage("沒有取得卡包。");
-                Debug.LogWarning($"Region '{region.name}' has no valid card pack drops.");
+                Debug.LogWarning($"Region '{GetRegionLabel(region.Data)}' has no drawable card packs.", region.Data);
                 return;
             }
 
-            int packCount = UnityEngine.Random.Range(selectedDrop.MinPackCount, selectedDrop.MaxPackCount + 1);
-            for (int i = 0; i < packCount; i++)
+            OpenCardPack(region, selectedPack.Data, cardController, result);
+            if (!region.HasRemainingPacks)
             {
-                OpenCardPack(selectedDrop.CardPack, cardController, result);
+                result.AddMessage($"地區「{GetRegionLabel(region.Data)}」的物資已枯竭。");
             }
         }
 
-        private static CardPackDropEntry SelectWeightedPackDrop(IReadOnlyList<CardPackDropEntry> drops)
-        {
-            int totalWeight = 0;
-            if (drops == null)
-            {
-                return null;
-            }
-
-            foreach (CardPackDropEntry drop in drops)
-            {
-                if (drop != null && drop.CardPack != null)
-                {
-                    totalWeight += drop.Weight;
-                }
-            }
-
-            if (totalWeight <= 0)
-            {
-                return null;
-            }
-
-            int roll = UnityEngine.Random.Range(0, totalWeight);
-            int cumulative = 0;
-            foreach (CardPackDropEntry drop in drops)
-            {
-                if (drop == null || drop.CardPack == null)
-                {
-                    continue;
-                }
-
-                cumulative += drop.Weight;
-                if (roll < cumulative)
-                {
-                    return drop;
-                }
-            }
-
-            return null;
-        }
-
-        private void OpenCardPack(CardPackData cardPack, CardController cardController, ExplorationResult result)
+        private void OpenCardPack(
+            RegionRuntime region,
+            CardPackData cardPack,
+            CardController cardController,
+            ExplorationResult result)
         {
             if (cardPack == null)
             {
@@ -358,6 +364,7 @@ namespace ZombieCardSurvive.Exploration.Runtime
                 return;
             }
 
+            int skippedZombiePollution = 0;
             foreach (CardBase card in generatedCards)
             {
                 if (card == null)
@@ -367,7 +374,13 @@ namespace ZombieCardSurvive.Exploration.Runtime
 
                 if (cardPack.IsZombiePollution(card) && card is ZombieCardData zombieCard)
                 {
-                    AddZombieCardToDiscard(cardController, zombieCard, result);
+                    if (region.RemainingZombieCount <= 0)
+                    {
+                        skippedZombiePollution++;
+                        continue;
+                    }
+
+                    TryAddRegionalZombieCardToDiscard(region, cardController, zombieCard, result);
                     continue;
                 }
 
@@ -382,36 +395,54 @@ namespace ZombieCardSurvive.Exploration.Runtime
                     Debug.LogWarning("Exploration could not add card to inventory because CardInventory is missing.");
                 }
             }
-        }
 
-        private void ResolveRegionRisks(ExplorationRegionData region, CardController cardController, ExplorationResult result)
-        {
-            foreach (RegionRiskEntry risk in region.Risks)
+            if (skippedZombiePollution > 0)
             {
-                if (risk == null || risk.ChancePercent <= 0 || risk.Amount <= 0)
-                {
-                    continue;
-                }
-
-                int roll = UnityEngine.Random.Range(1, 101);
-                if (roll > risk.ChancePercent)
-                {
-                    continue;
-                }
-
-                ApplyRisk(risk, cardController, result);
+                result.AddMessage($"當地殭屍已清空，略過 {skippedZombiePollution} 張污染卡。");
             }
         }
 
-        private void ApplyRisk(RegionRiskEntry risk, CardController cardController, ExplorationResult result)
+        private void ResolveRegionRisks(RegionRuntime region, CardController cardController, ExplorationResult result)
+        {
+            MoraleBatchRequest moraleBatch = new MoraleBatchRequest($"Exploration:{region.RegionId}");
+            foreach (RegionRiskEntry risk in region.Data.Risks)
+            {
+                if (risk == null || risk.Amount <= 0)
+                {
+                    continue;
+                }
+
+                bool triggered = risk.RiskType == RegionRiskType.AddZombieCardToDiscard
+                    ? RollChance(region.EncounterChance)
+                    : RollChance(risk.ChancePercent / 100f);
+                if (!triggered)
+                {
+                    continue;
+                }
+
+                ApplyRisk(region, risk, cardController, result, moraleBatch);
+            }
+
+            if (moraleBatch.Count > 0)
+            {
+                result.SetMoraleSettlement(MoraleSystem.CommitBatch(moraleBatch));
+            }
+        }
+
+        private void ApplyRisk(
+            RegionRuntime region,
+            RegionRiskEntry risk,
+            CardController cardController,
+            ExplorationResult result,
+            MoraleBatchRequest moraleBatch)
         {
             switch (risk.RiskType)
             {
                 case RegionRiskType.AddZombieCardToDiscard:
-                    ApplyZombieRisk(risk, cardController, result);
+                    ApplyZombieRisk(region, risk, cardController, result);
                     break;
                 case RegionRiskType.LoseMorale:
-                    MoraleSystem.ReduceMorale(risk.Amount);
+                    moraleBatch.Add($"RegionRisk:{risk.RiskType}", -risk.Amount);
                     result.AddMessage(BuildRiskMessage(risk, $"士氣下降 {risk.Amount}。"));
                     break;
                 case RegionRiskType.LoseFood:
@@ -424,7 +455,11 @@ namespace ZombieCardSurvive.Exploration.Runtime
             }
         }
 
-        private void ApplyZombieRisk(RegionRiskEntry risk, CardController cardController, ExplorationResult result)
+        private void ApplyZombieRisk(
+            RegionRuntime region,
+            RegionRiskEntry risk,
+            CardController cardController,
+            ExplorationResult result)
         {
             if (risk.ZombieCard == null)
             {
@@ -433,27 +468,70 @@ namespace ZombieCardSurvive.Exploration.Runtime
                 return;
             }
 
-            for (int i = 0; i < risk.Amount; i++)
+            int amountToGenerate = Mathf.Min(risk.Amount, region.RemainingZombieCount);
+            int generatedCount = 0;
+            for (int i = 0; i < amountToGenerate; i++)
             {
-                AddZombieCardToDiscard(cardController, risk.ZombieCard, result);
+                if (!TryAddRegionalZombieCardToDiscard(region, cardController, risk.ZombieCard, result))
+                {
+                    break;
+                }
+
+                generatedCount++;
             }
 
-            result.AddMessage(BuildRiskMessage(risk, $"污染：{risk.Amount} 張殭屍卡進入棄牌堆。"));
+            if (generatedCount > 0)
+            {
+                result.AddMessage(BuildRiskMessage(risk, $"污染：{generatedCount} 張殭屍卡進入棄牌堆。"));
+            }
+            else if (region.RemainingZombieCount <= 0)
+            {
+                result.AddMessage("風險已觸發，但當地已沒有剩餘殭屍。");
+            }
         }
 
-        private static void AddZombieCardToDiscard(CardController cardController, ZombieCardData zombieCard, ExplorationResult result)
+        private static bool TryAddRegionalZombieCardToDiscard(
+            RegionRuntime region,
+            CardController cardController,
+            ZombieCardData zombieCard,
+            ExplorationResult result)
         {
+            if (region == null || region.RemainingZombieCount <= 0)
+            {
+                return false;
+            }
+
             if (cardController == null)
             {
                 result.AddMessage($"未加入污染：{GetCardName(zombieCard)}（場景缺少 CardController）。");
                 Debug.LogWarning("Exploration could not add zombie card to discard pile because CardController is missing.");
-                return;
+                return false;
             }
 
-            if (cardController.AddCardToDiscardPile(zombieCard))
+            if (!cardController.AddCardToDiscardPile(zombieCard))
             {
-                result.AddZombieCard(zombieCard);
+                return false;
             }
+
+            if (!region.TryConsumeZombie())
+            {
+                Debug.LogError($"Region '{region.RegionId}' failed to consume zombie stock after creating a zombie card.");
+                return false;
+            }
+
+            result.AddZombieCard(zombieCard);
+            return true;
+        }
+
+        private static bool RollChance(float chance)
+        {
+            chance = Mathf.Clamp01(chance);
+            if (chance <= 0f)
+            {
+                return false;
+            }
+
+            return chance >= 1f || UnityEngine.Random.value < chance;
         }
 
         private static string BuildRiskMessage(RegionRiskEntry risk, string fallback)

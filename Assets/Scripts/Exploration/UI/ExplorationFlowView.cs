@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using ZombieCardSurvive.Exploration.Data;
 using ZombieCardSurvive.Exploration.Runtime;
 
 namespace ZombieCardSurvive.Exploration.UI
@@ -13,6 +14,8 @@ namespace ZombieCardSurvive.Exploration.UI
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private TMP_Text titleText;
         [SerializeField] private TMP_Text descriptionText;
+        [SerializeField] private TMP_Text resultSummaryText;
+        [SerializeField] private GameObject resultPanel;
         [SerializeField] private ExplorationRegionCardView[] regionCards;
         [SerializeField] private Button closeButton;
 
@@ -86,6 +89,7 @@ namespace ZombieCardSurvive.Exploration.UI
 
         private void ApplyChoosingState()
         {
+            if (resultPanel != null) resultPanel.SetActive(false);
             SetText(titleText, "選擇探索地區");
             SetText(descriptionText, "選擇一個地區，獲得對應卡包並承擔探索風險。");
             SetCloseVisible(false);
@@ -103,7 +107,9 @@ namespace ZombieCardSurvive.Exploration.UI
                 if (i < offerCount)
                 {
                     int index = i;
-                    regionCard.Bind(explorationSystem.CurrentOffers[i], () => ChooseRegion(index));
+                    ExplorationRegionData region = explorationSystem.CurrentOffers[i];
+                    RegionRuntime runtime = explorationSystem.GetRegionRuntime(region.RegionId);
+                    regionCard.Bind(region, runtime, () => ChooseRegion(index));
                 }
                 else
                 {
@@ -119,9 +125,33 @@ namespace ZombieCardSurvive.Exploration.UI
                 : "探索結果";
 
             SetText(titleText, regionName);
-            SetText(descriptionText, explorationSystem.LastResult != null ? explorationSystem.LastResult.BuildSummary() : "探索已結束。");
+            bool hasResultPanel = resultPanel != null && resultSummaryText != null;
+            if (resultPanel != null) resultPanel.SetActive(hasResultPanel);
+            SetText(descriptionText, hasResultPanel ? "探索已完成，以下是本次收穫與遭遇。內容較長時可使用滾輪查看。" : BuildResultSummary());
+            if (hasResultPanel) SetText(resultSummaryText, BuildResultSummary());
             SetCloseVisible(true);
             SetRegionCardsVisible(false);
+        }
+
+        private string BuildResultSummary()
+        {
+            string summary = explorationSystem.LastResult != null
+                ? explorationSystem.LastResult.BuildSummary()
+                : "探索已結束。";
+
+            ExplorationRegionData selectedRegion = explorationSystem.SelectedRegion;
+            RegionRuntime runtime = selectedRegion != null
+                ? explorationSystem.GetRegionRuntime(selectedRegion.RegionId)
+                : null;
+            if (runtime == null || !ReferenceEquals(runtime.Data, selectedRegion))
+            {
+                return summary;
+            }
+
+            string status = ExplorationTextUtility.FormatRegionStatus(
+                runtime.ResourceState,
+                runtime.RelativeDangerLevel);
+            return $"{summary}\n\n探索後狀態：{status}";
         }
 
         private void ChooseRegion(int index)

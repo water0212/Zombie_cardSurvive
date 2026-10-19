@@ -25,7 +25,7 @@ MonoBehaviour:
   - slotType: 2
     count: 1
     acceptedCardTypes: 05000000
-    defaultCard: {fileID: 11400000, guid: 50f0cff2d46824e4a8da77f4fe35ed51, type: 2}
+    defaultCard: {fileID: 11400000, guid: e0a25c1477b8e0b4cbf2cd8b79799c96, type: 2}
   - slotType: 3
     count: 8
     acceptedCardTypes: 0000000001000000020000000300000004000000050000000600000007000000

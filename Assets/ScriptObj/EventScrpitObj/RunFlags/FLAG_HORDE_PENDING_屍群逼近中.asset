@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ded64a2d13a7abd4ebcdcbd482961f94, type: 3}
+  m_Name: "FLAG_HORDE_PENDING_\u5C4D\u7FA4\u903C\u8FD1\u4E2D"
+  m_EditorClassIdentifier: 
+  flagId: FLAG_HORDE_PENDING
+  displayName: "\u5C4D\u7FA4\u903C\u8FD1\u4E2D"
+  description: "\u5C4D\u7FA4\u903C\u8FD1\u4E8B\u4EF6\u5EFA\u7ACB\u7684\u5F85\u8655\u7406\u5C4D\u7FA4\u8CC7\u683C\u3002\u6578\u503C\u5927\u65BC
+    0 \u6642\uFF0C\u5C4D\u7FA4\u4F86\u81E8\u53EF\u4EE5\u9032\u5165\u4E8B\u4EF6\u6C60\u3002"
+  defaultValue: 0
+  minimumValue: 0
+  maximumValue: 1

@@ -3,6 +3,7 @@ using UnityEngine.InputSystem;
 using ZombieCardSurvive.Run;
 using ZombieCardSurvive.Cards.UI.Piles;
 using ZombieCardSurvive.Events.Runtime;
+using ZombieCardSurvive.UI;
 
 /// <summary>
 /// 全域快捷鍵控制器。
@@ -65,6 +66,11 @@ public class ShortcutInputController : MonoBehaviour
     // EndTurn 快捷鍵：只負責轉送給 RunPhaseController，由階段控制器判斷是否能結束。
     private void OnEndTurn(InputAction.CallbackContext context)
     {
+        if (FlowInspectionController.IsInspectingGameplay)
+        {
+            return;
+        }
+
         if (runPhaseController != null)
         {
             runPhaseController.EndTurn();
@@ -74,6 +80,11 @@ public class ShortcutInputController : MonoBehaviour
     // EndEvent 快捷鍵：有事件流程時優先關事件，否則退回 RunPhaseController 的確認事件入口。
     private void OnEndEvent(InputAction.CallbackContext context)
     {
+        if (FlowInspectionController.IsInspectingGameplay)
+        {
+            return;
+        }
+
         if (eventFlowController != null)
         {
             eventFlowController.EndEvent();
@@ -89,6 +100,11 @@ public class ShortcutInputController : MonoBehaviour
     // ClosePopup 快捷鍵：目前用於關閉牌堆檢視視窗。
     private void OnClosePopup(InputAction.CallbackContext context)
     {
+        if (FlowInspectionController.IsInspectingGameplay)
+        {
+            return;
+        }
+
         if (cardPileViewSystem != null)
         {
             cardPileViewSystem.Close();

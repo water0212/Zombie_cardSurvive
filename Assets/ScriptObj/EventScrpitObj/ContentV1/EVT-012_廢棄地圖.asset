@@ -17,22 +17,40 @@ MonoBehaviour:
   description: "\u4E00\u5F35\u88AB\u96E8\u6C34\u6CE1\u76BA\u7684\u57CE\u5E02\u5730\u5716\u4ECD\u80FD\u770B\u51FA\u5E7E\u689D\u88DC\u7D66\u8DEF\u7DDA\u3002"
   artwork: {fileID: 0}
   choices:
-  - choiceText: "\u6536\u9032\u6A94\u6848"
-    resultTitle: "\u53EF\u7528\u60C5\u5831"
-    resultDescription: "\u7372\u5F97 1 \u6B21\u66FF\u63DB\u6A5F\u6703\u3002\u63A2\u7D22\u4FEE\u6B63\u4FDD\u7559\u5F8C\u7E8C\u5BE6\u4F5C\u3002"
+  - choiceText: "\u67E5\u770B\u65B0\u5730\u9EDE"
+    resultTitle: "\u767C\u73FE\u5730\u9EDE"
+    resultDescription: "\u65B0\u589E\u53EF\u4F9B\u63A2\u7D22\u5361\u767C\u73FE\u7684\u5730\u9EDE\u3002"
     resultArtwork: {fileID: 0}
-    effects:
-    - carrier: 1
-      category: 1
-      valueEffectType: 0
-      cardFlowEffectType: 1
-      buildingEffectType: 0
-      survivorEffectType: 0
-      cardData: {fileID: 0}
-      amount: 1
-      effectId: 
-      isPermanent: 0
-      remainingTurns: 0
-      requiredBuildingId: 
-      requiredBuildingLevel: 0
-      invertBuildingRequirement: 0
+    effects: []
+    forcedLossConsequences: []
+  - choiceText: "\u78BA\u8A8D\u820A\u5730\u9EDE"
+    resultTitle: "\u88DC\u5B8C\u5730\u5716"
+    resultDescription: "\u63D0\u9AD8\u65E2\u6709\u5730\u9EDE\u7684\u63A2\u7D22\u503C\u3002"
+    resultArtwork: {fileID: 0}
+    effects: []
+    forcedLossConsequences: []
+  - choiceText: "\u6A19\u8A3B\u5A01\u8105\u9EDE"
+    resultTitle: "\u66F4\u65B0\u5A01\u8105"
+    resultDescription: "\u964D\u4F4E\u7B49\u540C\u6700\u5927\u80FD\u91CF\u7684\u4E16\u754C\u5A01\u8105\u3002"
+    resultArtwork: {fileID: 0}
+    effects: []
+    forcedLossConsequences: []
+  moodCategory: 0
+  contentCategory: 4
+  implementationStatus: 1
+  impactLevel: "\u9AD8"
+  specialRules: "\u672C\u8F2A\u6253\u51FA\u63A2\u7D22\u5361\u6642\u6B0A\u91CD\u589E\u52A0
+    50\uFF0C\u51B7\u537B\u6E1B\u5C11 1\u3002"
+  implementationNotes: "\u9700\u8981\u5730\u5340\u767C\u73FE\u3001\u63A2\u7D22\u9032\u5EA6\u3001\u63A2\u7D22\u56DE\u5408\u7D00\u9304\u8207
+    WorldThreat \u6B63\u5F0F\u7CFB\u7D71\u3002"
+  earliestDay: 10
+  latestDay: 0
+  baseWeight: 50
+  canRepeat: 1
+  maximumAppearancesPerRun: 0
+  minimumDaysBetweenAppearances: 10
+  eligibilityConditions:
+    matchMode: 0
+    invertResult: 0
+    conditions: []
+  weightModifiers: []

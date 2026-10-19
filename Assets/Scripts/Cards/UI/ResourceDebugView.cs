@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using ZombieCardSurvive.Cards.Runtime;
+using ZombieCardSurvive.Exploration.Runtime;
 using ZombieCardSurvive.Run;
 using ZombieCardSurvive.Systems;
 
@@ -10,6 +12,8 @@ namespace ZombieCardSurvive.Cards.UI
     {
         [SerializeField] private CardController cardController;
         [SerializeField] private RunPhaseController runPhaseController;
+        [Tooltip("Optional. Automatically found in the scene when left empty.")]
+        [SerializeField] private ExplorationSystem explorationSystem;
         [SerializeField] private TMP_Text foodText;
         [SerializeField] private TMP_Text resourceText;
         [SerializeField] private TMP_Text energyText;
@@ -27,6 +31,7 @@ namespace ZombieCardSurvive.Cards.UI
         {
             cardController = FindObjectOfType<CardController>();
             runPhaseController = FindObjectOfType<RunPhaseController>();
+            explorationSystem = FindObjectOfType<ExplorationSystem>();
         }
 
         private void OnEnable()
@@ -34,6 +39,16 @@ namespace ZombieCardSurvive.Cards.UI
             if (runPhaseController == null)
             {
                 runPhaseController = FindObjectOfType<RunPhaseController>();
+            }
+
+            if (cardController == null)
+            {
+                cardController = FindObjectOfType<CardController>();
+            }
+
+            if (explorationSystem == null)
+            {
+                explorationSystem = FindObjectOfType<ExplorationSystem>();
             }
 
             if (cardController != null)
@@ -62,38 +77,73 @@ namespace ZombieCardSurvive.Cards.UI
         {
             SetText(foodText, BuildFoodResourceText());
             SetText(resourceText, BuildResourceText(ResourceSystem.GetResource(), ResourceSystem.AvailableResource, ResourceSystem.ReservedResource));
-            SetText(moraleText, $"{MoraleSystem.GetMorale()}/{MoraleSystem.MaxMorale}");
+            SetText(
+                moraleText,
+                $"{MoraleSystem.CurrentMorale}/{MoraleSystem.MaximumMorale} [{MoraleSystem.CollapseStage}]");
             SetText(foodPlanText, BuildFoodPlanText());
             SetText(foodStorageText, BuildFoodStorageText());
             SetText(roundEndDebugText, BuildRoundEndText());
             SetText(combatLimitText, BuildCombatLimitText());
             SetText(zombieSummaryText, BuildZombieSummaryText());
+            SetText(deckDebugText, BuildDeckAndRegionDebugText());
 
             if (cardController == null)
             {
                 SetText(energyText, $"{EnergySystem.CurrentEnergy}/{EnergySystem.MaxEnergy}");
                 SetText(pendingDamageText, $"{CombatSystem.PendingDamage}/{CombatSystem.MaxCombatValue}");
                 SetText(zombieThreatText, $"{CombatSystem.ZombieThreatCount}");
-                SetText(deckDebugText, string.Empty);
                 return;
             }
 
             SetText(energyText, $"{EnergySystem.CurrentEnergy}/{EnergySystem.MaxEnergy}");
             SetText(pendingDamageText, $"{CombatSystem.PendingDamage}/{CombatSystem.MaxCombatValue}");
             SetText(zombieThreatText, $"{CombatSystem.ZombieThreatCount}");
-            SetText(deckDebugText, BuildDeckDebugText());
         }
 
-        private string BuildDeckDebugText()
+        private string BuildDeckAndRegionDebugText()
         {
-            if (cardController == null)
+            List<string> sections = new List<string>();
+            if (cardController != null)
+            {
+                sections.Add(
+                    $"正規抽牌:{cardController.RegularDrawPileCount}  附加:{cardController.AdditiveDrawPileCount}\n" +
+                    $"手牌:{cardController.HandCards.Count}  棄牌:{cardController.DiscardPile.Count}  已打出:{cardController.PlayedCards.Count}\n" +
+                    $"耗盡:{cardController.ExhaustedCards.Count}  補位需求:{cardController.VacancyRecords.Count}");
+            }
+
+            string regionDebug = BuildRegionDebugText();
+            if (!string.IsNullOrEmpty(regionDebug))
+            {
+                sections.Add(regionDebug);
+            }
+
+            return string.Join("\n", sections);
+        }
+
+        private string BuildRegionDebugText()
+        {
+            if (explorationSystem == null || !explorationSystem.IsRunInitialized)
             {
                 return string.Empty;
             }
 
-            return $"正規抽牌:{cardController.RegularDrawPileCount}  附加:{cardController.AdditiveDrawPileCount}\n"
-                + $"手牌:{cardController.HandCards.Count}  棄牌:{cardController.DiscardPile.Count}  已打出:{cardController.PlayedCards.Count}\n"
-                + $"耗盡:{cardController.ExhaustedCards.Count}  補位需求:{cardController.VacancyRecords.Count}";
+            List<RegionRuntime> regions = new List<RegionRuntime>(explorationSystem.RegionRuntimes.Values);
+            regions.Sort((left, right) => string.CompareOrdinal(left.RegionId, right.RegionId));
+
+            List<string> lines = new List<string> { "地區 Runtime：" };
+            foreach (RegionRuntime region in regions)
+            {
+                string label = !string.IsNullOrWhiteSpace(region.Data.DisplayName)
+                    ? region.Data.DisplayName
+                    : region.RegionId;
+                lines.Add(
+                    $"{label} 包{region.RemainingPackCount}/{region.InitialPackCount} " +
+                    $"屍{region.RemainingZombieCount}/{region.InitialZombieCount} " +
+                    $"熱{region.Heat:P0} 遭遇{region.EncounterChance:P0} " +
+                    $"搜索{region.SearchProgress:P0} 清理{region.Clearance:P0}");
+            }
+
+            return string.Join("\n", lines);
         }
 
         private static string BuildFoodPlanText()

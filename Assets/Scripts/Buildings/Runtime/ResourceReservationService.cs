@@ -20,6 +20,8 @@ namespace ZombieCardSurvive.Buildings.Runtime
     {
         private static readonly Dictionary<string, ResourceCost> reservations = new Dictionary<string, ResourceCost>();
 
+        public static event Action StateChanged;
+
         public static int ReservedFood { get; private set; }
         public static int ReservedResource { get; private set; }
         public static int AvailableFood => Math.Max(0, FoodSystem.GetFood() - ReservedFood);
@@ -38,6 +40,7 @@ namespace ZombieCardSurvive.Buildings.Runtime
             ReservedFood += cost.Food;
             ReservedResource += cost.Resource;
             token = new ResourceReservationToken(id);
+            StateChanged?.Invoke();
             return true;
         }
 
@@ -53,12 +56,16 @@ namespace ZombieCardSurvive.Buildings.Runtime
                 return false;
             }
 
-            if (!FoodSystem.SpendReservedFood(cost.Food) || !ResourceSystem.SpendReservedResource(cost.Resource))
+            if (!FoodSystem.SpendReservedFood(cost.Food, notifyStateChanged: false)
+                || !ResourceSystem.SpendReservedResource(cost.Resource, notifyStateChanged: false))
             {
                 return false;
             }
 
-            RemoveReservation(token.Id, cost);
+            RemoveReservation(token.Id, cost, notifyStateChanged: false);
+            FoodSystem.NotifyStateChanged();
+            ResourceSystem.NotifyStateChanged();
+            StateChanged?.Invoke();
             return true;
         }
 
@@ -69,8 +76,7 @@ namespace ZombieCardSurvive.Buildings.Runtime
                 return false;
             }
 
-            RemoveReservation(token.Id, cost);
-            return true;
+            return RemoveReservation(token.Id, cost);
         }
 
         public static bool Contains(ResourceReservationToken token)
@@ -83,6 +89,7 @@ namespace ZombieCardSurvive.Buildings.Runtime
             reservations.Clear();
             ReservedFood = 0;
             ReservedResource = 0;
+            StateChanged?.Invoke();
         }
 
         private static bool TryGetCost(ResourceReservationToken token, out ResourceCost cost)
@@ -91,11 +98,23 @@ namespace ZombieCardSurvive.Buildings.Runtime
             return token.IsValid && reservations.TryGetValue(token.Id, out cost);
         }
 
-        private static void RemoveReservation(string id, ResourceCost cost)
+        private static bool RemoveReservation(
+            string id,
+            ResourceCost cost,
+            bool notifyStateChanged = true)
         {
-            reservations.Remove(id);
+            if (!reservations.Remove(id))
+            {
+                return false;
+            }
+
             ReservedFood = Math.Max(0, ReservedFood - cost.Food);
             ReservedResource = Math.Max(0, ReservedResource - cost.Resource);
+            if (notifyStateChanged)
+            {
+                StateChanged?.Invoke();
+            }
+            return true;
         }
     }
 }

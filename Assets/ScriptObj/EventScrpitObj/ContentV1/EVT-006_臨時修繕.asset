@@ -17,55 +17,39 @@ MonoBehaviour:
   description: "\u5916\u570D\u8DEF\u969C\u51FA\u73FE\u7F3A\u53E3\uFF0C\u73FE\u5728\u4FEE\u9084\u4F86\u5F97\u53CA\u3002"
   artwork: {fileID: 0}
   choices:
-  - choiceText: "\u82B1\u8CC7\u6E90\u4FEE\u88DC"
-    resultTitle: "\u8DEF\u969C\u88DC\u4E0A"
-    resultDescription: "\u5931\u53BB 1 \u8CC7\u6E90\uFF0C\u79FB\u9664 1 \u500B\u6BAD\u5C4D\u5A01\u8105\u3002"
+  - choiceText: "\u52A0\u56FA\u5916\u7246"
+    resultTitle: "\u5B8C\u6210\u52A0\u56FA"
+    resultDescription: "\u652F\u4ED8\u6700\u5927\u80FD\u91CF\u5169\u500D\u7684\u8CC7\u6E90\uFF0C\u7372\u5F97\u7B49\u540C\u6700\u5927\u80FD\u91CF\u7684\u6230\u9B25\u503C\u3002"
     resultArtwork: {fileID: 0}
-    effects:
-    - carrier: 1
-      category: 0
-      valueEffectType: 4
-      cardFlowEffectType: 0
-      buildingEffectType: 0
-      survivorEffectType: 0
-      cardData: {fileID: 0}
-      amount: 1
-      effectId: 
-      isPermanent: 0
-      remainingTurns: 0
-      requiredBuildingId: 
-      requiredBuildingLevel: 0
-      invertBuildingRequirement: 0
-    - carrier: 1
-      category: 0
-      valueEffectType: 7
-      cardFlowEffectType: 0
-      buildingEffectType: 0
-      survivorEffectType: 0
-      cardData: {fileID: 0}
-      amount: 1
-      effectId: 
-      isPermanent: 0
-      remainingTurns: 0
-      requiredBuildingId: 
-      requiredBuildingLevel: 0
-      invertBuildingRequirement: 0
-  - choiceText: "\u66AB\u6642\u4E0D\u7BA1"
-    resultTitle: "\u7F3A\u53E3\u64F4\u5927"
-    resultDescription: "\u52A0\u5165 1 \u5F35\u6BAD\u5C4D\u5361\u5230\u68C4\u724C\u5806\u3002"
+    effects: []
+    forcedLossConsequences: []
+  - choiceText: "\u52A0\u5F37\u8B66\u6212"
+    resultTitle: "\u63D0\u9AD8\u6212\u5099"
+    resultDescription: "\u652F\u4ED8\u7B49\u540C\u6700\u5927\u80FD\u91CF\u7684\u8CC7\u6E90\uFF0C\u4E0B\u4E00\u8F2A\u6230\u9B25\u5361\u6230\u9B25\u503C\u589E\u52A0
+      1\u3002"
     resultArtwork: {fileID: 0}
-    effects:
-    - carrier: 1
-      category: 1
-      valueEffectType: 0
-      cardFlowEffectType: 2
-      buildingEffectType: 0
-      survivorEffectType: 0
-      cardData: {fileID: 11400000, guid: 43bcfd7fc71381a41b07ce48c3efc332, type: 2}
-      amount: 1
-      effectId: 
-      isPermanent: 0
-      remainingTurns: 0
-      requiredBuildingId: 
-      requiredBuildingLevel: 0
-      invertBuildingRequirement: 0
+    effects: []
+    forcedLossConsequences: []
+  - choiceText: "\u7C21\u55AE\u586B\u88DC"
+    resultTitle: "\u52C9\u5F37\u88DC\u4E0A"
+    resultDescription: "\u6230\u9B25\u503C\u6E1B\u5C11 2\u3002"
+    resultArtwork: {fileID: 0}
+    effects: []
+    forcedLossConsequences: []
+  moodCategory: 2
+  contentCategory: 0
+  implementationStatus: 1
+  impactLevel: "\u4E2D"
+  specialRules: 
+  implementationNotes: "\u9700\u8981\u4E0B\u4E00\u8F2A\u6230\u9B25\u5361\u6548\u679C\u4FEE\u6B63\uFF0C\u4EE5\u53CA\u6263\u9664\u73FE\u6709\u6230\u9B25\u503C\u7684\u6548\u679C\u3002"
+  earliestDay: 4
+  latestDay: 0
+  baseWeight: 30
+  canRepeat: 1
+  maximumAppearancesPerRun: 0
+  minimumDaysBetweenAppearances: 5
+  eligibilityConditions:
+    matchMode: 0
+    invertResult: 0
+    conditions: []
+  weightModifiers: []

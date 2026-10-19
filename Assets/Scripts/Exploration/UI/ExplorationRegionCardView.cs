@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 using ZombieCardSurvive.Exploration.Data;
+using ZombieCardSurvive.Exploration.Runtime;
 
 namespace ZombieCardSurvive.Exploration.UI
 {
@@ -55,6 +56,11 @@ namespace ZombieCardSurvive.Exploration.UI
 
         public void Bind(ExplorationRegionData region, UnityAction clickAction)
         {
+            Bind(region, null, clickAction);
+        }
+
+        public void Bind(ExplorationRegionData region, RegionRuntime runtime, UnityAction clickAction)
+        {
             SetVisible(region != null);
             ClearClickAction();
 
@@ -65,10 +71,22 @@ namespace ZombieCardSurvive.Exploration.UI
 
             SetText(nameText, !string.IsNullOrWhiteSpace(region.DisplayName) ? region.DisplayName : region.name);
             SetText(descriptionText, region.Description);
-            SetText(dangerText, "危險度：" + ExplorationTextUtility.GetDangerLabel(region.DangerLevel));
+            SetText(dangerText, BuildStatusText(region, runtime));
             SetText(rewardsText, "預期收益：" + region.BuildExpectedRewardsText());
             SetArtwork(region.Artwork);
             SetClickAction(clickAction);
+        }
+
+        private static string BuildStatusText(ExplorationRegionData region, RegionRuntime runtime)
+        {
+            if (runtime != null && ReferenceEquals(runtime.Data, region))
+            {
+                return ExplorationTextUtility.FormatRegionStatus(
+                    runtime.ResourceState,
+                    runtime.RelativeDangerLevel);
+            }
+
+            return "物資：未知｜危險：" + ExplorationTextUtility.GetDangerLabel(region.DangerLevel);
         }
 
         public void SetVisible(bool visible)

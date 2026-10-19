@@ -1,7 +1,7 @@
 # 殭屍生存卡牌 - Scrum 開發待辦清單
 
-版本：0.3  
-日期：2026-07-30  
+版本：0.4  
+日期：2026-08-24  
 用途：整理目前已完成、部分完成、尚未完成的開發任務，並依照 Scrum / Backlog 的方式安排優先順序。
 
 這份文件是「開發管理文件」，不是 GDD 的替代品。  
@@ -167,6 +167,9 @@ StartRun
 - 欄位預設卡
 - 附加卡
 - 抽到自動觸發卡
+- 自動與手動打出共用 `Costs -> Effects -> 使用次數 -> 去向` 結算管線
+- 自動打出免能量；`Costs` 不足時留在手牌，之後可支付能量手動打出
+- 自動附加牌依使用次數進棄牌堆或耗盡，耗盡時不產生正規卡位補位需求
 - 不能打出的卡
 
 ### C10 - 正規卡組建立系統
@@ -429,13 +432,12 @@ StartRun
 分類：生存經濟  
 目標：加入士氣作為基地狀態與事件判定核心數值。
 
-規則：
-- 預設士氣為 70%
-- 高士氣會逐步衰減回預設值
-- 低士氣不會自然恢復
-- 低士氣可透過食物計畫或事件恢復
-- 殭屍攻擊與負面事件會降低士氣
-- 士氣門檻之後會影響事件選項與好事件機率
+> 本故事只代表既有單一士氣值與效果接口已完成。初始 70、單一門檻與舊食物計畫規則已由 GDD 第 30 章及 PB-P0-014A～E 取代。
+
+既有完成範圍：
+- 士氣數值可被 Runtime、事件與效果讀取或修改。
+- 高士氣回落、食物計畫、殭屍與負面事件已有原型接點。
+- 不可逆階段、士氣上限與基地崩潰不屬於本故事，改由 PB-P0-014 系列完成。
 
 驗收：
 - 士氣可追蹤與顯示
@@ -554,7 +556,7 @@ StartRun
 
 ### PB-P0-011 - 有限卡包權重與地區枯竭
 
-狀態：待辦  
+狀態：已完成  
 優先級：P0  
 分類：探索 / 卡包  
 設計依據：GDD 第 29.3、29.5 節  
@@ -585,9 +587,15 @@ Probability = CurrentWeight / SumOfAvailableCurrentWeights
 - 地區枯竭後不會出現在三選一；不足三個合法地區時顯示可用數量並輸出 warning。
 - 所有地區枯竭時探索流程顯示可理解結果，不崩潰也不免費退還已成功打出的探索卡。
 
+完成驗證（2026-08-01）：
+- `RegionPackRuntime` 會依 `BaseWeight * RemainingCount / InitialCount` 即時計算權重；`RegionRuntime` 提供機率、抽取、搜索進度、模糊資源狀態與補貨 API。
+- `ExplorationSystem` 已改為每次抽取並扣除一個 Runtime 卡包，枯竭地區不再進入一般探索候選池。
+- 所有地區枯竭時仍完成探索卡流程並顯示可理解結果；特殊事件可透過 `TryRestockRegionPack()` 重新補充指定地區卡包。
+- Unity 2022.3.62f3：RegionRuntime／PB-P0-011 Edit Mode 測試 14/14、全套 Edit Mode 測試 31/31 通過。
+
 ### PB-P0-012 - 地區殭屍存量與探索熱度
 
-狀態：待辦  
+狀態：已完成  
 優先級：P0  
 分類：探索 / 風險  
 設計依據：GDD 第 28.8、29.4 節  
@@ -612,9 +620,16 @@ Probability = CurrentWeight / SumOfAvailableCurrentWeights
 - 殭屍存量不足時不會產生超過剩餘數量的殭屍卡。
 - 殭屍存量歸零後，即使熱度仍高也不再自然產生殭屍。
 
+完成驗證（2026-08-01）：
+- `RegionRuntime` 已提供動態 `EncounterChance`、探索活動紀錄、每日熱度衰減、清理度與殭屍補充 API。
+- V1 使用 `HeatModifier = Heat`、`ClearanceModifier = BaseEncounterChance * Clearance`；地區殭屍歸零時遭遇率強制為 0。
+- 地區風險與卡包污染成功產生殭屍卡後才扣除存量，且不會產生超過剩餘數量的殭屍卡。
+- `RunPhaseController` 會在事件後、建築結算前，衰減本日未探索地區的熱度。
+- Unity 2022.3.62f3：RegionRuntime／PB-P0-012 Edit Mode 測試 21/21、全套 Edit Mode 測試 38/38 通過。
+
 ### PB-P0-013 - 地區模糊情報 UI 與 Sprint 7 整合驗收
 
-狀態：待辦  
+狀態：已完成（2026-08-18，使用者確認）  
 優先級：P0  
 分類：探索 / UI / 整合  
 設計依據：GDD 第 29.5、29.6 節  
@@ -628,8 +643,28 @@ Probability = CurrentWeight / SumOfAvailableCurrentWeights
 - `ExplorationRegionCardView` 顯示資源狀態與相對危險分級。
 - 探索結果顯示取得卡包、觸發風險及更新後的模糊地區狀態。
 - Debug UI 額外顯示精確 Runtime 數值，正式地區卡不顯示精確權重與剩餘數量。
-- 使用 Unity Editor Setup 或資料遷移工具更新首批地區 Asset，不手寫 Unity YAML。
-- 完成四個地區的 Play Mode 串接測試。
+- 完成五個地區的 Play Mode 串接測試。
+
+已完成（2026-08-02）：
+- 新增冪等 `RegionContentV1SetupUtility`，以 Unity API 建立與更新地區 Asset，不手寫 Unity YAML。
+- 依 `Region Design` 匯入 5 個正式地區：廢棄超市、住宅區、消防局、五金行、倉庫。
+- 依 `Region CardPack Design` 匯入 17 筆有限卡包存量、供應稀有度與基礎權重。
+- 正規化 4 個既有卡包的尾端空白 ID，保留既有卡包抽卡池與產出數量。
+- SampleScene 的 `ExplorationSystem.regionPool` 已改接 5 個正式地區；舊 Demo 地區 Asset 保留、不覆寫。
+- 第二次執行 Setup 不新增重複 Asset，且無需再次修改 Pack ID。
+- 地區內容 Edit Mode 回歸測試 4/4 通過。
+
+已完成（2026-08-03）：
+- `RegionRuntime` 新增即時相對危險分級：`0～20%` 低、`20～35%` 中、`35～60%` 高、超過 `60%` 極高。
+- `ExplorationRegionCardView` 改讀 Runtime，正式地區卡只顯示「充足／普通／稀少／枯竭」與「低／中／高／極高」，不公開精確存量與機率。
+- 探索結果摘要會顯示取得卡包、卡牌、殭屍風險訊息，以及結算後的模糊地區狀態。
+- 既有 `ResourceDebugView` 追加五個地區的卡包、殭屍、熱度、遭遇率、搜索進度與清理度精確數值。
+- `Validate Region Content V1` 會同步檢查探索面板、三張地區卡及 Debug 文字引用。
+- 新增危險分級、公開資訊與 SampleScene UI 接線回歸測試；C# 專案編譯為 0 errors、0 warnings。
+
+待手動驗收：
+- 在 Unity Test Runner 執行全套 Edit Mode 測試。
+- 在 SampleScene 完成五地區探索、枯竭移除、跨輪保存與新局重置 Play Mode 流程。
 
 驗收：
 - 打出探索卡後只會出現仍有資源的合法地區。
@@ -637,7 +672,176 @@ Probability = CurrentWeight / SumOfAvailableCurrentWeights
 - 殭屍風險會依有限存量與熱度結算。
 - 枯竭地區從普通探索選項消失。
 - 關閉 UI、進入下一輪與重新打出探索卡時，地區狀態保持一致。
-- 開始新存檔後四個地區全部回到初始狀態。
+- 開始新存檔後五個地區全部回到初始狀態。
+
+### PB-P0-014 - 士氣金字塔與基地崩潰
+
+狀態：製作中；PB-P0-014A～D 已完成，PB-P0-014E 待實作  
+優先級：P0  
+分類：士氣 / 失敗條件 / 殭屍存活與下輪效果 / UI  
+設計依據：GDD 第 30 章  
+相依：PB-P0-003、PB-P0-004、PB-P0-005、PB-P0-007、PB-P2-001、PB-P2-009D  
+目標：以當前士氣、永久士氣上限與不可逆崩潰階段建立一般生存失敗閉環，並讓玩家能在殭屍與食物後果發生前理解、預防與追溯原因。
+
+子故事：
+- PB-P0-014A：士氣狀態核心、不可逆階段與基地崩潰。
+- PB-P0-014B：食物、事件與輪末士氣批次結算。
+- PB-P0-014C：殭屍漏防、永久士氣上限損傷與完整反應窗口。
+- PB-P0-014D：資料化金字塔 Profile 與階段效果替換。
+- PB-P0-014E：常駐 HUD、輪末預警、崩潰報告與局前選擇 UI。
+
+### PB-P0-014A - 士氣狀態核心、不可逆階段與基地崩潰
+
+狀態：已完成（2026-08-21）  
+優先級：P0  
+分類：士氣 / Runtime / Run 結束  
+設計依據：GDD 第 30.2、30.3、30.7、30.10 節  
+相依：PB-P0-005  
+目標：先建立不依賴特定效果內容的士氣狀態機，讓所有後續來源共用同一套限制、跨階、記錄與失敗判定。
+
+待做：
+- 新局初始化 `CurrentMorale = 100`、`MaximumMorale = 100`、`MoraleCollapseStage = 0`。
+- 建立完整士氣批次提交結果，記錄當前值、上限、來源、跨階與崩潰結果。
+- 門檻採 `< 70` 與 `< 35`；階段只允許 `0 -> 1 -> 2`，回復不降階。
+- 支援一次跨兩階並各記錄一次轉換；同階重複提交不得重播首次轉換。
+- 士氣回復受上限限制；上限下降先限制當前值，且不重複扣除同額士氣。
+- 完整批次後士氣為 0 時只觸發一次基地崩潰，提供 Run 結束訊號並阻止下一輪。
+- 先提供空的階段效果接口，不在本故事寫死正式正負效果。
+
+驗收：
+- 70 / 69、35 / 34 邊界符合 GDD。
+- Stage 1 或 2 回復到 100 後階段不變。
+- 80 一次降到 30 時直接進入 Stage 2，兩筆轉換記錄各一次。
+- 重複低士氣提交不重複套用階段或崩潰事件。
+- 新 Run 完整重置當前士氣、上限、階段與崩潰狀態。
+- 既有卡牌、事件與輪末來源尚未遷移前仍可運作，不產生雙重扣除。
+
+完成紀錄（2026-08-21）：
+- `MoraleSystem` 已加入當前士氣、永久上限、不可逆階段、批次提交結果與一次性基地崩潰事件；舊 API 保留為相容入口。
+- `RunPhaseController` 已加入 `Failed` 階段與流程守衛，新 Run 會完整重置士氣狀態。
+- Debug UI 可顯示 `Current / Maximum / Stage`；正式 HUD 留待 PB-P0-014E。
+- Unity Edit Mode：本故事 10 / 10、受影響回歸 30 / 30 通過。
+- 全套 Edit Mode 為 148 / 150；剩餘 2 項是既存 `EVT-014` 屍群事件資產效果順序／引用不符 PB-P2-009D 規格，與本故事修改範圍無交集。
+
+### PB-P0-014B - 食物、事件與輪末士氣批次結算
+
+狀態：已完成（2026-08-22）  
+優先級：P0  
+分類：士氣 / 食物 / 事件 / 輪末  
+設計依據：GDD 第 30.5、30.7 節  
+相依：PB-P0-014A、PB-P0-003、PB-P0-004、PB-P2-001  
+目標：把既有士氣來源遷移到同一批次流程，移除已取消的自動食物收益與重複懲罰。
+
+待做：
+- 高士氣自然回落只到 70，不得自行觸發降階。
+- 食物短缺依資料倍率與單輪上限造成士氣損失。
+- 移除食物溢出轉士氣與安全儲備自動加成。
+- 食物計畫移除節約配給，只保留支付固定需求後，以額外永久食物恢復士氣。
+- 臨時食物不能支付士氣交換；成本不足時不部分扣款、不部分恢復。
+- 事件與其他非輪末來源改用完整士氣交易提交，不直接繞過門檻與崩潰檢查。
+- 輪末聚合來源並產生可供 UI 使用的逐項結果。
+
+驗收：
+- 食物溢出與安全儲備不增加士氣。
+- 額外食物交換受上限與每輪次數限制，且不恢復崩潰階段。
+- 同一批次多個增減來源使用固定順序，結果不受效果陣列排列影響。
+- 士氣 0 後不再進入事件、建築結算或下一輪。
+
+完成紀錄（2026-08-22）：
+- 新增可追溯的 `MoraleBatchRequest` / `MoraleBatchResult`；輪末、事件選項、卡牌效果與探索結果會先合併同一交易的士氣來源，再只提交一次階段與崩潰判定。
+- 食物短缺改為每缺 1 食物扣 3 士氣，短缺來源單輪最多扣 15。
+- 移除玩家可選的緊縮配給；舊 `Tight` 值會安全正規化為標準供應。
+- 鼓舞餐點使用 `ceil(D × 1.2) + MaxEnergy`，額外成本只能由未保留的永久食物支付，失敗不部分扣款或恢復；成功恢復 5 士氣。
+- 高士氣自然回落改為每輪最多 3、最低停在 70；既有 SampleScene 舊數值會由 V2 設定遷移更新為統一 Demo 值。
+- Debug 介面改顯示「標準供應／鼓舞餐點」，舊緊縮按鈕隱藏；正式 UX 仍屬 PB-P0-014E。
+- Unity Edit Mode：本故事 11 / 11、全套回歸 161 / 161 通過；Console 0 errors。
+- 後續數值修正已統一為鼓舞 `+5`、自然回落 `-3`，並新增「同輪淨增 2」及「食物需求 1 不覆蓋士氣回落 3」回歸案例；Runtime / Editor 程式集編譯 0 errors、0 warnings，待 MCP 恢復後補跑新增案例。
+
+### PB-P0-014C - 殭屍漏防、永久士氣上限損傷與完整反應窗口
+
+狀態：已完成（2026-08-24）  
+優先級：P0  
+分類：殭屍 / 戰鬥 / 士氣  
+設計依據：GDD 第 30.6、30.7 節  
+相依：PB-P0-014A、PB-P0-014B、PB-P0-007、PB-P2-009D  
+目標：讓平時保留戰鬥值的玩家能在後果發生前消除威脅，漏防才造成可追溯的當前與永久士氣損傷。
+
+待做：
+- 保證新生成或輪末自動揭露的殭屍至少取得一個完整可操作窗口，不在生成當次立即攻擊。
+- 輪末先結算標記擊殺，只有存活殭屍才建立後果。
+- 殭屍資料可分別定義當前士氣傷害、永久上限損傷與 `SurvivalNextRoundEffect`。
+- 永久上限損傷不額外重複扣除同額當前士氣；不設全域或單輪上限，由殭屍 Asset 與 Horde Profile 數量限制控制。
+- 第一版普通殭屍以當前士氣傷害為主；永久損傷只配置在明確標示的特殊來源。
+- 將殭屍存活效果送入 PB-P0-014B 的批次結算與報告，並讓殭屍、卡牌與事件共用 `NextRoundEffectData`。
+
+驗收：
+- 生成後尚未取得完整操作窗口的殭屍不造成後果。
+- 當輪已擊殺殭屍不造成當前士氣、上限或下一輪效果。
+- 多隻存活殭屍的聚合結果、永久損傷與報告一致。
+- 玩家有足夠戰鬥值並於窗口內擊殺全部殭屍時，不受任何殭屍損失。
+
+完成紀錄（2026-08-24）：
+- Turn 中、輪末揭露與輪間事件生成的殭屍具有正確的首次可結算輪次；輪末先擊殺，再由符合資格的存活殭屍建立效果。
+- `Attack`、永久士氣上限損傷及 `SurvivalNextRoundEffect` 均由殭屍 Asset 決定；永久損傷不設全域或單輪上限。
+- 通用下輪效果已改名為 `NextRoundEffectData` / `NextRoundEffectSystem`，卡牌與事件可在成功結算後使用相同排程流程。
+- 使用者已實測卡牌與殭屍的下輪效果正確；Unity 定向測試 10 / 10、全套 Edit Mode 178 / 178 通過，Console 0 errors。
+
+### PB-P0-014D - 資料化金字塔 Profile 與階段效果替換
+
+狀態：已完成（2026-08-24）  
+優先級：P0  
+分類：士氣 / 資料 / 效果  
+設計依據：GDD 第 30.3、30.4、30.9 節  
+相依：PB-P0-014A  
+目標：讓局前方案以完整預設組定義三階效果，支援多種打法但不開放正負效果自由混搭。
+
+待做：
+- 建立 `MoralePyramidProfile` 資料：名稱、說明、Stage 0 增益、Stage 1 固定效果組、Stage 2 固定效果組。
+- Run 開始時鎖定一個 Profile；不同 Profile 的單項效果不能混搭。
+- 階段轉換時原子移除舊組、套用新組一次；Stage 2 不與 Stage 1 疊加。
+- Runtime 只執行通用效果接口，不判斷特定 Profile ID。
+- 建立固定 Demo Profile `MORALE-PYRAMID-DEMO-01／標準生存`：Stage 0 無效果；Stage 1 每輪失去 1 資源；Stage 2 移除 Stage 1 並套用最大能量 `-1`。
+- Stage 1 資源最低為 0，不產生欠債或額外士氣損失；Stage 2 最大能量最低為 0，修正不逐輪累加。
+- PB-P0-014E 局前選擇 UI 完成前，新 Run 自動鎖定固定 Demo Profile。
+
+驗收：
+- 同一階段效果永遠只有一份。
+- 回復士氣不恢復舊階段效果。
+- Stage 1 每個合法輪末只扣 1 資源；進入 Stage 2 後不再扣除。
+- Stage 2 從下一個 Turn 補充能量時套用一份最大能量 `-1`，允許結果為 0，且之後增加基礎最大能量仍保留修正。
+- Profile 遺漏或效果資料無效時可阻擋開局或安全退回測試 Profile，不產生半套效果。
+- 新 Run 可重新選擇 Profile，舊 Run 的選擇不被資產後續變更靜默替換。
+
+完成紀錄（2026-08-24）：
+- 新增 `MoralePyramidProfileData`、三階效果資料與本局 `MoralePyramidProfileSnapshot`；Runtime 不依 Profile ID 分支，進行中 Run 不會被 Asset 即時修改。
+- `MoralePyramidSystem` 訂閱不可逆階段轉換，使用整組替換；Stage 0 直達 Stage 2 時只啟用最終階段，士氣回復不復原舊效果。
+- Stage 1 在輪末指定結算點每輪至多扣 1 資源並限制於 0；若該輪結算才跌入 Stage 1，從下一個合法輪末開始扣除。
+- `EnergySystem` 已區分基礎最大能量與 Profile 修正；Stage 2 的 `-1` 於下一 Turn 補能量前套用一次，最低允許 0，後續基礎成長仍保留修正。
+- Unity 已建立 `MORALE-PYRAMID-DEMO-01／標準生存` Asset 並指定給 SampleScene；Profile 遺漏或無效會阻止新 Run。
+- Unity 編譯 0 errors；014D 與受影響定向測試 23 / 23 通過，最終全套 Edit Mode 190 / 190 通過；SampleScene Play Mode 自動開局 0 errors。既有事件池會出現「第 1 天無合法事件，使用 neutral fallback」警告，與本故事無關。
+
+### PB-P0-014E - 士氣 HUD、輪末預警、崩潰報告與局前選擇 UI
+
+狀態：待辦  
+優先級：P0  
+分類：士氣 / UI / UX  
+設計依據：GDD 第 30.8、30.10 節  
+相依：PB-P0-014A、PB-P0-014B、PB-P0-014C、PB-P0-014D  
+目標：讓不可逆降階在發生前可預測、發生後可理解，並讓玩家知道回復當前士氣的價值與限制。
+
+待做：
+- 常駐 HUD 以大型數字顯示當前士氣，並持續顯示不可逆階段與小型士氣金字塔；士氣上限、永久失去上限及下一門檻改由懸停／右鍵詳情查閱。
+- 結束回合前顯示已知輪末損失來源、預計結果與跨階警告。
+- 殭屍顯示攻擊時點與可知後果；未知數值以一致的模糊情報呈現。
+- 跨階顯示舊效果移除、新效果啟用與「本局不可恢復」說明。
+- 局前只顯示並選擇完整 Profile，不提供個別正負效果混搭。
+- 基地崩潰畫面列出主要原因、最後變化與基地／社群瓦解語意。
+
+驗收：
+- HUD、輪末預測、結算報告與 Runtime 最終值一致。
+- 玩家能區分當前士氣、永久上限與不可逆階段。
+- 回復至門檻以上時，UI 不會誤示階段即將恢復。
+- 失敗後不能繼續操作遊戲內按鈕或進入下一輪。
 
 ## P1 待辦項目
 
@@ -790,7 +994,7 @@ Probability = CurrentWeight / SumOfAvailableCurrentWeights
 
 ### PB-P1-011 - 每日事件分類、條件與排程器
 
-狀態：待辦，設計已確認  
+狀態：已完成，Unity Edit Mode 驗收通過（2026-08-04）  
 優先級：P1  
 分類：事件 / Runtime  
 設計依據：GDD 第 28.4 節  
@@ -799,13 +1003,16 @@ Probability = CurrentWeight / SumOfAvailableCurrentWeights
 使用者故事：
 - 身為玩家，我希望事件能反映目前士氣、日期與基地狀態，而不是每一天從完整清單中完全均勻亂抽。
 
-待做：
+完成內容：
 - 為事件資料增加情緒分類：正面、負面、混合。
 - 增加內容分類：資源、倖存者、效果、殭屍、劇情。
 - 增加最早日期、最晚日期、基礎權重、是否可重複與一局最多出現次數。
 - 建立每局事件歷史，記錄出現次數、最近出現日與最近一次負面事件日。
 - 依士氣、前置條件、日期與重複規則建立合法候選池，再進行加權抽取。
 - 終局事件包啟用時繼續由終局系統全面接管，不混入一般事件池。
+- 可重複事件預設至少間隔一個完整日；沒有合法候選時顯示「平靜的一天」。
+- 使用獨立 `System.Random` 與可指定種子，避免事件測試受其他 Unity 亂數呼叫干擾。
+- 已加入 Edit Mode 測試，涵蓋日期、條件、一局一次、間隔、士氣權重、固定種子、保底與終局接管。
 
 驗收：
 - 每天只選出一個事件，事件內選項照既有流程運作。
@@ -816,7 +1023,7 @@ Probability = CurrentWeight / SumOfAvailableCurrentWeights
 
 ### PB-P1-012 - EventMagnitude 與效果縮放
 
-狀態：待辦，設計已確認  
+狀態：已完成，Unity 事件縮放驗收通過（2026-08-12）
 優先級：P1  
 分類：事件 / 數值系統  
 設計依據：GDD 第 28.5、28.6 節  
@@ -826,13 +1033,18 @@ Probability = CurrentWeight / SumOfAvailableCurrentWeights
 使用者故事：
 - 身為玩家，我希望後期事件仍有值得考慮的成本與收益，同時不會因取得最大能量就讓所有帳單等比例變貴。
 
-待做：
+完成內容：
 - 建立 `TimeTier`、`DevelopmentPoints`、`CurrentSettlementTier`、`PeakSettlementTier` 與 `EventMagnitude` 的單局計算來源。
 - 每 10 天與每 3 點發展值作為資料可調整的初始參數。
 - 事件效果支援固定、時間、基地、事件規模、人口、最大能量、倉庫容量與威脅等縮放模式。
 - 支援縮放強度、最小值、最大值與取整方式。
 - 事件出現時建立效果快照並鎖定最終數字，UI 顯示解析後成本與收益。
 - `PeakSettlementTier` 在同一局只升不降。
+- `GameEffectData` 新增指定解析數值的多載，原卡牌 API 與基礎 `Amount` 維持不變。
+- 選項與結果文字支援 `{value:N}` 及 `{magnitude:N}`，顯示值和實際套用值共用同一份 Runtime 快照。
+- 尚未實作的倖存者、永久欄位、`WorldThreat` 與 `HordeBudget` 先由具名 API 提供中性值，不提前擴張其他系統範圍。
+- 已加入 Edit Mode 測試，涵蓋公式、Peak、縮放、取整、上下限、負數、交換比例、文字解析、卡牌隔離與事件流程鎖定。
+- 已在 Unity 驗證事件縮放結果、文字數值與實際效果一致，過程無錯誤（2026-08-12）。
 
 驗收：
 - Day 1、零額外發展時 `EventMagnitude = 1`。
@@ -843,19 +1055,23 @@ Probability = CurrentWeight / SumOfAvailableCurrentWeights
 
 ### PB-P1-013 - 事件 ChoiceCost 與 ForcedLoss 支付邊界
 
-狀態：待辦，設計已確認  
+狀態：已完成，Unity Edit Mode 與 Play Mode 驗收通過（2026-08-12）
 優先級：P1  
 分類：事件 / 資源  
 設計依據：GDD 第 28.7 節  
 相依：PB-P1-012  
 目標：明確區分玩家主動支付與事件強制損失，避免事件失敗、保留資源被誤扣或臨時食物支付不合法成本。
 
-待做：
-- `ChoiceCost` 在選項顯示時檢查可用資源，資源不足則停用選項並顯示原因。
-- `ForcedLoss` 最多扣至 0，不允許食物或資源成為負數。
-- 強制損失未支付部分可以依事件資料轉成士氣、狀態或其他後果。
-- 兩種支付都不能使用臨時食物，也不能動用已保留的建築與製作成本。
-- 修正 `EventChoiceData` 預檢失敗時只靜默返回、但畫面看似已選擇成功的問題。
+完成內容：
+- `ChoiceCost` 會聚合同一選項的永久食物與資源成本，任一成本不足便停用選項並顯示需求與可用量。
+- `ForcedLoss` 只扣除未保留的永久資源，最多扣至 0，並記錄實際支付量與短缺量。
+- 新增固定與每點短缺兩種後果模式，可使用一般 `GameEffectData` 套用士氣、狀態或其他效果。
+- 臨時食物與建築／製作保留資源不會被 `ChoiceCost` 或 `ForcedLoss` 使用。
+- 事件選項改由 `EventChoiceExecutionPlan` 預檢並執行，避免多筆成本分開判定造成部分扣款。
+- `EventFlowController.ChooseOption()` 失敗時保持在選擇畫面，不再顯示成功結果。
+- 選項按鈕支援停用原因；結果文字支援 `{paid:N}` 與 `{shortage:N}`。
+- 已加入 12 項 Edit Mode 測試，涵蓋臨時食物、保留資源、成本聚合、ForcedLoss、短缺後果、流程狀態與卡牌隔離。
+- 已在 Unity 驗證 `ChoiceCost`、`ForcedLoss`、短缺後果、結果文字與不可選 UI，執行過程無錯誤（2026-08-12）。
 
 驗收：
 - 只有臨時食物時，永久食物成本選項不可選。
@@ -866,12 +1082,26 @@ Probability = CurrentWeight / SumOfAvailableCurrentWeights
 
 ### PB-P1-014 - Event Schedule 內容匯入與節奏 Playtest
 
-狀態：待辦，事件設計表已完成  
+狀態：進行中，PB-P1-014A 已完成；PB-P1-014B 等待事件支援系統  
 優先級：P1  
 分類：事件 / 內容 / 工具  
 設計依據：GDD 第 28 章與 `zombie_card_design_template_v1_clean.xlsx`  
 相依：PB-P1-011、PB-P1-012、PB-P1-013  
 目標：把 Event Schedule 中的第一批正式事件轉成可測試 Asset，驗證正負節奏、日期與後期縮放。
+
+PB-P1-014A 完成內容：
+- 依 Event Schedule 順序建立 `EVT-001` 至 `EVT-014`，一般可重複事件的 `LatestDay` 統一為 `0`。
+- 14 個事件皆有 Asset 骨架、分類、日期、權重、冷卻、選項文本、特殊規則與實作狀態。
+- `EVT-003 夜間低溫` 為目前唯一完整可執行事件；其餘事件標記 `RequiresSupportSystem`，保留阻塞原因且不加入正式 Play Mode 事件池。
+- 新增冪等 Setup、Validate 與固定種子 30 天純排程模擬工具。
+- 固定種子 `14014` 的 30 天模擬無 Fallback；100 組固定種子樣本中 14 個事件皆曾出現。
+- 30 天排程報告位於 `Assets/Docs/Playtest/EventScheduleV1_30Day_Report.md`。
+- 建築內容 Setup 不再建立或覆寫事件 Asset；事件內容改由 Event Content V1 Setup 單獨管理。
+
+PB-P1-014B 保留內容：
+- 補齊事件公式、跨輪狀態、事件連鎖、事件獎勵，以及倖存者／威脅／地區相關能力。
+- 將完成支援的事件逐步加入正式事件池。
+- 執行會實際套用事件選擇的 30 天經濟與支付 Playtest。
 
 待做：
 - 為表內事件補齊 ID、情緒分類、內容分類、日期、重複規則與縮放模式。
@@ -885,6 +1115,45 @@ Probability = CurrentWeight / SumOfAvailableCurrentWeights
 - 前期與第 20、30 天事件效果可依快照正確縮放。
 - 事件選項不會因資源不足而出現「按了但沒有結果」的狀態。
 - Playtest 報告列出過度頻繁、長期未出現與成本失衡的事件。
+
+### PB-P1-015 - RunFlag、事件前置條件與動態權重 V1
+
+狀態：已完成程式骨架；Unity 編譯通過，命令列 TestRunner 未產生 XML 結果  
+優先級：P1  
+分類：事件 / Runtime 狀態 / 工具  
+設計依據：GDD 第 28 章、PB-P1-014B、屍群逼近與屍群來臨事件需求  
+相依：PB-P1-011、PB-P1-012、PB-P1-014A  
+目標：讓事件可以透過本局 Runtime Flag 建立前置條件、消耗資格與等待權重，而不是把所有特殊事件都硬寫成系統邏輯。
+
+完成內容：
+- 新增 `RunFlagData` 作為 Flag 定義 Asset；Asset 只存 ID、名稱、描述、預設值、最小值與最大值。
+- 新增 `RunFlagRuntimeStore` 保存本局 Flag 數值、首次設定日、最後變更日與變更次數。
+- `EventConditionEntry` 支援 `RunFlagData` 引用，並保留舊字串 `targetId` fallback。
+- `EventConditionType` 新增 `RunFlagValue` 與 `RunFlagDaysSinceSet`。
+- `EventData` 新增 `weightModifiers`，目前支援依 `RunFlagDaysSinceSet` 增加事件權重。
+- `GameEffectData` 新增 `EventState` 分類，可 `SetRunFlagValue`、`AddRunFlagValue`、`ClearRunFlag`。
+- `EventFlowController` 初始化與事件選項結算時接入 `RunFlagRuntimeStore`。
+- `GameEffectDataDrawer` 支援在 Inspector 中填寫事件狀態效果。
+- `EventContentV1SetupUtility` 會建立 `FLAG_HORDE_PENDING`，並將 `EVT-014 屍群來臨` 設為需要該 Flag 且等待後增加權重。
+
+規則：
+- `RunFlagData.asset` 是設計資料，不會保存單局變化。
+- 本局變化只存在 `RunFlagRuntimeStore`，未來由 Run State / Save State 保存。
+- `FLAG_HORDE_PENDING` 預設為 `0`，最大值為 `1`。
+- `EVT-014 屍群來臨` 需要 `FLAG_HORDE_PENDING >= 1` 才能進入候選池。
+- `EVT-014` 在 Flag 設定後隔天基礎權重仍為 `50`；之後每多等待一天額外 `+50`。
+
+驗收：
+- 沒有 Flag 時，Flag 前置事件不會被抽出。
+- Flag 設定後，前置事件可以進入候選池。
+- Flag 等待權重會依設定天數增加。
+- 事件選項可增加或清除 Flag。
+- Event Content V1 Setup 可冪等建立 `FLAG_HORDE_PENDING` 並更新 `EVT-014` 條件。
+
+後續：
+- `EVT-008 屍群逼近` 仍因 WorldThreat / HordeBudget 與正式屍群效果未完成，不加入正式事件池。
+- 待 PB-P2-008、PB-P2-009 完成後，將 `EVT-008` 的選項接上 `FLAG_HORDE_PENDING +1`，並讓 `EVT-014` 消耗 Flag、產生屍群。
+- 命令列 TestRunner 未產生 XML 結果，需在 Unity Test Runner UI 或修正批次測試命令後重新確認新增測試。
 
 ## P2 待辦項目
 
@@ -994,47 +1263,166 @@ Probability = CurrentWeight / SumOfAvailableCurrentWeights
 
 ### PB-P2-008 - WorldThreat、BaseAttention 與 RegionPressure 數值設計
 
-狀態：待辦，先做設計與模擬  
+狀態：已拆分為 PB-P2-008A / PB-P2-008B，並完成目前 Runtime 公式階段  
 優先級：P2  
 分類：殭屍 / 遊戲設計  
 設計依據：GDD 第 28.8 節  
 相依：PB-P0-012、PB-P1-014  
 目標：定義世界惡化、基地噪音與地區活動的獨立成長來源，避免一個威脅值同時控制所有結果。
 
-待做：
-- 定義 `WorldThreat` 的時間、基地發展與劇情修正來源。
-- 定義 `BaseAttention` 的建築噪音、基地事件與隱蔽修正來源。
-- 定義 `RegionPressure` 如何由地區基礎值、探索熱度與清理度組成。
-- 設計第 1、15、30、60、90 天的威脅錨點與對應殭屍階級。
-- 定義 UI 的低、中、高、極高為相對局部資訊，不直接暴露全球威脅數字。
-- 在試算表完成公式模擬後才進入 Runtime 實作。
+### PB-P2-008A - Threat 資料模型與 Runtime
+
+狀態：已完成，Unity Edit Mode 驗收通過（2026-08-12）  
+優先級：P2  
+分類：殭屍 / Runtime  
+設計依據：GDD 第 28.8 節  
+相依：PB-P0-012、PB-P1-012  
+目標：建立 `WorldThreat`、`BaseAttention`、`RegionPressure` 的可調公式資產與 Runtime API。
+
+已完成：
+- 新增 `ThreatSettingsData`，可在 Inspector 調整天數、發展點、Tier 與低中高極高門檻。
+- 新增 `ThreatRuntime`、`ThreatInputSnapshot`、`ThreatSnapshot`、`RegionPressureSnapshot`。
+- `WorldThreat` 由時間、永久發展、難度修正與劇情修正組成。
+- `BaseAttention` 由基礎注意力、建築噪音、基地事件注意力與隱蔽修正組成。
+- `RegionPressure` 由地區基礎遭遇率、探索熱度、局部修正與清理度組成。
+- `EventFlowController` 會使用 `ThreatRuntime` 提供 `EventScaleSource.WorldThreat` 的縮放 Tier；`HordeBudget` 暫保留中性/手動值。
 
 驗收：
-- 三個變數沒有重複計算同一發展來源。
-- 連續探索影響遭遇率，不直接提高同一天的單隻殭屍體質。
-- 後期不會因線性時間成長而讓所有地區永久顯示極高。
-- 至少完成一組 30 天與一組 90 天曲線模擬。
+- 第 1 天無發展時 `WorldThreat = 0`、`WorldThreatTier = 1`。
+- 基地發展會提高 `WorldThreat`，但不會直接提高 `BaseAttention`。
+- 建築噪音與隱蔽修正只影響 `BaseAttention`。
+- 地區熱度提高 `RegionPressure`；清理度降低 `RegionPressure`；剩餘殭屍為 0 時壓力為 0。
+
+### PB-P2-008B - 威脅曲線錨點與測試
+
+狀態：已完成目前公式與測試；待長局 Playtest 平衡  
+優先級：P2  
+分類：殭屍 / 平衡  
+設計依據：GDD 第 28.8 節  
+相依：PB-P2-008A  
+目標：提供第一版可測威脅曲線，使 30 至 90 天局長有穩定數值基準。
+
+已完成：
+- 預設每 10 天增加 1 點 `TimeThreat`。
+- 預設每 3 點永久發展增加 1 點 `DevelopmentThreat`。
+- 預設每 2 點 `WorldThreat` 增加 1 層 `WorldThreatTier`。
+- 純時間錨點：第 1、15、30、60、90 天的 `WorldThreat` 約為 0、1、2、5、8。
+- 純時間錨點：第 1、15、30、60、90 天的 `WorldThreatTier` 約為 1、1、2、3、5。
+- 低、中、高、極高採可調門檻，未來可由情報中心揭露，但不直接公開精確威脅值。
+
+驗收：
+- Edit Mode 測試覆蓋第 1、15、30、60、90 天錨點。
+- 連續探索只改變局部地區壓力，不改變同一天的 `WorldThreatTier`。
+- 尚未把威脅公式接入 `HordeBudget`、殭屍種類生成、基地傷害或失敗條件。
+
+完成驗證（2026-08-12）：
+- Unity 2022.3.62f3 批次編譯通過，無 C# 編譯錯誤。
+- Edit Mode 測試全套 `105/105` 通過。
 
 ### PB-P2-009 - HordeBudget 與殭屍組成原型
 
-狀態：阻塞  
+狀態：已完成；PB-P2-009A / PB-P2-009B / PB-P2-009C / PB-P2-009D 均已完成（2026-08-18）  
 優先級：P2  
 分類：殭屍 / 戰鬥  
 設計依據：GDD 第 28.8 節  
 相依：PB-P2-003、PB-P2-008  
-阻塞原因：基地傷害、殭屍攻擊結果與一般失敗條件尚未定稿。  
 目標：用單一屍群預算共同控制殭屍數量與體質，避免兩者各自倍增造成難度平方成長。
 
-待做：
-- 為殭屍種類設定預算成本與地區傾向。
-- 讓事件選擇數量型、菁英型、混合型或固定數量組成方式。
-- 使用同一筆 `HordeBudget` 購買數量、生命與特殊能力。
-- 建立標準屍群基準，使正常發展玩家可在 1 至 3 天內清除。
+### PB-P2-009A - HordeBudget 資料模型與公式 Runtime
 
-解除阻塞條件：
-- 定義殭屍存活時造成的資源、士氣或基地傷害。
-- 定義基地一般失敗條件。
-- PB-P2-008 的威脅曲線獲得設計確認。
+狀態：已完成，Unity Edit Mode 驗收通過（2026-08-12）  
+優先級：P2  
+分類：殭屍 / 威脅公式  
+設計依據：GDD 第 28.8 節  
+相依：PB-P2-008A、PB-P2-008B  
+目標：把 `WorldThreatTier`、`BaseAttention`、`RegionPressure` 與事件修正轉成單次屍群總預算。
+
+完成內容：
+- 新增 `HordeProfileData`，可設定基礎預算、世界威脅預算、基地注意力預算、地區壓力預算、最小值與最大值。
+- 新增 `HordeBudgetInputSnapshot`，可從 `ThreatSnapshot` 與 `RegionPressureSnapshot` 建立輸入。
+- 新增 `HordeBudgetRuntime` 與 `HordeBudgetSnapshot`，完整記錄各來源貢獻與最終預算。
+
+V1 公式：
+
+```text
+HordeBudget
+= BaseBudget
++ (WorldThreatTier - 1) * WorldThreatBudgetPerTier
++ floor(BaseAttention * BaseAttentionBudgetPerPoint)
++ floor(RegionPressure * RegionPressureBudgetMultiplier)
++ EventBonusBudget
+```
+
+### PB-P2-009B - 殭屍組成 Runtime
+
+狀態：已完成，Unity Edit Mode 驗收通過（2026-08-12）  
+優先級：P2  
+分類：殭屍 / 組成器  
+設計依據：GDD 第 28.8 節  
+相依：PB-P2-009A  
+目標：使用同一筆 `HordeBudget` 挑選殭屍卡清單，不直接生成場上殭屍。
+
+完成內容：
+- 新增 `ZombieArchetypeEntry`，每個殭屍種類可設定預算成本、基礎權重、最低／最高世界威脅 Tier、單次屍群上限。
+- 新增 `HordeCompositionStyle`：`Mixed`、`Quantity`、`Elite`、`FixedOrder`。
+- 新增 `HordeCompositionRuntime`，依預算與 Profile 產生 `HordeCompositionResult`。
+- 新增 `HordeCompositionEntry` 與 `HordeCompositionStopReason`，讓結果可檢查花費、剩餘預算與停止原因。
+- 009B 只回傳將來要生成的 `ZombieCardData` 清單，不呼叫 `CombatSystem.SpawnZombieThreat()`。
+
+驗收紀錄：
+- Unity 編譯通過，無 C# 編譯錯誤。
+- Edit Mode 測試全套 `114/114` 通過。
+
+### PB-P2-009C - 事件生成屍群
+
+狀態：已完成，Unity Edit Mode 驗收通過（2026-08-17）  
+優先級：P2  
+分類：事件 / 殭屍 / 戰鬥整合  
+設計依據：GDD 第 28.8 節、`design/quick-specs/pb-p2-009c-event-spawn-horde-2026-08-17.md`  
+相依：PB-P2-009A、PB-P2-009B、PB-P1-012、PB-P1-013  
+目標：新增事件效果 `SpawnHorde`，在事件顯示時鎖定屍群組成，玩家確認選項後再把結果批次加入 `CombatSystem`。
+
+完成內容：
+- `GameEffectData` 新增事件專用 `Threat / SpawnHorde`，可指定 `HordeProfileData` 與 `EventBonusBudget`。
+- `EventFlowController` 會在事件開始時鎖定 `ThreatSnapshot`；屍群預算固定使用 `WorldThreatTier`、`BaseAttention`、`RegionPressure = 0` 與事件額外預算。
+- `ResolvedGameEffectRuntime` 保存 `HordeBudgetSnapshot`、`HordeCompositionResult`、穩定亂數種子、停止原因與實際生成結果。
+- 玩家尚未選擇前不生成殭屍；選擇後才把鎖定的組成批次加入 `CombatSystem`。
+- `CombatSystem.SpawnZombieThreats()` 會先驗證整批輸入，再一次生成並只發送一次 `StateChanged`。
+- Profile 遺漏、沒有合格殭屍或預算不足時選項不可執行，且不扣成本、不清 Flag、不產生部分屍群。
+- 既有 `AddZombieThreat`、殭屍標記擊殺與輪末流程維持原行為。
+
+驗收紀錄：
+- Unity 2022.3.62f3 編譯通過，Console 0 errors。
+- `EventHordeSpawnEffectTests`：`10/10` 通過。
+- Edit Mode 全套回歸測試：`128/128` 通過。
+
+### PB-P2-009D - 正式 Horde Profile 與事件內容接線
+
+狀態：已完成，Unity Edit Mode 與 SampleScene 驗收通過（2026-08-18）  
+優先級：P2  
+分類：殭屍 / 事件內容  
+設計依據：GDD 第 28.8 節  
+相依：PB-P2-009C  
+目標：建立第一批正式 `HordeProfileData` 與殭屍池資產，並完成 `EVT-008`、`EVT-014` 的正式接線與平衡驗收。
+
+完成內容：
+- 新增正式殭屍 `ZMB-001 遊蕩殭屍`、`ZMB-002 毀壞殭屍`、`ZMB-003 狂暴殭屍`，預算成本為 1 / 2 / 4，權重為 60 / 30 / 10，最低 `WorldThreatTier` 為 1 / 2 / 3。
+- 新增正式 `HORDE-STANDARD-01 標準基地屍群`：`Mixed` 組成、基礎預算 3、每個世界威脅 Tier 增加 2、最小 3、最大 10。
+- 每種殭屍的單次數量上限為 6 / 3 / 2；100 組固定種子 × Tier 1～5 驗證中，最大單次生成量不超過 8 隻。
+- `EVT-008` 三個選項都會在成功執行後設定 `FLAG_HORDE_PENDING = 1`；加強警戒同時支付資源並增加戰鬥值，偵查先支付食物並記錄屍群情報，不提前修改尚無正式效果 API 的 `WorldThreat`。
+- `EVT-014` 接入正式 Profile，效果順序固定為 `SpawnHorde` 後 `ClearRunFlag`；生成失敗時沿用 009C 原子化規則，不清 Flag。
+- `Setup Event Content V1` 會冪等建立或更新正式殭屍、Profile、事件資產與 SampleScene 事件池；另提供獨立 Horde Setup / Validate Menu。
+- 目前三種正式殭屍暫時共用既有殭屍美術；本故事只完成資料與事件接線，不新增美術資產。
+
+驗收紀錄：
+- Unity 2022.3.62f3 編譯通過，Console 0 errors。
+- 009D 與既有事件／屍群目標測試：`25/25` 通過。
+- Edit Mode 全套回歸測試：`133/133` 通過。
+- Event Content V1 驗證：14 個 canonical assets、3 個 playable events。
+- SampleScene 最大壓力情境實測：Tier 5、預算 10、8 隻殭屍；第一排 7 隻、第二排 1 隻，殭屍彼此不重疊並保持在建築前方。
+
+範圍提醒：
+- 基地血量、建築受損、防禦工事減傷與正式失敗條件仍不在 PB-P2-009 系列範圍。
 
 ### PB-P2-010 - 資料驅動牌組配置與欄位擴張
 
@@ -1197,7 +1585,7 @@ Probability = CurrentWeight / SumOfAvailableCurrentWeights
 
 ### Sprint 7 - 有限地區探索 Demo
 
-狀態：下一個建議 Sprint  
+狀態：已完成（2026-08-18）  
 目標：讓每次探索永久消耗本局地區存量，並以有限卡包、有限殭屍與熱度形成可見的探索壓力。
 
 Must Have：
@@ -1216,7 +1604,7 @@ PB-P0-009
 ```
 
 驗收：
-- 四個 Demo 地區可在同一局持續保存獨立存量。
+- 五個 Demo 地區可在同一局持續保存獨立存量。
 - 普通卡包耗盡時，稀有卡包相對機率上升。
 - 連續探索提高殭屍遭遇率，但不提高同一天的單隻殭屍體質。
 - 資源枯竭的地區從一般三選一移除。
@@ -1225,7 +1613,7 @@ PB-P0-009
 
 ### Sprint 8 - 每日事件排程與基地規模
 
-狀態：Sprint 7 完成後進行  
+狀態：Runtime Must Have 已完成；PB-P1-014 內容與長局 Playtest 進行中  
 目標：讓事件依日期、狀態與重複規則出現，並在 30 至 90 天局長中維持有意義的成本與收益。
 
 Must Have：
@@ -1245,18 +1633,18 @@ Should Have：
 
 ### Sprint 9 - 倖存者與威脅基礎
 
-狀態：設計排程，部分項目仍阻塞  
+狀態：威脅 Runtime 與屍群 A～D 已完成；PB-P2-002 倖存者仍待實作  
 目標：加入人口與最大能量成長，並為後續殭屍難度曲線建立彼此分離的威脅來源。
 
 Must Have：
 - PB-P2-002：倖存者系統 V1。
-- PB-P2-008：`WorldThreat`、`BaseAttention`、`RegionPressure` 數值設計。
+- PB-P2-008A / PB-P2-008B：`WorldThreat`、`BaseAttention`、`RegionPressure` Runtime 與威脅錨點。
 
 Should Have：
 - PB-P2-010：資料驅動牌組配置與欄位擴張設計驗證。
 
 Blocked：
-- PB-P2-009：`HordeBudget` 與殭屍組成原型，等待傷害、基地失敗條件與威脅曲線定稿。
+- 無；PB-P2-009A～D 與 PB-P0-014A～D 已完成，後續士氣資訊與局前選擇 UI 由 PB-P0-014E 接續。
 
 驗收：
 - 普通與特殊倖存者能形成不同的永久成長選擇。
@@ -1264,21 +1652,49 @@ Blocked：
 - 三種威脅來源有清楚職責，不重複計算同一發展值。
 - 未完成殭屍傷害設計前，不把暫定屍群公式寫死進 Runtime。
 
+### Sprint 10 - 士氣金字塔與一般失敗閉環
+
+狀態：進行中；PB-P0-014A～D 已完成，下一步為 PB-P0-014E  
+目標：讓食物短缺與殭屍漏防能透過可預測、可追溯但具有不可逆後果的士氣系統結束一局。
+
+Must Have：
+- PB-P0-014A：士氣狀態核心、不可逆階段與基地崩潰。
+- PB-P0-014B：食物、事件與輪末士氣批次結算。
+- PB-P0-014C：殭屍漏防、永久士氣上限損傷與完整反應窗口。
+
+Should Have：
+- PB-P0-014D：資料化金字塔 Profile 與最小 Demo 效果。
+- PB-P0-014E：常駐 HUD、輪末預警、崩潰報告與局前選擇 UI。
+
+執行順序：
+
+```text
+PB-P0-014A
+-> PB-P0-014B
+-> PB-P0-014C
+-> PB-P0-014D
+-> PB-P0-014E
+```
+
+Sprint 驗收：
+- 玩家可在威脅結算前看懂即將承受的損失與是否跨越永久門檻。
+- 充分準備並於窗口內清除殭屍時，不會受到殭屍後果。
+- 士氣回復有價值，但不能逆轉已發生的崩潰階段或永久上限損傷。
+- 士氣歸零時只結束一次 Run，且玩家能從報告追溯主要原因。
+- 最小 Demo 不因階段負面效果削弱恢復與戰鬥工具而形成自動死亡螺旋。
+
 ## 目前最推薦的下一步
 
-目前正規牌組、輪末生存經濟、殭屍威脅、探索卡包、建築施工與製作流程都已通過目前階段的 Play Mode 驗證。下一個最推薦的開發方向是 Sprint 7：有限地區探索 Demo。
+PB-P0-014A～D 已完成：士氣已有權威狀態機、統一批次結算、殭屍完整反應窗口、永久上限損傷、可共用的下輪效果，以及資料化 Profile 與整組階段替換。下一個最推薦的開發項目是 PB-P0-014E，補齊玩家可見資訊、預警與失敗回饋。
 
 立即順序：
 
-1. PB-P0-009：先填完四個 Demo 地區的有限存量與熱度數值。
-2. PB-P0-010：建立不修改 Asset 的 `RegionRuntime`。
-3. PB-P0-011：完成剩餘比例權重、扣除存量與枯竭候選過濾。
-4. PB-P0-012：完成有限殭屍與探索熱度。
-5. PB-P0-013：接回地區卡 UI 並完成整合 Playtest。
+1. PB-P0-014E：補齊常駐資訊、輪末與跨階預警、局前 Profile 選擇與失敗報告。
+2. 進行一輪針對 70／35 門檻、Stage 1 資源壓力與 Stage 2 能量縮減的玩家驗收。
 
 選擇此順序的原因：
 
-- 它直接建立在目前已正常運作的探索與卡包流程上，修改範圍集中。
-- 它能讓探索從「無限隨機獎勵」變成真正的單局有限資源決策。
-- 它不需要先解決尚未定稿的基地血量、殭屍傷害與失敗條件。
-- 完成後才有穩定環境測試每日事件縮放、倖存者負擔與長期威脅曲線。
+- 014A 先建立單一權威狀態機，可避免既有卡牌、事件與輪末流程各自判斷門檻。
+- 014B、014C 再逐步遷移來源，較容易發現雙重扣除與結算順序問題。
+- 先保證玩家有完整反應窗口，再加入永久損傷，才能讓失敗被理解為準備不足而非無法避免。
+- 014D 已把 Profile 與階段效果資料流固定下來；014E 現在可以只處理資訊呈現、選擇與失敗解釋，不必再改動核心結算規則。
