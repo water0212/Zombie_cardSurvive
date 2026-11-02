@@ -16,7 +16,9 @@ namespace ZombieCardSurvive.UI.World
         private IWorldInteractionTarget hovered;
 
         public static WorldInteractionRouter Current { get; private set; }
-        public bool IsInputLocked => inputLocked || FlowInspectionController.IsInspectingGameplay;
+        public bool IsInputLocked => inputLocked
+            || FlowInspectionController.IsInspectingGameplay
+            || ZombieCardSurvive.Run.GameplayInteractionLock.IsLocked;
 
         public void Configure(Camera cameraValue, LayerMask layers)
         {

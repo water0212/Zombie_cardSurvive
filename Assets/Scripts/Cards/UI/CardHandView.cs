@@ -52,7 +52,8 @@ namespace ZombieCardSurvive.Cards.UI
 
         public bool RequestPlayCard(CardView cardView)
         {
-            if (cardController == null || cardView == null)
+            if (ZombieCardSurvive.Run.GameplayInteractionLock.IsLocked
+                || cardController == null || cardView == null)
             {
                 return false;
             }

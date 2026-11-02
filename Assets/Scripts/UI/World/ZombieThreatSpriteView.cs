@@ -90,7 +90,7 @@ namespace ZombieCardSurvive.UI.World
 
         public void OnPrimaryInteract()
         {
-            if (runtime == null)
+            if (runtime == null || ZombieCardSurvive.Run.GameplayInteractionLock.IsLocked)
             {
                 return;
             }

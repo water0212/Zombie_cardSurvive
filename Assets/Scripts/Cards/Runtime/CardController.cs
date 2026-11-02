@@ -1,3 +1,4 @@
+using ZombieCardSurvive.Systems.Transactions;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -110,6 +111,17 @@ namespace ZombieCardSurvive.Cards.Runtime
         /// <summary>舊 API 名稱，保留給既有 UI 或測試使用；語意等同 PendingVacancyRefillCount。</summary>
         public int PendingExhaustionRefillCount => PendingVacancyRefillCount;
 
+        private bool runInvalidated;
+        private long callbackGeneration;
+        public void ClearRunState()
+        {
+            runInvalidated = true; callbackGeneration++;
+            StopAllCoroutines();
+            cardPileViewSystem?.AbortRun();
+            drawPile.Clear(); handCards.Clear(); discardPile.Clear(); playedCards.Clear(); exhaustedCards.Clear();
+            vacancyRecords.Clear(); pendingPlanningReplacementCount = 0; drawOperationDepth = 0;
+        }
+
         private void Awake()
         {
             if (cardPileViewSystem == null)
@@ -117,7 +129,7 @@ namespace ZombieCardSurvive.Cards.Runtime
                 cardPileViewSystem = FindObjectOfType<CardPileViewSystem>(true);
             }
 
-            if (startDemoOnAwake)
+            if (startDemoOnAwake && !ZombieCardSurvive.Run.RunLifecycleController.OwnsStartup)
             {
                 StartDemoRun();
             }
@@ -129,6 +141,7 @@ namespace ZombieCardSurvive.Cards.Runtime
         [ContextMenu("Start Demo Run")]
         public void StartDemoRun()
         {
+            runInvalidated = false; callbackGeneration++;
             drawPile.Clear();
             handCards.Clear();
             discardPile.Clear();
@@ -262,6 +275,7 @@ namespace ZombieCardSurvive.Cards.Runtime
         /// <returns>成功打出回傳 true；費用不足、不是手牌或不可打出時回傳 false。</returns>
         public bool RequestPlayCard(CardRuntime card)
         {
+            if (MoraleSystem.IsCollapsed || ZombieCardSurvive.Run.GameplayInteractionLock.IsLocked) return false;
             return TryPlayCard(card, CardPlayOrigin.Manual, true);
         }
 
@@ -271,6 +285,17 @@ namespace ZombieCardSurvive.Cards.Runtime
         /// </summary>
         private bool TryPlayCard(CardRuntime card, CardPlayOrigin origin, bool notifyStateChanged)
         {
+            if (ValueTransactions.Executing != null) return TryPlayCardCore(card, origin, notifyStateChanged);
+            using (var transaction = new ValueTransaction("Card:" + (card?.Data != null ? card.Data.DisplayName : "unknown"), ValueTransactionKind.Card))
+            {
+                bool success = transaction.Execute(() => TryPlayCardCore(card, origin, notifyStateChanged));
+                transaction.Complete();
+                return success;
+            }
+        }
+        private bool TryPlayCardCore(CardRuntime card, CardPlayOrigin origin, bool notifyStateChanged)
+        {
+            if (runInvalidated || MoraleSystem.IsCollapsed) return false;
             if (card == null || card.Data == null)
             {
                 return false;
@@ -307,7 +332,7 @@ namespace ZombieCardSurvive.Cards.Runtime
                 return false;
             }
 
-            CardPlayContext context = new CardPlayContext(this, card);
+            CardPlayContext context = new CardPlayContext(this, card, ValueTransactions.Executing);
 
             if (!card.Data.CanPayCosts(context))
             {
@@ -321,7 +346,7 @@ namespace ZombieCardSurvive.Cards.Runtime
                 return false;
             }
 
-            if (paysEnergy && !EnergySystem.SpendEnergy(effectiveEnergyCost))
+            if (paysEnergy && !GameValues.Energy.TrySpend(effectiveEnergyCost, context.Transaction))
             {
                 NotifyAfterPlayAttempt(notifyStateChanged);
                 return false;
@@ -807,6 +832,12 @@ namespace ZombieCardSurvive.Cards.Runtime
                 return false;
             }
 
+            if (runInvalidated) return false;
+            long generation = callbackGeneration;
+            var completedCallback = onCompleted;
+            var cancelledCallback = onCancelled;
+            onCompleted = cards => { if (!runInvalidated && generation == callbackGeneration) completedCallback(cards); };
+            onCancelled = () => { if (!runInvalidated && generation == callbackGeneration) cancelledCallback?.Invoke(); };
             List<CardRuntime> validCards = request.GetValidCards();
             if (validCards.Count == 0)
             {

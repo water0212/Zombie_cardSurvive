@@ -1,17 +1,19 @@
+using ZombieCardSurvive.Systems.Transactions;
 using ZombieCardSurvive.Systems;
 
 namespace ZombieCardSurvive.Cards.Runtime
 {
     public readonly struct CardPlayContext
     {
-        public CardPlayContext(CardController controller, CardRuntime card)
+        public CardPlayContext(CardController controller, CardRuntime card, ValueTransaction transaction = null)
         {
             Controller = controller;
-            Card = card;
+            Card = card; Transaction = transaction;
         }
 
         public CardController Controller { get; }
         public CardRuntime Card { get; }
+        public ValueTransaction Transaction { get; }
         public int Food => FoodSystem.AvailableFood;
         public int TemporaryFood => FoodSystem.TemporaryFood;
         public int Resource => ResourceSystem.AvailableResource;
@@ -23,7 +25,7 @@ namespace ZombieCardSurvive.Cards.Runtime
 
         public void AddFood(int amount)
         {
-            FoodSystem.AddFood(amount);
+            if (Transaction != null) GameValues.Food.Change(amount, Transaction); else FoodSystem.AddFood(amount);
         }
 
         public void AddTemporaryFood(int amount)
@@ -33,12 +35,12 @@ namespace ZombieCardSurvive.Cards.Runtime
 
         public void AddResource(int amount)
         {
-            ResourceSystem.AddResource(amount);
+            if (Transaction != null) GameValues.Resource.Change(amount, Transaction); else ResourceSystem.AddResource(amount);
         }
 
         public void AddPendingDamage(int amount)
         {
-            CombatSystem.AddPendingDamage(amount);
+            if (Transaction != null) GameValues.Combat.Change(amount, Transaction); else CombatSystem.AddPendingDamage(amount);
         }
 
         public void AddZombieThreat(int amount)

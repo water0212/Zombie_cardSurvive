@@ -234,10 +234,7 @@ namespace ZombieCardSurvive.Systems
             }
 
             int before = pendingDamage;
-            int overcap = pendingDamage - maxCombatValue;
-            int keptPercent = 100 - overcapLossPercent;
-            int keptOvercap = Mathf.FloorToInt(overcap * keptPercent / 100f);
-            pendingDamage = maxCombatValue + Mathf.Max(0, keptOvercap);
+            pendingDamage = PreviewCombatAfterOvercapDecay();
             int loss = before - pendingDamage;
 
             if (loss > 0)
@@ -246,6 +243,14 @@ namespace ZombieCardSurvive.Systems
             }
 
             return loss;
+        }
+
+        /// <summary>已標記擊殺的戰鬥值已在標記當下扣除，此處只計算剩餘值的超量衰減。</summary>
+        public static int PreviewCombatAfterOvercapDecay()
+        {
+            if (pendingDamage <= maxCombatValue) return pendingDamage;
+            int keptOvercap = Mathf.FloorToInt((pendingDamage - maxCombatValue) * (100 - overcapLossPercent) / 100f);
+            return maxCombatValue + Mathf.Max(0, keptOvercap);
         }
 
         public static void Reset(int maxValue = 9, int lossPercent = 50)

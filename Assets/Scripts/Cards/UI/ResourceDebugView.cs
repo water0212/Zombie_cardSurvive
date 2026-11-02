@@ -10,6 +10,10 @@ namespace ZombieCardSurvive.Cards.UI
 {
     public class ResourceDebugView : MonoBehaviour
     {
+        [SerializeField] private bool primaryValuesOwnedExternally;
+        public bool PrimaryValuesOwnedExternally => primaryValuesOwnedExternally;
+        public void SetPrimaryValuesOwnedExternally(bool owned)
+        { primaryValuesOwnedExternally = owned; Refresh(); }
         [SerializeField] private CardController cardController;
         [SerializeField] private RunPhaseController runPhaseController;
         [Tooltip("Optional. Automatically found in the scene when left empty.")]
@@ -75,8 +79,8 @@ namespace ZombieCardSurvive.Cards.UI
         [ContextMenu("Refresh")]
         public void Refresh()
         {
-            SetText(foodText, BuildFoodResourceText());
-            SetText(resourceText, BuildResourceText(ResourceSystem.GetResource(), ResourceSystem.AvailableResource, ResourceSystem.ReservedResource));
+            if (!primaryValuesOwnedExternally) SetText(foodText, BuildFoodResourceText());
+            if (!primaryValuesOwnedExternally) SetText(resourceText, BuildResourceText(ResourceSystem.GetResource(), ResourceSystem.AvailableResource, ResourceSystem.ReservedResource));
             SetText(
                 moraleText,
                 $"{MoraleSystem.CurrentMorale}/{MoraleSystem.MaximumMorale} [{MoraleSystem.CollapseStage}]");
@@ -89,14 +93,14 @@ namespace ZombieCardSurvive.Cards.UI
 
             if (cardController == null)
             {
-                SetText(energyText, $"{EnergySystem.CurrentEnergy}/{EnergySystem.MaxEnergy}");
-                SetText(pendingDamageText, $"{CombatSystem.PendingDamage}/{CombatSystem.MaxCombatValue}");
+                if (!primaryValuesOwnedExternally) SetText(energyText, $"{EnergySystem.CurrentEnergy}/{EnergySystem.MaxEnergy}");
+                if (!primaryValuesOwnedExternally) SetText(pendingDamageText, $"{CombatSystem.PendingDamage}/{CombatSystem.MaxCombatValue}");
                 SetText(zombieThreatText, $"{CombatSystem.ZombieThreatCount}");
                 return;
             }
 
-            SetText(energyText, $"{EnergySystem.CurrentEnergy}/{EnergySystem.MaxEnergy}");
-            SetText(pendingDamageText, $"{CombatSystem.PendingDamage}/{CombatSystem.MaxCombatValue}");
+            if (!primaryValuesOwnedExternally) SetText(energyText, $"{EnergySystem.CurrentEnergy}/{EnergySystem.MaxEnergy}");
+            if (!primaryValuesOwnedExternally) SetText(pendingDamageText, $"{CombatSystem.PendingDamage}/{CombatSystem.MaxCombatValue}");
             SetText(zombieThreatText, $"{CombatSystem.ZombieThreatCount}");
         }
 

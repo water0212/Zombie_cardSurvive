@@ -80,6 +80,14 @@ namespace ZombieCardSurvive.Exploration.Runtime
         }
 
         [ContextMenu("Initialize Exploration Run")]
+        public void ClearRunState()
+        {
+            StopAllCoroutines();
+            DetachRegionRuntimeEvents(); regionRuntimes.Clear(); ResetFlowState(true);
+            IsRunInitialized = false;
+            if (ReferenceEquals(activeInstance, this)) activeInstance = null;
+        }
+
         public void InitializeRun()
         {
             DetachRegionRuntimeEvents();

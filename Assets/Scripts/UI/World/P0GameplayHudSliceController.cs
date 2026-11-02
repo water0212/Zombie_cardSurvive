@@ -1,3 +1,4 @@
+using ZombieCardSurvive.Systems.Transactions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -94,6 +95,12 @@ namespace ZombieCardSurvive.UI.World
                 CombatSystem.Reset(9, 50);
             }
 
+            // Demo setup is initialization, never a gameplay gain or stage-transition animation.
+            ValueTransactions.ResetPresentation();
+            using (var transaction = new ValueTransaction("P0DemoInitialization", ValueTransactionKind.Reset))
+            {
+                transaction.Execute(() =>
+                {
             FoodSystem.SetStorageCapacity(30);
             EnergySystem.SpendEnergy(2);
             MoraleSystem.ReduceMorale(38);
@@ -108,6 +115,9 @@ namespace ZombieCardSurvive.UI.World
                 }
             }
             Refresh();
+                });
+                transaction.Complete();
+            }
         }
 
         public void ToggleInputLock()
@@ -115,6 +125,40 @@ namespace ZombieCardSurvive.UI.World
             locked = !locked;
             inputRouter?.SetInputLocked(locked);
             Refresh();
+        }
+
+        [ContextMenu("QA/Set Food Shortage Warning")]
+        public void SetFoodShortageWarning()
+        {
+            if (!RequirePlayMode()) return;
+            FoodSystem.Reset(0);
+            Debug.Log("QA state applied: permanent food is 0; the HUD should show this round's food shortage warning.", this);
+        }
+
+        [ContextMenu("QA/Set Stage Crossing Risk")]
+        public void SetStageCrossingRisk()
+        {
+            if (!RequirePlayMode()) return;
+            MoraleSystem.Reset(startingMorale: 72);
+            FoodSystem.Reset(0);
+            Debug.Log("QA state applied: ending the round should request confirmation for a morale stage crossing.", this);
+        }
+
+        [ContextMenu("QA/Restore Demo Values")]
+        public void RestoreDemoValues()
+        {
+            if (!RequirePlayMode()) return;
+            FoodSystem.Reset(23);
+            MoraleSystem.Reset();
+            MoraleSystem.ReduceMorale(38);
+            Debug.Log("QA state restored to the P0 demo values.", this);
+        }
+
+        private bool RequirePlayMode()
+        {
+            if (Application.isPlaying) return true;
+            Debug.LogWarning("This QA action is available only in Play Mode.", this);
+            return false;
         }
 
         private void Refresh()

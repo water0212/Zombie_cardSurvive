@@ -39,7 +39,20 @@ namespace ZombieCardSurvive.Systems
         public bool IsMarkedForKill { get; private set; }
         public int ReservedCombatValue { get; private set; }
 
-        public string NegativeEffectDescription => $"Round end morale damage: {Attack}";
+        public string NegativeEffectDescription
+        {
+            get
+            {
+                string timing = $"第 {FirstConsequenceRoundEnd} 輪起，若輪末仍存活：";
+                string result = $"士氣 -{Attack}";
+                if (PermanentMaximumMoraleDamage > 0)
+                    result += $"｜士氣上限永久 -{PermanentMaximumMoraleDamage}";
+                int foodDemand = SourceCard != null && SourceCard.SurvivalNextRoundEffect != null
+                    ? SourceCard.SurvivalNextRoundEffect.GetNextRoundFoodDemandModifier() : 0;
+                if (foodDemand > 0) result += $"｜下一輪食物需求 +{foodDemand}";
+                return timing + result;
+            }
+        }
 
         public bool CanResolveConsequencesAtRoundEnd(int roundIndex)
         {

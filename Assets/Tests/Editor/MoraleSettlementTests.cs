@@ -92,7 +92,7 @@ namespace ZombieCardSurvive.Tests.Editor
             Assert.That(FoodPlanSystem.GetRoundFoodConsumption(), Is.EqualTo(5));
             Assert.That(FoodPlanSystem.GetDisplayName(FoodPlanLevel.Tight), Is.EqualTo("標準供應"));
 
-            Assert.That(FoodPlanSystem.TrySetPendingPlan(FoodPlanLevel.Tight), Is.True);
+            Assert.That(FoodPlanSystem.TrySetPendingPlan(FoodPlanLevel.Tight), Is.False); // Normalizes to the current plan: no change.
             Assert.That(FoodPlanSystem.PendingPlan, Is.EqualTo(FoodPlanLevel.Normal));
             Assert.That(FoodPlanSystem.HasPendingPlan, Is.False);
         }

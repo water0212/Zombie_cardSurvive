@@ -94,6 +94,17 @@ namespace ZombieCardSurvive.Events.Runtime
 
         /// <summary>依 Inspector 設定建立新事件局並清除舊歷史。</summary>
         [ContextMenu("Initialize Event Run")]
+        public void ClearRunState()
+        {
+            StopAllCoroutines();
+            InitializeRun(0);
+            scheduler.InitializeRun(null, null, 0);
+            eventSequenceSource = null;
+            survivorCount = 0;
+            schedulerInitialized = false;
+            State = EventFlowState.Hidden;
+        }
+
         public void InitializeRun()
         {
             int seed = useFixedRandomSeed
@@ -143,6 +154,7 @@ namespace ZombieCardSurvive.Events.Runtime
         /// <summary>抽選並顯示指定日的唯一事件。</summary>
         public void BeginEventPhase(int day)
         {
+            if (runPhaseController != null && runPhaseController.IsRunEnded) return;
             EnsureSchedulerInitialized();
             CurrentEventDay = Mathf.Max(1, day);
             CurrentEvent = SelectEvent(CurrentEventDay);
@@ -174,7 +186,7 @@ namespace ZombieCardSurvive.Events.Runtime
         /// <summary>選擇目前事件的一個選項並套用既有效果。</summary>
         public bool ChooseOption(int optionIndex)
         {
-            if (State != EventFlowState.Choosing || CurrentResolvedEvent == null)
+            if (MoraleSystem.IsCollapsed || ZombieCardSurvive.Run.GameplayInteractionLock.IsLocked || State != EventFlowState.Choosing || CurrentResolvedEvent == null)
             {
                 return false;
             }
@@ -235,7 +247,7 @@ namespace ZombieCardSurvive.Events.Runtime
         [ContextMenu("End Event")]
         public void EndEvent()
         {
-            if (State != EventFlowState.Result)
+            if (MoraleSystem.IsCollapsed || ZombieCardSurvive.Run.GameplayInteractionLock.IsLocked || State != EventFlowState.Result)
             {
                 return;
             }

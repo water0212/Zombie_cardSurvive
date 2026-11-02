@@ -1,3 +1,4 @@
+using ZombieCardSurvive.Systems.Transactions;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -74,6 +75,12 @@ namespace ZombieCardSurvive.Systems
                 false));
         }
 
+        /// <summary>No run exists in the menu. Do not create a new 100/100 run as cleanup.</summary>
+        public static void ClearRunState()
+        {
+            Reset(0, 0, 0, 0);
+        }
+
         public static int GetMorale()
         {
             return morale;
@@ -98,6 +105,22 @@ namespace ZombieCardSurvive.Systems
         /// 將完整交易中的逐項來源合併後只提交一次，避免效果排列順序造成中途降階。
         /// </summary>
         public static MoraleBatchResult CommitBatch(MoraleBatchRequest request)
+        {
+            if (ValueTransactions.Executing != null)
+            {
+                var result = CommitBatchCore(request);
+                ValueTransactions.Executing.AttachMorale(result);
+                return result;
+            }
+            using (var transaction = new ValueTransaction(request?.Source ?? "Morale", ValueTransactionKind.System))
+            {
+                var result = transaction.Execute(() => CommitBatchCore(request));
+                transaction.AttachMorale(result);
+                transaction.Complete();
+                return result;
+            }
+        }
+        private static MoraleBatchResult CommitBatchCore(MoraleBatchRequest request)
         {
             if (request == null)
             {
@@ -125,6 +148,19 @@ namespace ZombieCardSurvive.Systems
             int moraleDelta = 0,
             int maximumMoraleDelta = 0)
         {
+            if (ValueTransactions.Executing != null) return CommitChangeCore(source, moraleDelta, maximumMoraleDelta);
+            using (var transaction = new ValueTransaction(source, ValueTransactionKind.System))
+            {
+                var result = transaction.Execute(() => CommitChangeCore(source, moraleDelta, maximumMoraleDelta));
+                transaction.Complete();
+                return result;
+            }
+        }
+        private static MoraleChangeResult CommitChangeCore(
+            string source,
+            int moraleDelta = 0,
+            int maximumMoraleDelta = 0)
+        {
             int moraleBefore = morale;
             int maximumBefore = maxMorale;
             MoraleCollapseStage stageBefore = collapseStage;
@@ -132,10 +168,10 @@ namespace ZombieCardSurvive.Systems
 
             if (!isCollapsed)
             {
-                maxMorale = AddClamped(maxMorale, maximumMoraleDelta, 0, AbsoluteMaximumMorale);
-                morale = Mathf.Min(morale, maxMorale);
-                morale = AddClamped(morale, moraleDelta, 0, maxMorale);
-                collapseStage = CalculateStage(collapseStage, morale);
+                MoraleChangeResult preview = PreviewChange(source, moraleDelta, maximumMoraleDelta);
+                maxMorale = preview.MaximumMoraleAfter;
+                morale = preview.MoraleAfter;
+                collapseStage = preview.StageAfter;
                 isCollapsed = morale == 0;
             }
 
@@ -170,6 +206,25 @@ namespace ZombieCardSurvive.Systems
             }
 
             return result;
+        }
+
+        /// <summary>以相同提交規則計算結果，但不修改狀態或發送通知。</summary>
+        public static MoraleChangeResult PreviewChange(string source, int moraleDelta = 0, int maximumMoraleDelta = 0)
+        {
+            int maximum = isCollapsed ? maxMorale : AddClamped(maxMorale, maximumMoraleDelta, 0, AbsoluteMaximumMorale);
+            int current = isCollapsed ? morale : AddClamped(Math.Min(morale, maximum), moraleDelta, 0, maximum);
+            MoraleCollapseStage stage = isCollapsed ? collapseStage : CalculateStage(collapseStage, current);
+            bool collapsed = isCollapsed || current == 0;
+            return new MoraleChangeResult(source, morale, current, maxMorale, maximum,
+                moraleDelta, maximumMoraleDelta, collapseStage, stage,
+                BuildTransitions(collapseStage, stage), isCollapsed, collapsed, !isCollapsed && collapsed);
+        }
+
+        /// <summary>以完整交易的淨變化計算高士氣自然回落量。</summary>
+        public static int PreviewRoundEndDrift(int moraleDelta, int maximumMoraleDelta)
+        {
+            int value = PreviewChange("Preview", moraleDelta, maximumMoraleDelta).MoraleAfter;
+            return value > defaultMorale ? -Math.Min(highMoraleDecayPerRound, value - defaultMorale) : 0;
         }
 
         public static int ApplyRoundEndDrift()

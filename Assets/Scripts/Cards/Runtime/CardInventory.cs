@@ -86,6 +86,8 @@ namespace ZombieCardSurvive.Cards.Runtime
         public IReadOnlyList<CardBase> Cards => cards;
         public int Count => entries.Count;
 
+        public void ClearRunState() { entries.Clear(); cards.Clear(); }
+
         private void Awake()
         {
             ResetInventory();

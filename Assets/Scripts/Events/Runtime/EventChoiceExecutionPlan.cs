@@ -1,3 +1,4 @@
+using ZombieCardSurvive.Systems.Transactions;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -191,6 +192,16 @@ namespace ZombieCardSurvive.Events.Runtime
 
         public EventChoiceExecutionResult Execute()
         {
+            if (ValueTransactions.Executing != null) return ExecuteCore();
+            using (var transaction = new ValueTransaction("Event:" + choice?.ChoiceText, ValueTransactionKind.Event))
+            {
+                var result = transaction.Execute(ExecuteCore);
+                transaction.Complete();
+                return result;
+            }
+        }
+        private EventChoiceExecutionResult ExecuteCore()
+        {
             if (!Availability.IsAvailable)
             {
                 return EventChoiceExecutionResult.Failure(Availability);
@@ -247,7 +258,7 @@ namespace ZombieCardSurvive.Events.Runtime
                     continue;
                 }
 
-                if (!effect.TryApply(context))
+                if (!effect.TryApply(context.WithTransaction(ValueTransactions.Executing)))
                 {
                     Debug.LogError($"Event effect {index} failed after its choice execution plan passed validation.");
                     EventChoiceAvailability failed = new EventChoiceAvailability(
@@ -286,7 +297,7 @@ namespace ZombieCardSurvive.Events.Runtime
                     continue;
                 }
 
-                if (!consequence.Effect.TryApply(context, amount))
+                if (!consequence.Effect.TryApply(context.WithTransaction(ValueTransactions.Executing), amount))
                 {
                     Debug.LogError(
                         $"Forced-loss consequence for effect {consequence.SourceEffectIndex} failed during execution.");

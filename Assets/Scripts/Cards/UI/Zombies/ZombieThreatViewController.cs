@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using ZombieCardSurvive.Systems;
+using ZombieCardSurvive.Run;
 
 namespace ZombieCardSurvive.Cards.UI.Zombies
 {
@@ -125,6 +126,7 @@ namespace ZombieCardSurvive.Cards.UI.Zombies
         /// <param name="threat">要標記或取消標記的殭屍 Runtime。</param>
         public void ToggleKillMark(ZombieThreatRuntime threat)
         {
+            if (GameplayInteractionLock.IsLocked) return;
             bool changed = CombatSystem.TryToggleZombieKillMark(threat);
             if (!changed)
             {

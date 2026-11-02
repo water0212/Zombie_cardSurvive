@@ -28,18 +28,19 @@ namespace ZombieCardSurvive.Systems
             MoralePyramidProfileData profileData,
             out string error)
         {
+            if (profileData == null) { error = "Morale Pyramid Profile is not assigned."; return false; }
+            if (!profileData.TryCreateSnapshot(out var snapshot, out error)) return false;
+            return TryPrepareSnapshot(snapshot, out error);
+        }
+
+        public static bool TryPrepareSnapshot(MoralePyramidProfileSnapshot snapshot, out string error)
+        {
+            if (snapshot == null || string.IsNullOrWhiteSpace(snapshot.ProfileId)
+                || snapshot.GetStage(MoraleCollapseStage.Stable) == null
+                || snapshot.GetStage(MoraleCollapseStage.Shaken) == null
+                || snapshot.GetStage(MoraleCollapseStage.Brink) == null)
+            { error = "Incomplete morale profile snapshot"; return false; }
             Reset();
-            if (profileData == null)
-            {
-                error = "Morale Pyramid Profile is not assigned.";
-                return false;
-            }
-
-            if (!profileData.TryCreateSnapshot(out MoralePyramidProfileSnapshot snapshot, out error))
-            {
-                return false;
-            }
-
             profile = snapshot;
             activeStage = profile.GetStage(MoraleSystem.CollapseStage);
             pendingMaximumEnergyModifier = activeStage.MaximumEnergyModifier;
@@ -81,9 +82,7 @@ namespace ZombieCardSurvive.Systems
         /// <summary>依輪末指定結算點的有效階段扣除一次資源；同一 Round 重複呼叫不重扣。</summary>
         public static ValueConsumptionResult ResolveRoundEndResourceLoss(int roundIndex)
         {
-            if (!IsInitialized
-                || roundIndex <= 0
-                || roundIndex <= lastResourceLossRound)
+            if (!CanResolveRoundEndResourceLoss(roundIndex))
             {
                 return new ValueConsumptionResult(0, 0);
             }
@@ -91,6 +90,19 @@ namespace ZombieCardSurvive.Systems
             lastResourceLossRound = roundIndex;
             int requested = Math.Max(0, activeStage.ResourceLossPerRound);
             return ResourceSystem.ConsumeResourceAllowShortage(requested);
+        }
+
+        /// <summary>只讀取本輪尚未支付的階段資源扣除，不標記該輪已結算。</summary>
+        public static ValueConsumptionResult PreviewRoundEndResourceLoss(int roundIndex)
+        {
+            int requested = CanResolveRoundEndResourceLoss(roundIndex)
+                ? Math.Max(0, activeStage.ResourceLossPerRound) : 0;
+            return new ValueConsumptionResult(requested, Math.Min(requested, ResourceSystem.AvailableResource));
+        }
+
+        private static bool CanResolveRoundEndResourceLoss(int roundIndex)
+        {
+            return IsInitialized && roundIndex > 0 && roundIndex > lastResourceLossRound;
         }
 
         private static void HandleMoraleStageChanged(

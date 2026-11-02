@@ -423,6 +423,13 @@ namespace ZombieCardSurvive.Cards.UI.Piles
             RefreshButtonLabels();
         }
 
+        /// <summary>Discard pending delegates without invoking cancel/complete against an invalid run.</summary>
+        public void AbortRun()
+        {
+            ClearSelectionState();
+            ClosePopupOnly();
+        }
+
         public void Close()
         {
             if (isSelectionMode)

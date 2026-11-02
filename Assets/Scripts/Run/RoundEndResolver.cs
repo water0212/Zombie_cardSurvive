@@ -48,6 +48,8 @@ namespace ZombieCardSurvive.Run
             MigrateMoraleSettlementConfig();
         }
 
+        public void ClearRunState() { LastReport = null; }
+
         public void PrepareRun()
         {
             MigrateMoraleSettlementConfig();
@@ -176,14 +178,11 @@ namespace ZombieCardSurvive.Run
             report.FoodPlanMoraleDelta = report.EncouragingMealMoraleGain;
             report.FoodAfterConsumption = FoodSystem.GetFood();
 
-            int moraleBeforeDrift = PreviewMoraleAfter(
+            report.HighMoraleDrift = MoraleSystem.PreviewRoundEndDrift(
                 moraleBatch.NetMoraleDelta,
                 moraleBatch.NetMaximumMoraleDelta);
-            if (moraleBeforeDrift > MoraleSystem.DefaultMorale)
+            if (report.HighMoraleDrift != 0)
             {
-                report.HighMoraleDrift = -Mathf.Min(
-                    MoraleSystem.HighMoraleDecayPerRound,
-                    moraleBeforeDrift - MoraleSystem.DefaultMorale);
                 moraleBatch.Add("HighMoraleDrift", report.HighMoraleDrift);
             }
 
@@ -224,9 +223,13 @@ namespace ZombieCardSurvive.Run
                 moraleBatch.NetMaximumMoraleDelta);
             int maximumMoraleBeforeMeal = PreviewMaximumMoraleAfter(
                 moraleBatch.NetMaximumMoraleDelta);
-            if (report.FoodShortage > 0
-                || moraleBeforeMeal >= maximumMoraleBeforeMeal
-                || report.EncouragingMealExtraFoodCost <= 0
+            EncouragingMealFailureReason failure = FoodPlanSystem.EvaluateEncouragingMeal(
+                report.FoodShortage,
+                moraleBeforeMeal,
+                maximumMoraleBeforeMeal,
+                report.EncouragingMealExtraFoodCost,
+                FoodSystem.AvailableFood);
+            if (failure != EncouragingMealFailureReason.None
                 || !FoodSystem.SpendFood(report.EncouragingMealExtraFoodCost))
             {
                 return;

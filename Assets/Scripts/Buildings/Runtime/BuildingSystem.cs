@@ -36,13 +36,14 @@ namespace ZombieCardSurvive.Buildings.Runtime
 
         public IReadOnlyDictionary<string, BuildingRuntime> Runtimes => runtimes;
         public BuildingResolutionReport LastResolutionReport { get; private set; }
-        public bool CanSubmitActions => runPhaseController == null || runPhaseController.CurrentPhase == RunPhase.Turn;
+        public bool CanSubmitActions => !GameplayInteractionLock.IsLocked
+            && (runPhaseController == null || runPhaseController.CurrentPhase == RunPhase.Turn);
 
         private void Awake()
         {
             activeInstance = this;
             ResolveReferences();
-            InitializeRun();
+            if (!RunLifecycleController.OwnsStartup) InitializeRun();
         }
 
         private void OnEnable()
@@ -56,6 +57,15 @@ namespace ZombieCardSurvive.Buildings.Runtime
             {
                 activeInstance = null;
             }
+        }
+
+        public void ClearRunState()
+        {
+            StopAllCoroutines();
+            replacementView?.Close();
+            ClearWorldViews();
+            runtimes.Clear(); LastResolutionReport = null;
+            if (ReferenceEquals(activeInstance, this)) activeInstance = null;
         }
 
         public void InitializeRun()

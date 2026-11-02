@@ -1,3 +1,4 @@
+using ZombieCardSurvive.Systems.Transactions;
 using System;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -123,7 +124,7 @@ namespace ZombieCardSurvive.Effects.Data
             switch (category)
             {
                 case GameEffectCategory.Value:
-                    return TryApplyValueEffect(resolvedAmount);
+                    return TryApplyValueEffect(resolvedAmount, context.Transaction);
                 case GameEffectCategory.CardFlow:
                     return TryApplyCardFlowEffect(context, resolvedAmount);
                 case GameEffectCategory.EventState:
@@ -163,12 +164,12 @@ namespace ZombieCardSurvive.Effects.Data
             }
         }
 
-        private bool TryApplyValueEffect(int resolvedAmount)
+        private bool TryApplyValueEffect(int resolvedAmount, ValueTransaction transaction)
         {
             switch (valueEffectType)
             {
                 case ValueEffectType.AddFood:
-                    FoodSystem.AddFood(resolvedAmount);
+                    if (transaction != null) GameValues.Food.Change(resolvedAmount, transaction); else FoodSystem.AddFood(resolvedAmount);
                     return true;
                 case ValueEffectType.AddTemporaryFood:
                     FoodSystem.AddTemporaryFood(resolvedAmount);
@@ -183,12 +184,12 @@ namespace ZombieCardSurvive.Effects.Data
                         return true;
                     }
 
-                    return FoodSystem.SpendFood(resolvedAmount);
+                    return transaction != null ? GameValues.Food.TrySpend(resolvedAmount, transaction) : FoodSystem.SpendFood(resolvedAmount);
                 case ValueEffectType.AddFoodProduction:
                     FoodSystem.AddProductionEffect(effectId, resolvedAmount, isPermanent, RemainingTurns);
                     return true;
                 case ValueEffectType.AddResource:
-                    ResourceSystem.AddResource(resolvedAmount);
+                    if (transaction != null) GameValues.Resource.Change(resolvedAmount, transaction); else ResourceSystem.AddResource(resolvedAmount);
                     return true;
                 case ValueEffectType.SpendResource:
                     if (IsForcedLoss)
@@ -197,7 +198,7 @@ namespace ZombieCardSurvive.Effects.Data
                         return true;
                     }
 
-                    return ResourceSystem.SpendResource(resolvedAmount);
+                    return transaction != null ? GameValues.Resource.TrySpend(resolvedAmount, transaction) : ResourceSystem.SpendResource(resolvedAmount);
                 case ValueEffectType.AddResourceProduction:
                     ResourceSystem.AddProductionEffect(effectId, resolvedAmount, isPermanent, RemainingTurns);
                     return true;
@@ -207,13 +208,13 @@ namespace ZombieCardSurvive.Effects.Data
                 case ValueEffectType.RemoveZombieThreat:
                     return CombatSystem.RemoveZombieThreat(resolvedAmount);
                 case ValueEffectType.AddPendingDamage:
-                    CombatSystem.AddPendingDamage(resolvedAmount);
+                    if (transaction != null) GameValues.Combat.Change(resolvedAmount, transaction); else CombatSystem.AddPendingDamage(resolvedAmount);
                     return true;
                 case ValueEffectType.ClearPendingDamage:
                     CombatSystem.ClearPendingDamage();
                     return true;
                 case ValueEffectType.AddCurrentEnergy:
-                    EnergySystem.AddEnergy(resolvedAmount);
+                    if (transaction != null) GameValues.Energy.Change(resolvedAmount, transaction); else EnergySystem.AddEnergy(resolvedAmount);
                     return true;
                 case ValueEffectType.IncreaseMaxEnergy:
                     EnergySystem.IncreaseMaxEnergy(resolvedAmount);

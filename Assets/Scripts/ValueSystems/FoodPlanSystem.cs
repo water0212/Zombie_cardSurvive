@@ -3,6 +3,11 @@ using UnityEngine;
 
 namespace ZombieCardSurvive.Systems
 {
+    public enum EncouragingMealFailureReason
+    {
+        None, NotSelected, FoodShortage, MoraleAtMaximum, NoExtraCost, InsufficientPermanentFood
+    }
+
     public static class FoodPlanSystem
     {
         public const int DefaultBaseRoundFoodDemand = 5;
@@ -140,6 +145,18 @@ namespace ZombieCardSurvive.Systems
         public static string GetDisplayName(FoodPlanLevel plan)
         {
             return NormalizePlan(plan) == FoodPlanLevel.Generous ? "鼓舞餐點" : "標準供應";
+        }
+
+        /// <summary>預測與正式付款共用的加餐資格，輸入為固定需求支付後的可用永久食物。</summary>
+        public static EncouragingMealFailureReason EvaluateEncouragingMeal(
+            int shortage, int currentMorale, int maximumMorale, int extraCost, int availablePermanentFood)
+        {
+            if (!IsEncouragingMealActive) return EncouragingMealFailureReason.NotSelected;
+            if (shortage > 0) return EncouragingMealFailureReason.FoodShortage;
+            if (currentMorale >= maximumMorale) return EncouragingMealFailureReason.MoraleAtMaximum;
+            if (extraCost <= 0) return EncouragingMealFailureReason.NoExtraCost;
+            if (availablePermanentFood < extraCost) return EncouragingMealFailureReason.InsufficientPermanentFood;
+            return EncouragingMealFailureReason.None;
         }
 
         private static FoodPlanLevel NormalizePlan(FoodPlanLevel plan)

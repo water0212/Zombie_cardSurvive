@@ -1,3 +1,5 @@
+using ZombieCardSurvive.Systems.Transactions;
+using ZombieCardSurvive.UI.Settlement;
 using System;
 using UnityEngine;
 using ZombieCardSurvive.Buildings.Runtime;
@@ -41,6 +43,23 @@ namespace ZombieCardSurvive.Run
         private bool postEventResolved;
         // 士氣歸零後鎖住本局流程，直到 StartRun 完整重置。
         private bool isRunEnded;
+        private SettlementPresenter settlementPresenter;
+        private long pendingSettlementId;
+        
+        public void RegisterSettlementPresenter(SettlementPresenter presenter)
+        {
+            settlementPresenter = presenter;
+            if (presenter == null && pendingSettlementId != 0) CompleteSettlementPresentation(pendingSettlementId);
+        }
+        public bool IsSettlementPending => pendingSettlementId != 0;
+        public void CompleteSettlementPresentation(long transactionId)
+        {
+            if (pendingSettlementId == 0 || pendingSettlementId != transactionId) return;
+            pendingSettlementId = 0;
+            if (!IsRunEnded) { EnterEventPhase(); GameplayInteractionLock.Release(this); }
+        }
+        private bool roundEndConfirmationAvailable;
+        private RoundEndPreview pendingRoundEndPreview;
 
         /// <summary>
         /// 階段切換時觸發，HUD 會用它更新目前 Phase 顯示。
@@ -48,6 +67,8 @@ namespace ZombieCardSurvive.Run
         public event Action<RunPhase> PhaseChanged;
         /// <summary>基地首次崩潰時觸發；正式失敗畫面會在 PB-P0-014E 訂閱。</summary>
         public event Action<MoraleChangeResult> RunFailed;
+        /// <summary>最後一個 Turn 有嚴重已知風險時，要求 UI 顯示單一合併確認。</summary>
+        public event Action<RoundEndPreview> RoundEndConfirmationRequested;
 
         /// <summary>目前所處遊戲階段。</summary>
         public RunPhase CurrentPhase { get; private set; } = RunPhase.Event;
@@ -61,6 +82,7 @@ namespace ZombieCardSurvive.Run
         public RoundEndReport LastRoundEndReport => roundEndResolver != null ? roundEndResolver.LastReport : null;
         /// <summary>士氣歸零後為 true；所有推進階段的公開入口都會停止。</summary>
         public bool IsRunEnded => isRunEnded || MoraleSystem.IsCollapsed;
+        public bool IsRoundEndConfirmationPending => pendingRoundEndPreview != null;
         /// <summary>本場景在新 Run 自動鎖定的士氣金字塔 Profile。</summary>
         public MoralePyramidProfileData DefaultMoraleProfile => defaultMoraleProfile;
 
@@ -99,7 +121,7 @@ namespace ZombieCardSurvive.Run
                 explorationSystem = FindObjectOfType<ExplorationSystem>();
             }
 
-            if (startRunOnAwake)
+            if (startRunOnAwake && !RunLifecycleController.OwnsStartup)
             {
                 StartRun();
             }
@@ -111,6 +133,67 @@ namespace ZombieCardSurvive.Run
         [ContextMenu("Start Run")]
         public void StartRun()
         {
+            if (RunLifecycleController.OwnsStartup && (runInitialized || startProfile == null)) return;
+            if (startProfile == null && (defaultMoraleProfile == null || !defaultMoraleProfile.TryCreateSnapshot(out startProfile, out _)))
+            { isRunEnded = true; Debug.LogError("Run start blocked: invalid morale profile", this); return; }
+            using (var transaction = new ValueTransaction("StartRun", ValueTransactionKind.Reset))
+            {
+                // Reset presentation before entering the operation scope.
+                StartRunResetPresentation();
+                transaction.Execute(StartRunCore);
+                transaction.Complete();
+            }
+        }
+        private bool runInitialized;
+        private MoralePyramidProfileSnapshot startProfile;
+        public int RunInitializationCount { get; private set; }
+
+        public bool TryStartRun(MoralePyramidProfileSnapshot profile, out string error)
+        {
+            error = null;
+            if (runInitialized) { error = "Run has already initialized"; return false; }
+            if (profile == null || profile.GetStage(MoraleCollapseStage.Stable) == null)
+            { error = "A validated morale profile snapshot is required"; return false; }
+            if (cardController == null || buildingSystem == null || explorationSystem == null || roundEndResolver == null || eventFlowController == null)
+            { error = "Gameplay initialization references are incomplete"; return false; }
+            startProfile = profile;
+            StartRun();
+            if (IsRunEnded) { error = "Run initialization was blocked"; return false; }
+            return true;
+        }
+
+        /// <summary>Invalidate before disabling presentation: teardown may otherwise finish an old event.</summary>
+        public void InvalidateRun()
+        {
+            isRunEnded = true;
+            pendingSettlementId = 0;
+            pendingRoundEndPreview = null;
+            waitingForReplacement = false;
+            UnhookReplacementView();
+            StopAllCoroutines();
+            GameplayInteractionLock.Acquire(this);
+        }
+        public void ClearRunState()
+        {
+            InvalidateRun();
+            cardController?.ClearRunState();
+            foreach (var inventory in FindObjectsOfType<CardInventory>(true)) inventory.ClearRunState();
+            buildingSystem?.ClearRunState();
+            explorationSystem?.ClearRunState();
+            eventFlowController?.ClearRunState();
+            roundEndResolver?.ClearRunState();
+            RoundIndex = 0; TurnIndex = 0;
+            postEventReplacementStep = 0; postEventResolved = false;
+            startProfile = null;
+        }
+        private void StartRunResetPresentation() => ValueTransactions.ResetPresentation();
+        private void StartRunCore()
+        {
+            
+            pendingSettlementId = 0;
+            GameplayInteractionLock.Reset();
+            if (RunLifecycleController.Instance != null) GameplayInteractionLock.Acquire(RunLifecycleController.Instance);
+            pendingRoundEndPreview = null;
             isRunEnded = false;
             RoundIndex = 0;
             TurnIndex = 0;
@@ -141,7 +224,7 @@ namespace ZombieCardSurvive.Run
                 MoraleSystem.Reset();
             }
 
-            if (!MoralePyramidSystem.TryPrepareRun(defaultMoraleProfile, out string profileError))
+            if (!MoralePyramidSystem.TryPrepareSnapshot(startProfile, out string profileError))
             {
                 isRunEnded = true;
                 Debug.LogError($"Run start blocked: {profileError}", this);
@@ -153,6 +236,9 @@ namespace ZombieCardSurvive.Run
                 eventFlowController.InitializeRun();
             }
 
+            runInitialized = true;
+            RunInitializationCount++;
+            startProfile = null;
             EnterEventPhase();
         }
 
@@ -181,7 +267,7 @@ namespace ZombieCardSurvive.Run
         /// </summary>
         public void StartRoundFromEvent()
         {
-            if (IsRunEnded)
+            if (IsRunEnded || IsSettlementPending)
             {
                 return;
             }
@@ -233,8 +319,11 @@ namespace ZombieCardSurvive.Run
 
         private void OnDestroy()
         {
+            GameplayInteractionLock.Release(this);
+            CancelRoundEnd();
             MoraleSystem.BaseCollapsed -= HandleBaseCollapsed;
-            MoralePyramidSystem.Reset();
+            // The lifecycle owner resets shared state after the old scene has fully unloaded.
+            if (!RunLifecycleController.OwnsStartup) MoralePyramidSystem.Reset();
             UnhookReplacementView();
         }
 
@@ -403,7 +492,7 @@ namespace ZombieCardSurvive.Run
         [ContextMenu("End Turn")]
         public void EndTurn()
         {
-            if (IsRunEnded || CurrentPhase != RunPhase.Turn)
+            if (IsRunEnded || IsSettlementPending || CurrentPhase != RunPhase.Turn || GameplayInteractionLock.IsLocked)
             {
                 return;
             }
@@ -414,15 +503,73 @@ namespace ZombieCardSurvive.Run
                 return;
             }
 
-            cardController.EndTurnCleanup();
+            if (cardController.IsDrawPileEmpty && roundEndConfirmationAvailable)
+            {
+                RoundEndPreview preview = RoundEndPreviewService.Capture(RoundIndex);
+                if (preview.RequiresConfirmation)
+                {
+                    pendingRoundEndPreview = preview;
+                    GameplayInteractionLock.Acquire(this);
+                    RoundEndConfirmationRequested?.Invoke(preview);
+                    return;
+                }
+            }
 
-            if (cardController.IsDrawPileEmpty)
+            CompleteEndTurn();
+        }
+
+        /// <summary>由危險確認 UI 註冊；沒有 UI 的既有場景維持原流程，不會產生隱形阻擋。</summary>
+        public void SetRoundEndConfirmationAvailable(bool available)
+        {
+            roundEndConfirmationAvailable = available;
+            if (!available)
+            {
+                CancelRoundEnd();
+            }
+        }
+
+        public void CancelRoundEnd()
+        {
+            pendingRoundEndPreview = null;
+            if (!IsRunEnded && !IsSettlementPending) GameplayInteractionLock.Release(this);
+        }
+
+        public void ConfirmRoundEnd()
+        {
+            if (pendingRoundEndPreview == null || IsRunEnded || CurrentPhase != RunPhase.Turn)
+            {
+                CancelRoundEnd();
+                return;
+            }
+
+            RoundEndPreview latest = RoundEndPreviewService.Capture(RoundIndex);
+            if (!pendingRoundEndPreview.IsEquivalentTo(latest))
+            {
+                pendingRoundEndPreview = latest;
+                if (latest.RequiresConfirmation)
+                {
+                    RoundEndConfirmationRequested?.Invoke(latest);
+                    return;
+                }
+            }
+
+            pendingRoundEndPreview = null;
+            GameplayInteractionLock.Release(this);
+            CompleteEndTurn();
+        }
+
+        private void CompleteEndTurn()
+        {
+            bool completesRound = cardController.IsDrawPileEmpty;
+            if (completesRound)
+            {
+                // 剩餘附加卡會在 EndTurnCleanup 揭露；先切換窗口，確保新殭屍不會立刻攻擊。
+                CombatSystem.BeginRoundEnd(RoundIndex);
+            }
+            cardController.EndTurnCleanup();
+            if (completesRound)
             {
                 EnterRoundEndPhase();
-                if (!IsRunEnded)
-                {
-                    EnterEventPhase();
-                }
             }
             else
             {
@@ -437,7 +584,7 @@ namespace ZombieCardSurvive.Run
         /// <returns>目前在 Turn 階段且 FoodPlanSystem 接受時回傳 true。</returns>
         public bool TrySetFoodPlan(FoodPlanLevel plan)
         {
-            if (IsRunEnded || CurrentPhase != RunPhase.Turn)
+            if (IsRunEnded || IsSettlementPending || CurrentPhase != RunPhase.Turn || GameplayInteractionLock.IsLocked)
             {
                 return false;
             }
@@ -449,6 +596,29 @@ namespace ZombieCardSurvive.Run
         /// 進入輪末階段並執行輪末固定消耗結算。
         /// </summary>
         public void EnterRoundEndPhase()
+        {
+            if (IsRunEnded || IsSettlementPending) return;
+            using (var transaction = new ValueTransaction("RoundEnd:" + RoundIndex, ValueTransactionKind.RoundEnd))
+            {
+                pendingSettlementId = transaction.Id;
+                GameplayInteractionLock.Acquire(this);
+                try
+                {
+                    transaction.Execute(EnterRoundEndPhaseCore);
+                    transaction.AttachRound(LastRoundEndReport);
+                    transaction.Complete();
+                }
+                catch
+                {
+                    pendingSettlementId = 0;
+                    GameplayInteractionLock.Release(this);
+                    throw;
+                }
+                if (settlementPresenter == null || !settlementPresenter.isActiveAndEnabled)
+                    CompleteSettlementPresentation(transaction.Id);
+            }
+        }
+        private void EnterRoundEndPhaseCore()
         {
             if (IsRunEnded)
             {
@@ -469,6 +639,7 @@ namespace ZombieCardSurvive.Run
         /// </summary>
         public void EnterEventPhase()
         {
+            if (IsSettlementPending) return;
             if (IsRunEnded)
             {
                 return;
@@ -500,7 +671,7 @@ namespace ZombieCardSurvive.Run
         /// </summary>
         public void EnterTurnPhase()
         {
-            if (IsRunEnded)
+            if (IsRunEnded || IsSettlementPending)
             {
                 return;
             }
@@ -524,6 +695,8 @@ namespace ZombieCardSurvive.Run
             }
 
             isRunEnded = true;
+            pendingRoundEndPreview = null;
+            GameplayInteractionLock.Acquire(this);
             waitingForReplacement = false;
             UnhookReplacementView();
             CurrentPhase = RunPhase.Failed;

@@ -1,3 +1,4 @@
+using ZombieCardSurvive.Systems.Transactions;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -31,6 +32,7 @@ namespace ZombieCardSurvive.UI.World
         [SerializeField] private TMP_Text combatText;
         [SerializeField] private TMP_Text energyText;
         [SerializeField] private bool resourceIconsApplied;
+        [SerializeField] private bool moralePresentationOwnedExternally;
 
         [Header("Piles")]
         [SerializeField] private TMP_Text drawPileText;
@@ -95,6 +97,14 @@ namespace ZombieCardSurvive.UI.World
             }
         }
 
+        public void SetMoralePresentationOwnedExternally(bool owned)
+        {
+            moralePresentationOwnedExternally = owned;
+            if (moraleText != null) moraleText.gameObject.SetActive(!owned);
+            if (moraleThresholdText != null) moraleThresholdText.gameObject.SetActive(!owned);
+            RefreshValues();
+        }
+
         private void Awake()
         {
             ResolveRuntimeSources();
@@ -133,9 +143,12 @@ namespace ZombieCardSurvive.UI.World
             }
         }
 
+        private void HandleTransaction(ValueTransactionResult result) { if (!ValuesPresentationOwnedExternally) RefreshAll(); }
         private void Subscribe()
         {
             Unsubscribe();
+            ValueTransactions.EnsureInitialized();
+            ValueTransactions.TransactionCompleted += HandleTransaction;
             if (runPhaseController != null)
             {
                 runPhaseController.PhaseChanged += HandlePhaseChanged;
@@ -146,17 +159,18 @@ namespace ZombieCardSurvive.UI.World
                 cardController.StateChanged += RefreshAll;
             }
 
-            FoodSystem.StateChanged += RefreshAll;
-            ResourceSystem.StateChanged += RefreshAll;
-            EnergySystem.StateChanged += RefreshAll;
+            // E2 numeric updates are delivered by completed transactions.
+            // E2 numeric updates are delivered by completed transactions.
+            // E2 numeric updates are delivered by completed transactions.
             ResourceReservationService.StateChanged += RefreshAll;
-            CombatSystem.StateChanged += RefreshAll;
+            // E2 numeric updates are delivered by completed transactions.
             MoraleSystem.StateChanged += HandleMoraleChanged;
             MoralePyramidSystem.ActiveStageChanged += HandleMoraleStageChanged;
         }
 
         private void Unsubscribe()
         {
+            ValueTransactions.TransactionCompleted -= HandleTransaction;
             if (runPhaseController != null)
             {
                 runPhaseController.PhaseChanged -= HandlePhaseChanged;
@@ -194,16 +208,26 @@ namespace ZombieCardSurvive.UI.World
             SetText(phaseText, BuildPhaseText(runPhaseController));
         }
 
-        private void RefreshValues()
+        public bool ValuesPresentationOwnedExternally { get; private set; }
+        public void SetValuesPresentationOwnedExternally(bool owned)
+        { ValuesPresentationOwnedExternally = owned; if (!owned) RefreshValues(); }
+        public TMP_Text GetResourceText(string field)
         {
+            switch (field) { case "Food": return foodText; case "Resource": return resourceText;
+                case "Combat": return combatText; case "Energy": return energyText; default: return null; }
+        }
+        private void RefreshValues() { if (ValuesPresentationOwnedExternally) return;
             MoraleCollapseStage stage = MoraleSystem.CollapseStage;
-            if (moraleText != null)
+            if (!moralePresentationOwnedExternally && moraleText != null)
             {
                 moraleText.text = $"士氣  {MoraleSystem.CurrentMorale}/{MoraleSystem.MaximumMorale}";
                 moraleText.color = GetStageColour(stage);
             }
 
-            SetText(moraleThresholdText, BuildNextThresholdText(stage));
+            if (!moralePresentationOwnedExternally)
+            {
+                SetText(moraleThresholdText, BuildNextThresholdText(stage));
+            }
             SetText(foodText, BuildFoodText());
             SetText(resourceText, BuildResourceText());
             SetText(combatText, $"{(resourceIconsApplied ? "" : "戰鬥 ")}{CombatSystem.CombatValue}/{CombatSystem.MaxCombatValue}");

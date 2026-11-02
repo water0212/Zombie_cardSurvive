@@ -13,7 +13,7 @@ namespace ZombieCardSurvive.Events.Editor
 {
     public static class EventScheduleSimulationUtility
     {
-        public const string ReportAssetPath = "Assets/Docs/Playtest/EventScheduleV1_30Day_Report.md";
+        public const string ReportAssetPath = "Assets/GameDevelopmentProcess/Playtest/EventScheduleV1_30Day_Report.md";
         private const string SchedulerSettingsPath = "Assets/ScriptObj/EventScrpitObj/EventSchedulerSettings.asset";
 
         [MenuItem("Tools/Zombie Card Survive/Simulate Event Content V1 (30 Days)")]
@@ -50,7 +50,7 @@ namespace ZombieCardSurvive.Events.Editor
 
             string reportPath = Path.Combine(
                 Application.dataPath,
-                "Docs",
+                "GameDevelopmentProcess",
                 "Playtest",
                 "EventScheduleV1_30Day_Report.md");
             Directory.CreateDirectory(Path.GetDirectoryName(reportPath) ?? Application.dataPath);

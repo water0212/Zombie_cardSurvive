@@ -1,0 +1,227 @@
+[
+  {
+    "Path": "Assets/production/session-state/active.md",
+    "Bytes": 14220,
+    "SHA256": "D198949EC0145D992DD1F814D5F611B491196C25057F6A7A6CB8123F98C9704E"
+  },
+  {
+    "Path": "Assets/Docs/ScriptCodeReview/E2_API_Review.md",
+    "Bytes": 22313,
+    "SHA256": "311FB77AB5B6605C1B58659F782B322535ACFD17A300ACC22A30CA3FCD1E7D3F"
+  },
+  {
+    "Path": "Assets/design/ux/morale-feedback-flow.md",
+    "Bytes": 1052,
+    "SHA256": "4F52CA682AEB8A26D33258A3388E80F544CA9E6E4513EA89A137573F3339A273"
+  },
+  {
+    "Path": "Assets/design/ux/hud.md",
+    "Bytes": 101700,
+    "SHA256": "968B8D3B3067316CF12414E26404A3EC2A17D39571DD0808B82F9C638C0E3294"
+  },
+  {
+    "Path": "Assets/production/epics/PB-P0-014E-plan.md",
+    "Bytes": 16040,
+    "SHA256": "C5E27D1361431B7B3F5D88EC987E2E059D044010AA2BC8F91A3B9C97A4BE05A9"
+  },
+  {
+    "Path": "Assets/Docs/GameDesign/殭屍生存卡牌_離線設計決策工作簿.docx",
+    "Bytes": 43398,
+    "SHA256": "22BB750ECCDB4C9A919D2A273F861F1457BF45460C54662E65C247EE8263E9E4"
+  },
+  {
+    "Path": "Assets/Docs/GameDesign/ZombieSurvivalCard_Scrum_Backlog.md",
+    "Bytes": 73370,
+    "SHA256": "7FF7E71439B4A3AFADCE1DEE777751920326417656047B978AFD04DD01477BB3"
+  },
+  {
+    "Path": "Assets/Docs/GameDesign/ZombieSurvivalCard_GDD.md",
+    "Bytes": 114911,
+    "SHA256": "22EDAD809E1331EC5A2CFDB485E820CA9B4BA73559DB3C115604620B0BAE19D5"
+  },
+  {
+    "Path": "Assets/Docs/CodexHandoff/p0-gameplay-hud-integration-slice.md",
+    "Bytes": 6045,
+    "SHA256": "B0C00A010B49F72705303F12AE0E03BBA6FE6C25C9EC00127B96AFB566EC23F5"
+  },
+  {
+    "Path": "Assets/Docs/CodexHandoff/current-context.md",
+    "Bytes": 38489,
+    "SHA256": "719EBCD5A922B42D092D469B866EA0F6BCE850EB441206B7D21275CF8C16538E"
+  },
+  {
+    "Path": "Assets/production/epics/PB-P0-014E-E1.md",
+    "Bytes": 4947,
+    "SHA256": "3D841D65FA3BC10B6B2BAF4AC4631E53FC063A028BE0A0693FE355C0CBAD9B41"
+  },
+  {
+    "Path": "Assets/Docs/Architecture/tr-registry.yaml",
+    "Bytes": 4337,
+    "SHA256": "5A12686D4396BFED0A3D11E540B162E0C9E1271EA4139B826CA37717B0C3858C"
+  },
+  {
+    "Path": "Assets/Docs/Architecture/sample-e1-e2-integration.md",
+    "Bytes": 4515,
+    "SHA256": "17A87847F369A731F238B8AB1C624AE664F67C0960640E2CBEA0B72628545D51"
+  },
+  {
+    "Path": "Assets/Docs/Architecture/e2-value-transactions.md",
+    "Bytes": 6718,
+    "SHA256": "1247D39BC373EB95DAB2D6F134E8E2F72B5F9EEDB834D77F40CB2EA7585D5E3B"
+  },
+  {
+    "Path": "Assets/Docs/Architecture/e2-responsive-value-presentation.md",
+    "Bytes": 4236,
+    "SHA256": "62BAAA3EBF6D0D94EEF7890554C73D43BDEE7DD17EC7295145B7D8F94E6DDE32"
+  },
+  {
+    "Path": "Assets/Docs/Architecture/adr-0003-morale-preview-and-warning.md",
+    "Bytes": 4168,
+    "SHA256": "71C4EC060DF70BEBAF1C7CFB64515D05B942010478BC5238CD4129AF4D6F2AF1"
+  },
+  {
+    "Path": "Assets/Docs/Architecture/adr-0002-building-bookmark-presentation.md",
+    "Bytes": 7873,
+    "SHA256": "D874FF90E6E698E8753EFA8FE0FA08AA82C745D771283E077734452555D71546"
+  },
+  {
+    "Path": "Assets/Docs/Architecture/adr-0001-sprite-renderer-base-world-and-canvas-hud-boundary.md",
+    "Bytes": 13681,
+    "SHA256": "F3E1D875F3157538AFD10FB177C1C651948B5E8FDCA08BDC085A908E8FC5108F"
+  },
+  {
+    "Path": "Assets/production/qa/evidence/pb-p0-014e-e2-collapse-final.png",
+    "Bytes": 519396,
+    "SHA256": "01671E60E0EFB98077FCD60891DD75E8295908D94DFA542B32FFA095B2BCC3AD"
+  },
+  {
+    "Path": "Assets/production/qa/evidence/pb-p0-014e-e1-evidence.md",
+    "Bytes": 4021,
+    "SHA256": "93AA206A5043A060C830EB308DFF331E5468D3C593336B4293CA052C07ED2CE4"
+  },
+  {
+    "Path": "Assets/production/qa/evidence/building-bookmark-panel-evidence.md",
+    "Bytes": 2544,
+    "SHA256": "58BEE8600125FD6A63832E09F2FFD68F64D835100ADEA39E6961D0BBD7F94DEE"
+  },
+  {
+    "Path": "Assets/production/qa/evidence/pb-p0-014e-e2-stage-play.png",
+    "Bytes": 808209,
+    "SHA256": "1466589ED85E5ECDC9D2947D17DE4B5B5721A8D43AF1D9D2D9A98727E36B97F2"
+  },
+  {
+    "Path": "Assets/production/qa/evidence/pb-p0-014e-e2-evidence.md",
+    "Bytes": 5334,
+    "SHA256": "5B951CC98B38C7B7C6E24BC5B6D89B66F6E9E2C2F6759D91DBB3E0958255C8FD"
+  },
+  {
+    "Path": "Assets/production/qa/evidence/pb-p0-014e-e2-summary-final.png",
+    "Bytes": 966349,
+    "SHA256": "08BF27E768A0752DDB08D860B82D3668566EA9452D4A7818D5D746704FA26A3E"
+  },
+  {
+    "Path": "Assets/production/qa/evidence/pb-p0-014e-e2-tests.json",
+    "Bytes": 1630,
+    "SHA256": "C4378316CA7FF3D82A93B8DAF53B21C10436CB213662B8FD93A562B68E845050"
+  },
+  {
+    "Path": "Assets/production/qa/evidence/pb-p0-014e-responsive-values-tests.json",
+    "Bytes": 1926,
+    "SHA256": "8F4A95C316057457DCEFFD93DC398E5233FE0BD005819F944B890F51CEFABEA2"
+  },
+  {
+    "Path": "Assets/Docs/Playtest/EventScheduleV1_30Day_Report.md",
+    "Bytes": 3932,
+    "SHA256": "BBC98FE1E68EFEBE93DBA75A5CC920AFFBC94426147DF27851BA4149121580A6"
+  },
+  {
+    "Path": "Assets/production/qa/evidence/pb-p0-014e-sample-integration-evidence.md",
+    "Bytes": 4046,
+    "SHA256": "65CF640C806274D0417529DD759ECD44F1F8F257EB45271AE9242489E4AE8BE0"
+  },
+  {
+    "Path": "Assets/production/qa/evidence/pb-p0-014e-sample-integration-play.json",
+    "Bytes": 2016,
+    "SHA256": "8B72C6B62651F6BE5ABA90A469C459309352C822F6A4D17A3C35FF7A9F3BCA41"
+  },
+  {
+    "Path": "Assets/production/qa/evidence/pb-p0-014e-sample-integration-tests.json",
+    "Bytes": 1924,
+    "SHA256": "BE5DE835D6647147E88575E13AE47706FF8A9D5373CE80C557C07657A35F57FB"
+  },
+  {
+    "Path": "Assets/design/art/art-bible.md",
+    "Bytes": 34995,
+    "SHA256": "10C288CF402C341B3D31972E773366E723BB1CC5826A6A28704D71BBC3ECD026"
+  },
+  {
+    "Path": "Assets/design/gdd/game-concept.md",
+    "Bytes": 10884,
+    "SHA256": "3E10A3782A9D8C73F18CF000303BE7179A28302F2659E9028ED15E58F159D752"
+  },
+  {
+    "Path": "Assets/production/epics/pb-p0-014e-e2/story-001-round-result-presentation-flow.md",
+    "Bytes": 6226,
+    "SHA256": "9F2023968C51378B2A88494DACE133E694A4E4A1352028E3E1350C2319B7AED1"
+  },
+  {
+    "Path": "Assets/production/epics/pb-p0-014e-e2/story-002-morale-stage-transition-presentation.md",
+    "Bytes": 4268,
+    "SHA256": "CE08A4BA5D949A22096130D55C0ECAEF6732A4DAAEA56C377B83D154EBBA3AD0"
+  },
+  {
+    "Path": "Assets/production/epics/pb-p0-014e-e2/story-003-collapse-report-and-failed-lock.md",
+    "Bytes": 4264,
+    "SHA256": "DFECAC06AC2DC082936ED904A2E8ACF9B7DA02CE03F9D14AD05C2E96EA882B01"
+  },
+  {
+    "Path": "Assets/production/epics/building-ui/BUILDING-UI-001.md",
+    "Bytes": 5367,
+    "SHA256": "5A6D202ABAF91107CE1A24E6AC09043588044E274E1374B6B8CF2E3D3C75DDC5"
+  },
+  {
+    "Path": "Assets/Docs/Registry/architecture.yaml",
+    "Bytes": 10126,
+    "SHA256": "FC84C3D1533BA58A837AC09AEAC3C833EBB1EB05F10ECE8B49199F3EBA6CEF97"
+  },
+  {
+    "Path": "Assets/design/assets/asset-manifest.md",
+    "Bytes": 10532,
+    "SHA256": "D86D9069A0D76150A1A4CD9E8C631963E798030C7B7574A786EA7DA7EA29B9B3"
+  },
+  {
+    "Path": "Assets/design/quick-specs/pb-p2-009c-event-spawn-horde-2026-08-17.md",
+    "Bytes": 10524,
+    "SHA256": "FB96F03F4672F90309AA69D1B556DCBF449ECA6F07772654F240C872AF60CC01"
+  },
+  {
+    "Path": "Assets/design/quick-specs/pb-p0-014d-morale-pyramid-profile-2026-08-24.md",
+    "Bytes": 9300,
+    "SHA256": "67375B882AA1A65EBA421561DD1B0B9DD51F5EB3895A8AA0C35FC6F8882D044B"
+  },
+  {
+    "Path": "Assets/design/quick-specs/pb-p0-014c-next-round-effects-2026-08-23.md",
+    "Bytes": 10631,
+    "SHA256": "1080781B847941715AAC6DAEB5396DCB8202DDA4EDF4E7ECCD5560A1F986E1B4"
+  },
+  {
+    "Path": "Assets/design/quick-specs/pb-p0-014b-morale-settlement-2026-08-21.md",
+    "Bytes": 5936,
+    "SHA256": "C456897CDB1DABF9E584E8C5481AC865F5ED4D3201F5BC0A3CBA3E7B35DCA01E"
+  },
+  {
+    "Path": "Assets/design/quick-specs/pb-p0-014a-morale-collapse-core-2026-08-18.md",
+    "Bytes": 3660,
+    "SHA256": "47CB1FC7666DBAD4E481662A6199219A07245A2DDC74AC9464C519B14611FC5A"
+  },
+  {
+    "Path": "Assets/design/assets/specs/visual-pilot-assets.md",
+    "Bytes": 16090,
+    "SHA256": "A56C1C146F5BDAA52872A6DCEB4AD683C498F5F7192D2A3D70695B3CFAC9F897"
+  },
+  {
+    "Path": "Assets/design/assets/specs/gameplay-hud-assets.md",
+    "Bytes": 46607,
+    "SHA256": "5C8B6CA4636E015648E2A343FF44C874F7BC2E1F9D4044B9CE44C458F98C65BA"
+  }
+]

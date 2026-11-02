@@ -1,3 +1,4 @@
+using ZombieCardSurvive.Systems.Transactions;
 using ZombieCardSurvive.Cards.Runtime;
 using ZombieCardSurvive.Events.Runtime;
 
@@ -20,15 +21,18 @@ namespace ZombieCardSurvive.Effects.Data
             CardPlayContext cardContext,
             CardController eventCardController,
             RunFlagRuntimeStore runFlags,
-            int eventDay)
+            int eventDay, ValueTransaction transaction = null)
         {
             Carrier = carrier;
             CardContext = cardContext;
             EventCardController = eventCardController;
             RunFlags = runFlags;
-            EventDay = eventDay;
+            EventDay = eventDay; Transaction = transaction ?? cardContext.Transaction;
         }
 
+        public ValueTransaction Transaction { get; }
+        public GameEffectContext WithTransaction(ValueTransaction transaction)
+            => new GameEffectContext(Carrier, CardContext, EventCardController, RunFlags, EventDay, transaction);
         public GameEffectCarrier Carrier { get; }
         public CardPlayContext CardContext { get; }
         public CardController EventCardController { get; }
@@ -52,14 +56,14 @@ namespace ZombieCardSurvive.Effects.Data
             return new GameEffectContext(GameEffectCarrier.Event, default, cardController);
         }
 
-        public static GameEffectContext ForEvent(RunFlagRuntimeStore runFlags, int eventDay)
+        public static GameEffectContext ForEvent(RunFlagRuntimeStore runFlags, int eventDay, ValueTransaction transaction = null)
         {
-            return new GameEffectContext(GameEffectCarrier.Event, default, null, runFlags, eventDay);
+            return new GameEffectContext(GameEffectCarrier.Event, default, null, runFlags, eventDay, transaction);
         }
 
-        public static GameEffectContext ForEvent(CardController cardController, RunFlagRuntimeStore runFlags, int eventDay)
+        public static GameEffectContext ForEvent(CardController cardController, RunFlagRuntimeStore runFlags, int eventDay, ValueTransaction transaction = null)
         {
-            return new GameEffectContext(GameEffectCarrier.Event, default, cardController, runFlags, eventDay);
+            return new GameEffectContext(GameEffectCarrier.Event, default, cardController, runFlags, eventDay, transaction);
         }
 
         public static GameEffectContext ForOther()
